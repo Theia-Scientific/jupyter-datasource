@@ -1,13 +1,14 @@
 package main
 
 import (
-	//	"crypto/hmac"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"strings"
@@ -46,6 +47,16 @@ type KernelSpec struct {
 	LastActivity string `json:"last_activity"`
 	ExecutionState string `json:"execution_state"`
 	Connections int `json:"connections"`
+}
+
+const DELIM = "<IDS|MSG>"
+
+func NewId() string {
+	part1 := make([]byte, 4)
+	rand.Read(part1)
+	part2 := make([]byte, 12)
+	rand.Read(part2)
+	return fmt.Sprintf("%s-%s", hex.EncodeToString(part1), hex.EncodeToString(part2))
 }
 
 func GetJupyterToken() string {
@@ -224,6 +235,20 @@ func GetMessage() string {
 	return string(rv)
 }
 
+func SignMessage(plaintext [][]byte, k *ConnectionInfo) string {
+	// fmt.Printf("decoding key %s", k.Key)
+	// key, err := hex.DecodeString(k.Key)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
+	key := []byte(k.Key)
+	mac := hmac.New(sha256.New, key)
+	for _, m := range plaintext {
+		mac.Write([]byte(m))
+	}
+  return hex.EncodeToString(mac.Sum(nil))
+}
+
 func main() {
 	jc := MakeJupyterHttpClient()
 	kernel, err := jc.SelectKernel()
@@ -238,60 +263,48 @@ func main() {
 
 	fmt.Printf("ci: %s\n", ci)
 
-	fmt.Printf("Message: %s\n", GetMessage())
-}
+	m := GetMessage()
+	fmt.Printf("Message: %s\n", m)
 
-func honk() {
-  flag.Parse()
-  if flag.NArg() < 1 {
-		log.Fatalln("Need a command line argument specifying the connection file.")
-	}
-
-  var connectionFile = flag.Arg(0)
-  connectionData, err := ioutil.ReadFile(connectionFile)
-  if err != nil {
-    log.Fatal(err)
-  }
-
-  var connectionInfo ConnectionInfo
-  err = json.Unmarshal(connectionData, &connectionInfo)
-  if err != nil {
-    log.Fatal(err)
-  }
-
-	// shell is a router socket that allows multiple connections from frontends
-	// that's pretty much all i need for now
 	dealer, err := zmq.NewSocket(zmq.DEALER)
-	var shellAddr = fmt.Sprintf("tcp://%s:%d/", connectionInfo.IP, connectionInfo.ShellPort)
-	log.Printf("shell address: %s", shellAddr)
-	dealer.Connect(shellAddr)
-	var executeRequest, _ = json.Marshal(ExecuteRequest{
-		Code: "1 + 2",
-		Silent: true,
-		StoreHistory: false,
-		//		UserExpressions: nil,
-		AllowStdin: false,
-		StopOnError: false,
-	})
-	fmt.Printf("making request: %s", string(executeRequest))
-	dealer.Send(string(executeRequest), 0)
-	response := make([]byte, 0)
-	var chunks = 0
-	var total = 0
-	for {
-		frame, err := dealer.RecvBytes(0)
-		fmt.Printf("chunk received")
-		if err != nil {
-			break // shutting down, quit
-		}
-		chunks++
-		size := len(frame)
-		total += size
-		if size == 0 {
-			break // whole response received
-		}
-		response = append(response, frame...)
+	if err != nil {
+		log.Fatal(err)
 	}
-	fmt.Printf("%v chunks received, %v bytes\n", chunks, total)	
-	fmt.Printf("response: %s", string(response))	
+	var shellAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.ShellPort)
+	log.Printf("shell address: %s", shellAddr)
+	err = dealer.Connect(shellAddr)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	signed := []([]byte){
+		[]byte{}, // header
+	  []byte{}, // parentHeader
+		[]byte{}, // metadata
+		[]byte(m), // content
+	}
+
+	signature := SignMessage(signed, &ci)
+	fmt.Printf("Signature: %s\n", signature)
+
+	// todo add zmq identifier
+	zmqId := NewId()
+	fmt.Printf("zmqId: %s\n", zmqId);
+	message := []([]byte){[]byte(zmqId), []byte(DELIM), []byte(signature)}
+	full_message := append(message, signed...)
+
+	fmt.Printf("sending message\n")
+	total, err := dealer.SendMessage(full_message)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Printf("message sent, %d bytes\n", total)
+
+	parts, err := dealer.RecvMessage(0)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Received reply:\n%s\n", parts)
 }
+
