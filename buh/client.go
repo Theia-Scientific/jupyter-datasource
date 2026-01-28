@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
   "crypto/hmac"
   "crypto/sha256"
   "encoding/hex"
@@ -27,18 +28,6 @@ type ConnectionInfo struct {
   ShellPort       int    `json:"shell_port"`
   Key             string `json:"key"`
   IP              string `json:"ip"`
-}
-
-type ExecuteRequest struct {
-  Code string `json:"code"`
-  Silent bool `json:"silent"`
-  StoreHistory bool `json:"store_history"`
-  //  UserExpressions dict `json:"user_expressions"`
-  AllowStdin bool `json:"allow_stdin"`
-  StopOnError bool `json:"stop_on_error"`
-}
-
-type ExecuteReply struct {
 }
 
 type KernelSpec struct {
@@ -196,44 +185,40 @@ func (jc *JupyterHttpClient) GetConnectionInfo(ks *KernelSpec) (ConnectionInfo, 
   return connectionInfo, err
 }
 
-func GetMessage() (string, string) {
-  type Header struct {
-    MsgId string `json:"msg_id"`
-    Username string `json:"username"`
-    Session string `json:"session"`
-    Date string `json:"date"`
-    MsgType string `json:"msg_type"`
-    Version string `json:"version"`
-  }
-  type Content struct {
-    Code string `json:"code"`
-  }
-  type Message struct {
-    Header Header `json:"header"`
-    Content Content `json:"content"`
-  }
+type Header struct {
+	MsgId string `json:"msg_id"`
+	Username string `json:"username"`
+	Session string `json:"session"`
+	Date string `json:"date"`
+	MsgType string `json:"msg_type"`
+	Version string `json:"version"`
+}
+type ExecuteRequestContent struct {
+	Code string `json:"code"`
+}
+type ExecuteResultContent struct {
+	Data map[string]string `json:"data"`
+}
+type StatusContent struct {
+	ExecutionState string `json:"execution_state"`
+}
 
-  var m = Message{
-    Header: Header{
-      MsgId: "m00001",
-      Username: "scruffy",
-      Session: "s00001",
-      Date: time.Now().Format(time.RFC3339),
-      MsgType: "execute_request",
-      Version: "5.0",
-    },
-    Content: Content{
-      Code: "12+34",
-    },
-  }
-  header, err := json.Marshal(m.Header)
-  fmt.Printf("native header: %s\n", m)
+func GetMessage(code string) (string, string) {
+  header, err := json.Marshal(Header{
+		MsgId: "m00001",
+		Username: "scruffy",
+		Session: "s00001",
+		Date: time.Now().Format(time.RFC3339),
+		MsgType: "execute_request",
+		Version: "5.0",
+	})
   fmt.Printf("serialized header: %s\n", header)
   if err != nil {
     log.Fatal(err)
   }
-  content, err := json.Marshal(m.Content)
-  fmt.Printf("native content: %s\n", m)
+  content, err := json.Marshal(ExecuteRequestContent{
+		Code: code,
+	})
   fmt.Printf("serialized content: %s\n", content)
   if err != nil {
     log.Fatal(err)
@@ -242,17 +227,84 @@ func GetMessage() (string, string) {
 }
 
 func SignMessage(plaintext [][]byte, k *ConnectionInfo) string {
-  // fmt.Printf("decoding key %s", k.Key)
-  // key, err := hex.DecodeString(k.Key)
-  // if err != nil {
-  //   log.Fatal(err)
-  // }
   key := []byte(k.Key)
   mac := hmac.New(sha256.New, key)
   for _, m := range plaintext {
     mac.Write([]byte(m))
   }
   return hex.EncodeToString(mac.Sum(nil))
+}
+
+func responseListener(ks *KernelSpec, ci *ConnectionInfo) {
+  sub, err := zmq.NewSocket(zmq.SUB)
+  if err != nil {
+    log.Fatal(err)
+  }
+  var ioPubAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.IOPubPort)
+  log.Printf("shell address: %s", ioPubAddr)
+  err = sub.Connect(ioPubAddr)
+  if err != nil {
+    log.Fatal(err)
+  }
+	err = sub.SetSubscribe("")
+  if err != nil {
+    log.Fatal(err)
+  }
+
+	results := make(map[string]string)
+
+	for {
+		parts, err := sub.RecvMessage(0)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("received reply: %s\n", parts)
+		// channel := parts[0]
+		// delim := parts[1]
+		// signature := parts[2]
+		header := parts[3]
+		parentHeader := parts[4]
+		// metadata := parts[5]
+		content := parts[6]
+
+		var headerParsed Header
+		err = json.Unmarshal([]byte(header), &headerParsed)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		var parentHeaderParsed Header
+		err = json.Unmarshal([]byte(parentHeader), &parentHeaderParsed)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		fmt.Printf("got message type %s\n", headerParsed.MsgType)
+		if headerParsed.MsgType == "execute_result" {
+			var contentParsed ExecuteResultContent
+			err = json.Unmarshal([]byte(content), &contentParsed)
+			if err != nil {
+				log.Fatal(err)
+			}
+			results[parentHeaderParsed.MsgId] = contentParsed.Data["text/plain"]
+		} else if headerParsed.MsgType == "status" {
+			var contentParsed StatusContent
+			err = json.Unmarshal([]byte(content), &contentParsed)
+			if err != nil {
+				log.Fatal(err)
+			}
+			if contentParsed.ExecutionState == "idle" {
+				result, ok := results[parentHeaderParsed.MsgId]
+				if ok {
+					fmt.Printf("result of %s: '%s'\n", parentHeaderParsed.MsgId, result)
+					delete(results, parentHeaderParsed.MsgId)
+				} else {
+					fmt.Printf("no result for %s\n", parentHeaderParsed.MsgId)
+				}
+			}
+		}
+	}	
 }
 
 func main() {
@@ -269,9 +321,6 @@ func main() {
 
   fmt.Printf("ci: %s\n", ci)
 
-  header, content := GetMessage()
-  fmt.Printf("Message: %s %s\n", header, content)
-
   dealer, err := zmq.NewSocket(zmq.DEALER)
   if err != nil {
     log.Fatal(err)
@@ -283,34 +332,41 @@ func main() {
     log.Fatal(err)
   }
 
-  signed := []([]byte){
-    []byte(header), // header
-    []byte("{}"), // parentHeader
-		[]byte("{}"), // metadata
-    []byte(content), // content
-  }
+	go responseListener(&kernel, &ci)
 
-  signature := SignMessage(signed, &ci)
-  fmt.Printf("Signature: %s\n", signature)
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Print("?> ")
+		expr, err := reader.ReadString('\n')
+		if err != nil {
+			os.Exit(0)
+		}
+		
+		header, content := GetMessage(expr)
+		fmt.Printf("Message: %s %s\n", header, content)
 
-  // todo add zmq identifier
-  zmqId := NewId()
-  fmt.Printf("zmqId: %s\n", zmqId);
-  message := []([]byte){[]byte(zmqId), []byte(DELIM), []byte(signature)}
-  full_message := append(message, signed...)
+		signed := []([]byte){
+			[]byte(header), // header
+			[]byte("{}"), // parentHeader
+			[]byte("{}"), // metadata
+			[]byte(content), // content
+		}
 
-  fmt.Printf("sending message\n")
-  total, err := dealer.SendMessage(full_message)
-  if err != nil {
-    log.Fatal(err)
-  }
-  fmt.Printf("message sent, %d bytes\n", total)
+		signature := SignMessage(signed, &ci)
+		fmt.Printf("Signature: %s\n", signature)
 
-  parts, err := dealer.RecvMessage(0)
-  if err != nil {
-    log.Fatal(err)
-  }
+		// todo add zmq identifier
+		zmqId := NewId()
+		fmt.Printf("zmqId: %s\n", zmqId);
+		message := []([]byte){[]byte(zmqId), []byte(DELIM), []byte(signature)}
+		full_message := append(message, signed...)
 
-  fmt.Printf("Received reply:\n%s\n", parts)
+		fmt.Printf("sending message\n")
+		total, err := dealer.SendMessage(full_message)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("message sent, %d bytes\n", total)
+	}
 }
 
