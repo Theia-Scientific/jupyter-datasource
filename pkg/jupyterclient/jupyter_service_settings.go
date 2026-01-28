@@ -40,10 +40,14 @@ func GetJupyterToken(systemServiceSettings *SystemServiceSettings) string {
 }
 
 func DefaultJupyterServiceSettings(systemServiceSettings *SystemServiceSettings) JupyterServiceSettings {
+	tok, ok := os.LookupEnv("jupyter_token")
+	if !ok {
+		tok = GetJupyterToken(systemServiceSettings)
+	}
 	return JupyterServiceSettings{
 		Host: os.Getenv("JUPYTER_SERVICE_HOST"),
 		Port: os.Getenv("JUPYTER_SERVICE_PORT"),
-		Token: GetJupyterToken(systemServiceSettings),
+		Token: tok,
 	}
 }
 
