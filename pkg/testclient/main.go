@@ -10,7 +10,10 @@ import (
 )
 
 func main() {
-  jc := jupyterclient.MakeJupyterHttpClient()
+	sys := jupyterclient.DefaultSystemServiceSettings()
+	jup := jupyterclient.DefaultJupyterServiceSettings(&sys)
+  jc := jupyterclient.MakeJupyterHttpClient(&jup)
+
   kernel, err := jc.SelectKernel()
   if err != nil {
     log.Fatal(err)
