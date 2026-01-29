@@ -78,7 +78,7 @@ func (js *JupyterSession) Quit() {
 	js.quit <- 0
 }
 
-func getMessage(msgId string, sessionId string, code string) (string, string) {
+func encodeHeader(msgId string, sessionId string) (string, error) {
   header, err := json.Marshal(Header{
 		MsgId: msgId,
 		Username: "scruffy",
@@ -87,18 +87,14 @@ func getMessage(msgId string, sessionId string, code string) (string, string) {
 		MsgType: "execute_request",
 		Version: "5.0",
 	})
-  fmt.Printf("serialized header: %s\n", header)
-  if err != nil {
-    log.Fatal(err)
-  }
+	return string(header), err
+}
+
+func encodeContent(code string) (string, error) {
   content, err := json.Marshal(ExecuteRequestContent{
 		Code: code,
 	})
-  fmt.Printf("serialized content: %s\n", content)
-  if err != nil {
-    log.Fatal(err)
-  }
-  return string(header), string(content)
+	return string(content), err
 }
 
 func signMessage(plaintext [][]byte, k *ConnectionInfo) string {
@@ -137,7 +133,14 @@ func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
 			msgId := NewId()
 			liveRequests[msgId] = request.cb
 
-			header, content := getMessage(msgId, sessionId, request.code)
+			header, err := encodeHeader(msgId, sessionId)
+			if err != nil {
+				log.Fatal(err)
+			}
+			content, err := encodeContent(request.code)
+			if err != nil {
+				log.Fatal(err)
+			}
 			fmt.Printf("Message: %s %s\n", header, content)
 
 			signed := []([]byte){
