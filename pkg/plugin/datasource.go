@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/Theia-Scientific/theiascientific-jupyter-datasource/pkg/models"
+	"github.com/Theia-Scientific/theiascientific-jupyter-datasource/pkg/jupyterclient"
 )
 
 // Make sure Datasource implements required interfaces. This is important to do
@@ -25,18 +26,35 @@ var (
 
 // NewDatasource creates a new datasource instance.
 func NewDatasource(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	return &Datasource{}, nil
+	systemSettings := jupyterclient.DefaultSystemServiceSettings()
+	jupyterSettings := jupyterclient.DefaultJupyterServiceSettings(&systemSettings)
+  httpClient := jupyterclient.MakeJupyterHttpClient(&jupyterSettings)
+
+  kernel, err := httpClient.SelectKernel()
+  if err != nil {
+		return nil, err
+  }
+
+  connectionInfo, err := httpClient.GetConnectionInfo(&kernel)
+  if err != nil {
+		return nil, err
+  }
+
+	jupyterSession := jupyterclient.MakeJupyterSession(&connectionInfo)
+	return &Datasource{session: jupyterSession}, nil
 }
 
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
-type Datasource struct{}
+type Datasource struct{
+	session jupyterclient.JupyterSession
+}
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
 // created. As soon as datasource settings change detected by SDK old datasource instance will
 // be disposed and a new one will be created using NewSampleDatasource factory function.
 func (d *Datasource) Dispose() {
-	// Clean up datasource instance resources.
+	session.Quit()
 }
 
 // QueryData handles multiple queries and returns multiple responses.
