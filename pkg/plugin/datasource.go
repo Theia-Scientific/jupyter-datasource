@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
+	// "time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
@@ -54,7 +54,7 @@ type Datasource struct{
 // created. As soon as datasource settings change detected by SDK old datasource instance will
 // be disposed and a new one will be created using NewSampleDatasource factory function.
 func (d *Datasource) Dispose() {
-	session.Quit()
+	d.session.Quit()
 }
 
 // QueryData handles multiple queries and returns multiple responses.
@@ -77,7 +77,9 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 	return response, nil
 }
 
-type queryModel struct{}
+type queryModel struct{
+  code string `json:"code"`
+}
 
 func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	var response backend.DataResponse
@@ -90,6 +92,13 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
 	}
 
+	// fake an await with channels
+	resultChannel := make(chan string)
+	d.session.Query(qm.code, func(result string) {
+		resultChannel <- result
+	})
+	result := <- resultChannel
+
 	// create data frame response.
 	// For an overview on data frames and how grafana handles them:
 	// https://grafana.com/developers/plugin-tools/introduction/data-frames
@@ -97,8 +106,8 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 
 	// add fields.
 	frame.Fields = append(frame.Fields,
-		data.NewField("time", nil, []time.Time{query.TimeRange.From, query.TimeRange.To}),
-		data.NewField("values", nil, []int64{10, 20}),
+		// data.NewField("time", nil, []time.Time{query.TimeRange.From, query.TimeRange.To}),
+		data.NewField("values", nil, []json.RawMessage{[]byte(result)}),
 	)
 
 	// add the frames to the response.
