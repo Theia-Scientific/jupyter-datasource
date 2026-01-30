@@ -92,12 +92,7 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
 	}
 
-	// fake an await with channels
-	resultChannel := make(chan string)
-	d.session.Query(qm.code, func(result string) {
-		resultChannel <- result
-	})
-	result := <- resultChannel
+	result := d.session.Query(qm.code)
 
 	// create data frame response.
 	// For an overview on data frames and how grafana handles them:

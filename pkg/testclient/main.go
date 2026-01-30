@@ -35,8 +35,7 @@ func main() {
 			os.Exit(0)
 		}
 		expr = strings.TrimRight(expr, "\r\n")
-		js.Query(expr, func(result string) {
-			fmt.Printf("'%s' => '%s'\n", expr, result)
-		})
+		result := js.Query(expr)
+		fmt.Printf("'%s' => '%s'\n", expr, result)
 	}
 }

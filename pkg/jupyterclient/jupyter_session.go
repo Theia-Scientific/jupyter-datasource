@@ -15,7 +15,7 @@ import (
 
 type Callback func(string)
 
-type requestMsg struct {code string; cb Callback}
+type requestMsg struct {code string; resultChannel chan string}
 type replyMsg struct {id string; val string}
 
 type JupyterSession struct {
@@ -71,8 +71,11 @@ func MakeJupyterSession(ci *ConnectionInfo) JupyterSession {
 	return rv
 }
 
-func (js *JupyterSession) Query(code string, callback func(string)) {
-	js.requests <- requestMsg{code: code, cb: callback}
+func (js *JupyterSession) Query(code string) string {
+	// fake an await with channels
+	resultChannel := make(chan string)
+	js.requests <- requestMsg{code: code, resultChannel: resultChannel}
+	return <- resultChannel
 }
 
 func (js *JupyterSession) Quit() {
@@ -113,7 +116,7 @@ func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
 	replyQuit := make(chan int)
 	go listener(ci, replies, replyQuit)
 
-	liveRequests := make(map[string]Callback)
+	liveRequests := make(map[string]chan string)
 	sessionId := NewId()
 	zmqId := NewId()
 
@@ -130,7 +133,7 @@ func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
 		select {
 		case request := <- requests: {
 			msgId := NewId()
-			liveRequests[msgId] = request.cb
+			liveRequests[msgId] = request.resultChannel
 
 			header, err := encodeHeader(msgId, sessionId)
 			if err != nil {
@@ -162,7 +165,7 @@ func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
 			}
 		}
 		case reply := <- replies: {
-			liveRequests[reply.id](reply.val)
+			liveRequests[reply.id] <- reply.val
 			delete(liveRequests, reply.id)
 		}
 		case <-quit:
