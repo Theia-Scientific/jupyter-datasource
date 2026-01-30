@@ -1,6 +1,7 @@
 package jupyterclient
 
 import (
+	"context"
   "crypto/hmac"
   "crypto/sha256"
   "encoding/hex"
@@ -9,7 +10,7 @@ import (
   "log"
   "time"
 
-  zmq "github.com/pebbe/zmq4"
+  zmq "github.com/go-zeromq/zmq4"
 )
 
 type Callback func(string)
@@ -107,6 +108,7 @@ func signMessage(plaintext [][]byte, k *ConnectionInfo) string {
 }
 
 func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
+	ctx := context.Background()
 	replies := make(chan replyMsg)
 	replyQuit := make(chan int)
 	go listener(ci, replies, replyQuit)
@@ -115,13 +117,10 @@ func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
 	sessionId := NewId()
 	zmqId := NewId()
 
-  dealer, err := zmq.NewSocket(zmq.DEALER)
-  if err != nil {
-    log.Fatal(err)
-  }
+  dealer := zmq.NewDealer(ctx, zmq.WithAutomaticReconnect(true))
   var shellAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.ShellPort)
   log.Printf("shell address: %s", shellAddr)
-  err = dealer.Connect(shellAddr)
+  err := dealer.Dial(shellAddr)
   if err != nil {
     log.Fatal(err)
   }
@@ -157,11 +156,10 @@ func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
 			full_message := append(message, signed...)
 
 			fmt.Printf("sending message\n")
-			total, err := dealer.SendMessage(full_message)
+			err = dealer.SendMulti(zmq.NewMsgFrom(full_message...))
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("message sent, %d bytes\n", total)
 		}
 		case reply := <- replies: {
 			liveRequests[reply.id](reply.val)
@@ -175,18 +173,16 @@ func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
 }
 
 func listener(ci *ConnectionInfo, replies chan replyMsg, quit chan int) {
-  sub, err := zmq.NewSocket(zmq.SUB)
-  if err != nil {
-    log.Fatal(err)
-  }
+	ctx := context.Background()
+  sub := zmq.NewSub(ctx, zmq.WithAutomaticReconnect(true))
   var ioPubAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.IOPubPort)
   log.Printf("shell address: %s", ioPubAddr)
-  err = sub.Connect(ioPubAddr)
+  err := sub.Dial(ioPubAddr)
   if err != nil {
     log.Fatal(err)
   }
 	defer sub.Close()
-	err = sub.SetSubscribe("")
+	err = sub.SetOption(zmq.OptionSubscribe, "")
   if err != nil {
     log.Fatal(err)
   }
@@ -200,10 +196,11 @@ func listener(ci *ConnectionInfo, replies chan replyMsg, quit chan int) {
 		default:
 		}
 		
-		parts, err := sub.RecvMessage(0)
+		msg, err := sub.Recv()
 		if err != nil {
 			log.Fatal(err)
 		}
+		parts := msg.Frames
 
 		fmt.Printf("received reply: %s\n", parts)
 		// channel := parts[0]

@@ -2,7 +2,10 @@ module github.com/Theia-Scientific/theiascientific-jupyter-datasource
 
 go 1.24.6
 
-require github.com/grafana/grafana-plugin-sdk-go v0.283.0
+require (
+	github.com/go-zeromq/zmq4 v0.17.0
+	github.com/grafana/grafana-plugin-sdk-go v0.283.0
+)
 
 require (
 	github.com/BurntSushi/toml v1.5.0 // indirect
@@ -15,6 +18,7 @@ require (
 	github.com/fatih/color v1.15.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
+	github.com/go-zeromq/goczmq/v4 v4.2.2 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -45,7 +49,6 @@ require (
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
-	github.com/pebbe/zmq4 v1.4.0 // indirect
 	github.com/pierrec/lz4/v4 v4.1.22 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
