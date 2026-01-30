@@ -24,8 +24,6 @@ func main() {
     log.Fatal(err)
   }
 
-  fmt.Printf("ci: %s\n", ci)
-
 	js := jupyterclient.MakeJupyterSession(&ci)
 	reader := bufio.NewReader(os.Stdin)
 	for {

@@ -7,7 +7,7 @@ import (
   "encoding/hex"
   "encoding/json"
   "fmt"
-  "log"
+	"log"
   "time"
 
   zmq "github.com/go-zeromq/zmq4"
@@ -122,7 +122,6 @@ func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
 
   dealer := zmq.NewDealer(ctx, zmq.WithAutomaticReconnect(true))
   var shellAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.ShellPort)
-  log.Printf("shell address: %s", shellAddr)
   err := dealer.Dial(shellAddr)
   if err != nil {
     log.Fatal(err)
@@ -143,7 +142,6 @@ func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			fmt.Printf("Message: %s %s\n", header, content)
 
 			signed := []([]byte){
 				[]byte(header), // header
@@ -153,12 +151,10 @@ func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
 			}
 
 			signature := signMessage(signed, ci)
-			fmt.Printf("Signature: %s\n", signature)
 
 			message := []([]byte){[]byte(zmqId), []byte(DELIM), []byte(signature)}
 			full_message := append(message, signed...)
 
-			fmt.Printf("sending message\n")
 			err = dealer.SendMulti(zmq.NewMsgFrom(full_message...))
 			if err != nil {
 				log.Fatal(err)
@@ -179,7 +175,6 @@ func listener(ci *ConnectionInfo, replies chan replyMsg, quit chan int) {
 	ctx := context.Background()
   sub := zmq.NewSub(ctx, zmq.WithAutomaticReconnect(true))
   var ioPubAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.IOPubPort)
-  log.Printf("shell address: %s", ioPubAddr)
   err := sub.Dial(ioPubAddr)
   if err != nil {
     log.Fatal(err)
@@ -205,7 +200,6 @@ func listener(ci *ConnectionInfo, replies chan replyMsg, quit chan int) {
 		}
 		parts := msg.Frames
 
-		fmt.Printf("received reply: %s\n", parts)
 		// channel := parts[0]
 		// delim := parts[1]
 		// signature := parts[2]
@@ -226,7 +220,6 @@ func listener(ci *ConnectionInfo, replies chan replyMsg, quit chan int) {
 			log.Fatal(err)
 		}
 
-		fmt.Printf("got message type %s\n", headerParsed.MsgType)
 		if headerParsed.MsgType == "execute_result" {
 			var contentParsed ExecuteResultContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
@@ -243,12 +236,14 @@ func listener(ci *ConnectionInfo, replies chan replyMsg, quit chan int) {
 			if contentParsed.ExecutionState == "idle" {
 				result, ok := results[parentHeaderParsed.MsgId]
 				if ok {
-					fmt.Printf("result of %s: '%s'\n", parentHeaderParsed.MsgId, result)
+					// got a result
 					replies <- replyMsg{id: parentHeaderParsed.MsgId, val: result}
 					delete(results, parentHeaderParsed.MsgId)
 				} else {
-					fmt.Printf("no result for %s\n", parentHeaderParsed.MsgId)
-					replies <- replyMsg{id: parentHeaderParsed.MsgId, val: "None"}
+					// computation terminated without result
+					// (like we did a print('something')
+					// just return a null
+					replies <- replyMsg{id: parentHeaderParsed.MsgId, val: "null"}
 				}
 			}
 		}

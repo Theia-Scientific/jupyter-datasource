@@ -68,7 +68,6 @@ func (jc *JupyterHttpClient) CreateKernel() (KernelSpec, error) {
   if err != nil {
     return kernel, err
   }
-  fmt.Printf("CreateKernel body: %s\n", body)
   err = json.Unmarshal(body, &kernel)
   return kernel, err
 }
@@ -84,11 +83,9 @@ func (jc *JupyterHttpClient) SelectKernel() (KernelSpec, error) {
     if err != nil {
       return KernelSpec{}, err
     }
-    fmt.Printf("using new kernel: %s\n", kernel)
     return kernel, nil
   } else {
     // use the first kernel
-    fmt.Printf("using existing kernel: %s\n", kernels[0])
     return kernels[0], nil
   }
 }
@@ -96,7 +93,6 @@ func (jc *JupyterHttpClient) SelectKernel() (KernelSpec, error) {
 func (jc *JupyterHttpClient) GetConnectionInfo(ks *KernelSpec) (ConnectionInfo, error) {
   var connectionInfo ConnectionInfo
   path := fmt.Sprintf("jupyter/api/kernels/%s/connection", ks.Id)
-  fmt.Printf("getting path %s\n", path)
   req, err := jc.Get(path)
   if err != nil {
     return connectionInfo, err
@@ -110,7 +106,6 @@ func (jc *JupyterHttpClient) GetConnectionInfo(ks *KernelSpec) (ConnectionInfo, 
   if err != nil {
     return connectionInfo, err
   }
-  fmt.Printf("GetConnectionInfo body: %s\n", body)
   err = json.Unmarshal(body, &connectionInfo)
   return connectionInfo, err
 }

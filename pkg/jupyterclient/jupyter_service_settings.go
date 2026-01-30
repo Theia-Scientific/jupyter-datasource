@@ -21,7 +21,6 @@ type JupyterHttpClient struct {
 
 func GetJupyterToken(systemServiceSettings *SystemServiceSettings) string {
   url := fmt.Sprintf("http://%s:%s/tokens/jupyter", systemServiceSettings.Host, systemServiceSettings.Port)
-  fmt.Printf("getting jupyter token... ");
   req, err := http.NewRequest(http.MethodPut, url, http.NoBody)
   if err != nil {
     log.Fatal(err)
@@ -35,7 +34,6 @@ func GetJupyterToken(systemServiceSettings *SystemServiceSettings) string {
   if err != nil {
     log.Fatal(err)
   }
-  fmt.Printf("%s\n", string(body));
   return string(body)
 }
 
