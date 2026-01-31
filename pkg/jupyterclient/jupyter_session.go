@@ -164,6 +164,9 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 			delete(liveRequests, reply.id)
 		}
 		case <-ctx.Done():
+			for _, resultChannel := range liveRequests {
+				resultChannel <- "null"
+			}
 			return
 		}
 	}
