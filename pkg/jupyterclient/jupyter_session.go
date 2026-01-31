@@ -20,7 +20,7 @@ type replyMsg struct {id string; val string}
 
 type JupyterSession struct {
 	requests chan requestMsg
-	quit chan int
+	cancel context.CancelFunc
 }
 
 type Header struct {
@@ -63,11 +63,12 @@ type KernelSpec struct {
 
 const DELIM = "<IDS|MSG>"
 func MakeJupyterSession(ci *ConnectionInfo) JupyterSession {
-	rv := JupyterSession {
+	ctx, cancel := context.WithCancel(context.Background())
+	rv := JupyterSession{
 		requests: make(chan requestMsg),
-		quit: make(chan int),
+		cancel: cancel,
 	}
-	go requestor(ci, rv.requests, rv.quit)
+	go requestor(ctx, ci, rv.requests)
 	return rv
 }
 
@@ -79,7 +80,7 @@ func (js *JupyterSession) Query(code string) string {
 }
 
 func (js *JupyterSession) Quit() {
-	js.quit <- 0
+	js.cancel()
 }
 
 func encodeHeader(msgId string, sessionId string) (string, error) {
@@ -110,11 +111,9 @@ func signMessage(plaintext [][]byte, k *ConnectionInfo) string {
   return hex.EncodeToString(mac.Sum(nil))
 }
 
-func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
-	ctx := context.Background()
+func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg) {
 	replies := make(chan replyMsg)
-	replyQuit := make(chan int)
-	go listener(ci, replies, replyQuit)
+	go listener(ctx, ci, replies)
 
 	liveRequests := make(map[string]chan string)
 	sessionId := NewId()
@@ -164,15 +163,13 @@ func requestor(ci *ConnectionInfo, requests chan requestMsg, quit chan int) {
 			liveRequests[reply.id] <- reply.val
 			delete(liveRequests, reply.id)
 		}
-		case <-quit:
-			replyQuit <- 0
+		case <-ctx.Done():
 			return
 		}
 	}
 }
 
-func listener(ci *ConnectionInfo, replies chan replyMsg, quit chan int) {
-	ctx := context.Background()
+func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
   sub := zmq.NewSub(ctx, zmq.WithAutomaticReconnect(true))
   var ioPubAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.IOPubPort)
   err := sub.Dial(ioPubAddr)
@@ -189,14 +186,18 @@ func listener(ci *ConnectionInfo, replies chan replyMsg, quit chan int) {
 
 	for {
 		select {
-		case <- quit:
+		case <-ctx.Done():
 			return
 		default:
 		}
 		
 		msg, err := sub.Recv()
 		if err != nil {
-			log.Fatal(err)
+			if err == context.Canceled {
+				return
+			} else {
+				log.Fatal(err)
+			}
 		}
 		parts := msg.Frames
 

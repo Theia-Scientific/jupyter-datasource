@@ -33,6 +33,7 @@ func main() {
 		fmt.Print("?> ")
 		expr, err := reader.ReadString('\n')
 		if err != nil {
+			js.Quit()
 			os.Exit(0)
 		}
 		expr = strings.TrimRight(expr, "\r\n")
