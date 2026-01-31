@@ -3,7 +3,6 @@ package jupyterclient
 import (
 	"fmt"
 	"io"
-	"log"
   "net/http"
 	"os"
 )
@@ -19,33 +18,37 @@ type JupyterHttpClient struct {
   AuthHeader string
 }
 
-func GetJupyterToken(systemServiceSettings *SystemServiceSettings) string {
+func GetJupyterToken(systemServiceSettings *SystemServiceSettings) (string, error) {
   url := fmt.Sprintf("http://%s:%s/tokens/jupyter", systemServiceSettings.Host, systemServiceSettings.Port)
   req, err := http.NewRequest(http.MethodPut, url, http.NoBody)
   if err != nil {
-    log.Fatal(err)
+    return "", err
   }
   res, err := http.DefaultClient.Do(req)
   if err != nil {
-    log.Fatal(err)
+    return "", err
   }
   defer res.Body.Close()
   body, err := io.ReadAll(res.Body)
   if err != nil {
-    log.Fatal(err)
+    return "", err
   }
-  return string(body)
+  return string(body), nil
 }
 
-func DefaultJupyterServiceSettings(systemServiceSettings *SystemServiceSettings) JupyterServiceSettings {
+func DefaultJupyterServiceSettings(systemServiceSettings *SystemServiceSettings) (*JupyterServiceSettings, error) {
 	tok, ok := os.LookupEnv("jupyter_token")
 	if !ok {
-		tok = GetJupyterToken(systemServiceSettings)
+		var err error
+		tok, err = GetJupyterToken(systemServiceSettings)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return JupyterServiceSettings{
+	return &JupyterServiceSettings{
 		Host: os.Getenv("JUPYTER_SERVICE_HOST"),
 		Port: os.Getenv("JUPYTER_SERVICE_PORT"),
 		Token: tok,
-	}
+	}, nil
 }
 

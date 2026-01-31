@@ -27,8 +27,11 @@ var (
 // NewDatasource creates a new datasource instance.
 func NewDatasource(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	systemSettings := jupyterclient.DefaultSystemServiceSettings()
-	jupyterSettings := jupyterclient.DefaultJupyterServiceSettings(&systemSettings)
-  httpClient := jupyterclient.MakeJupyterHttpClient(&jupyterSettings)
+	jupyterSettings, err := jupyterclient.DefaultJupyterServiceSettings(systemSettings)
+  if err != nil {
+		return nil, err
+  }
+  httpClient := jupyterclient.MakeJupyterHttpClient(jupyterSettings)
 
   kernel, err := httpClient.SelectKernel()
   if err != nil {

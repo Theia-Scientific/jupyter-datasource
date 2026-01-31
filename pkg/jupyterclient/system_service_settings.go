@@ -9,8 +9,8 @@ type SystemServiceSettings struct {
 	Port string
 }
 
-func DefaultSystemServiceSettings() SystemServiceSettings {
-	return SystemServiceSettings{
+func DefaultSystemServiceSettings() *SystemServiceSettings {
+	return &SystemServiceSettings{
 		Host: os.Getenv("SYSTEM_SERVICE_HOST"),
 		Port: os.Getenv("SYSTEM_SERVICE_PORT"),
 	}
