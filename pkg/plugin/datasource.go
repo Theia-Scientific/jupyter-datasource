@@ -25,13 +25,20 @@ var (
 )
 
 // NewDatasource creates a new datasource instance.
-func NewDatasource(_ context.Context, _ backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	systemSettings := jupyterclient.DefaultSystemServiceSettings()
-	jupyterSettings, err := jupyterclient.DefaultJupyterServiceSettings(systemSettings)
+func NewDatasource(_ context.Context, instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+	systemSettings := jupyterclient.SystemServiceSettings{
+		BaseUrl: instanceSettings.DecryptedSecureJSONData["systemUrl"],
+	}
+	jupyterToken, err := jupyterclient.GetJupyterToken(&systemSettings)
   if err != nil {
 		return nil, err
   }
-  httpClient := jupyterclient.MakeJupyterHttpClient(jupyterSettings)
+	jupyterSettings := jupyterclient.JupyterServiceSettings{
+		BaseUrl: instanceSettings.DecryptedSecureJSONData["jupyterUrl"],
+		Token: jupyterToken,
+	}
+
+  httpClient := jupyterclient.MakeJupyterHttpClient(&jupyterSettings)
 
   kernel, err := httpClient.SelectKernel()
   if err != nil {
@@ -120,17 +127,11 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 // a datasource is working as expected.
 func (d *Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	res := &backend.CheckHealthResult{}
-	config, err := models.LoadPluginSettings(*req.PluginContext.DataSourceInstanceSettings)
+	_, err := models.LoadPluginSettings(*req.PluginContext.DataSourceInstanceSettings)
 
 	if err != nil {
 		res.Status = backend.HealthStatusError
 		res.Message = "Unable to load settings"
-		return res, nil
-	}
-
-	if config.Secrets.ApiKey == "" {
-		res.Status = backend.HealthStatusError
-		res.Message = "API key is missing"
 		return res, nil
 	}
 
