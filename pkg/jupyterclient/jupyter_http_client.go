@@ -11,12 +11,12 @@ import (
 func MakeJupyterHttpClient(settings *JupyterServiceSettings) JupyterHttpClient {
   return JupyterHttpClient{
     AuthHeader: fmt.Sprintf("Bearer %s", settings.Token),
-		BasePath: fmt.Sprintf("http://%s:%s/", settings.Host, settings.Port),
+		BasePath: settings.BaseUrl,
 	}
 }
 
 func (jc *JupyterHttpClient) NewRequest(method, path string, body io.Reader) (*http.Request, error) {
-  req, err := http.NewRequest(method, fmt.Sprintf("%s%s", jc.BasePath, path), body)
+  req, err := http.NewRequest(method, fmt.Sprintf("%s/%s", jc.BasePath, path), body)
   if err != nil {
     return nil, err
   }

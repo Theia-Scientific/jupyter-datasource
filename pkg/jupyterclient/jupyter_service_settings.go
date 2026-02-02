@@ -7,9 +7,18 @@ import (
 	"os"
 )
 
+type SystemServiceSettings struct {
+	BaseUrl string
+}
+
+func DefaultSystemServiceSettings() *SystemServiceSettings {
+	return &SystemServiceSettings{
+		BaseUrl: fmt.Sprintf("http://%s:%s", os.Getenv("SYSTEM_SERVICE_HOST"), os.Getenv("SYSTEM_SERVICE_PORT")),
+	}
+}
+
 type JupyterServiceSettings struct {
-	Host string
-	Port string
+	BaseUrl string
 	Token string
 }
 
@@ -19,7 +28,7 @@ type JupyterHttpClient struct {
 }
 
 func GetJupyterToken(systemServiceSettings *SystemServiceSettings) (string, error) {
-  url := fmt.Sprintf("http://%s:%s/tokens/jupyter", systemServiceSettings.Host, systemServiceSettings.Port)
+  url := fmt.Sprintf("%s/tokens/jupyter", systemServiceSettings.BaseUrl)
   req, err := http.NewRequest(http.MethodPut, url, http.NoBody)
   if err != nil {
     return "", err
@@ -46,8 +55,7 @@ func DefaultJupyterServiceSettings(systemServiceSettings *SystemServiceSettings)
 		}
 	}
 	return &JupyterServiceSettings{
-		Host: os.Getenv("JUPYTER_SERVICE_HOST"),
-		Port: os.Getenv("JUPYTER_SERVICE_PORT"),
+		BaseUrl: fmt.Sprintf("http://%s:%s", os.Getenv("JUPYTER_SERVICE_HOST"), os.Getenv("JUPYTER_SERVICE_PORT")),
 		Token: tok,
 	}, nil
 }
