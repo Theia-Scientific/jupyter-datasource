@@ -9,61 +9,95 @@ export function ConfigEditor(props: Props) {
   const { onOptionsChange, options } = props;
   const { jsonData, secureJsonFields, secureJsonData } = options;
 
-  const onPathChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const onNotebookChange = (event: ChangeEvent<HTMLInputElement>) => {
     onOptionsChange({
       ...options,
       jsonData: {
         ...jsonData,
-        path: event.target.value,
+        notebook: event.target.value,
       },
     });
   };
 
-  // Secure field (only sent to the backend)
-  const onAPIKeyChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const onSystemUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
     onOptionsChange({
       ...options,
       secureJsonData: {
-        apiKey: event.target.value,
+        systemUrl: event.target.value,
       },
     });
   };
 
-  const onResetAPIKey = () => {
+  const onResetSystemUrl = () => {
     onOptionsChange({
       ...options,
       secureJsonFields: {
         ...options.secureJsonFields,
-        apiKey: false,
+        systemUrl: false,
       },
       secureJsonData: {
         ...options.secureJsonData,
-        apiKey: '',
+        systemUrl: '',
+      },
+    });
+  };
+
+  const onJupyterUrlChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onOptionsChange({
+      ...options,
+      secureJsonData: {
+        jupyterUrl: event.target.value,
+      },
+    });
+  };
+
+  const onResetJupyterUrl = () => {
+    onOptionsChange({
+      ...options,
+      secureJsonFields: {
+        ...options.secureJsonFields,
+        jupyterUrl: false,
+      },
+      secureJsonData: {
+        ...options.secureJsonData,
+        jupyterUrl: '',
       },
     });
   };
 
   return (
     <>
-      <InlineField label="Path" labelWidth={14} interactive tooltip={'Json field returned to frontend'}>
+      <InlineField label="Notebook" labelWidth={14} interactive tooltip={'Notebook that query should run in'}>
         <Input
-          id="config-editor-path"
-          onChange={onPathChange}
-          value={jsonData.path}
-          placeholder="Enter the path, e.g. /api/v1"
+          id="config-editor-notebook"
+          onChange={onNotebookChange}
+          value={jsonData.notebook}
+          placeholder="Enter the notebook, e.g. Untitled.ipynb"
           width={40}
         />
       </InlineField>
-      <InlineField label="API Key" labelWidth={14} interactive tooltip={'Secure json field (backend only)'}>
+      <InlineField label="System URL" labelWidth={14} interactive tooltip={'URL for system service (no terminal slash)'}>
         <SecretInput
           required
-          id="config-editor-api-key"
-          isConfigured={secureJsonFields.apiKey}
-          value={secureJsonData?.apiKey}
-          placeholder="Enter your API key"
+          id="config-editor-system-url"
+          isConfigured={secureJsonFields.systemUrl}
+          value={secureJsonData?.systemUrl}
+          placeholder="Enter your System URL"
           width={40}
-          onReset={onResetAPIKey}
-          onChange={onAPIKeyChange}
+          onReset={onResetSystemUrl}
+          onChange={onSystemUrlChange}
+        />
+      </InlineField>
+      <InlineField label="Jupyter URL" labelWidth={14} interactive tooltip={'URL for Jupyter service (no terminal slash)'}>
+        <SecretInput
+          required
+          id="config-editor-jupyter-url"
+          isConfigured={secureJsonFields.jupyterUrl}
+          value={secureJsonData?.jupyterUrl}
+          placeholder="Enter your Jupyter URL"
+          width={40}
+          onReset={onResetJupyterUrl}
+          onChange={onJupyterUrlChange}
         />
       </InlineField>
     </>
