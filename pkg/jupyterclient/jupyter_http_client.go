@@ -1,6 +1,7 @@
 package jupyterclient
 
 import (
+	"bytes"
   "encoding/json"
   "fmt"
   "io"
@@ -32,6 +33,10 @@ func (jc *JupyterHttpClient) Post(path string, body string) (*http.Request, erro
   return jc.NewRequest(http.MethodPost, path, strings.NewReader(body))
 }
 
+func (jc *JupyterHttpClient) PostBytes(path string, body []byte) (*http.Request, error) {
+  return jc.NewRequest(http.MethodPost, path, bytes.NewReader(body))
+}
+
 func (jc *JupyterHttpClient) GetKernels() ([]KernelSpec, error) {
   var kernels []KernelSpec
 
@@ -52,10 +57,19 @@ func (jc *JupyterHttpClient) GetKernels() ([]KernelSpec, error) {
   return kernels, err
 }
 
-func (jc *JupyterHttpClient) CreateKernel() (KernelSpec, error) {
+func (jc *JupyterHttpClient) CreateKernel(kernelType string) (KernelSpec, error) {
   var kernel KernelSpec
 
-  req, err := jc.Post("jupyter/api/kernels", "{\"name\":\"python3\"}")
+	type CreateKernelRequest struct {
+		Name string `json:"name"`
+	}
+	ckr := CreateKernelRequest{Name:kernelType}
+	post, err := json.Marshal(ckr)
+  if err != nil {
+    return kernel, err
+  }
+
+  req, err := jc.PostBytes("jupyter/api/kernels", post)
   if err != nil {
     return kernel, err
   }
@@ -79,7 +93,7 @@ func (jc *JupyterHttpClient) SelectKernel() (KernelSpec, error) {
   }
   if len(kernels) == 0 {
     // create a kernel
-    kernel, err := jc.CreateKernel()
+    kernel, err := jc.CreateKernel("python3")
     if err != nil {
       return KernelSpec{}, err
     }
@@ -90,9 +104,9 @@ func (jc *JupyterHttpClient) SelectKernel() (KernelSpec, error) {
   }
 }
 
-func (jc *JupyterHttpClient) GetConnectionInfo(ks *KernelSpec) (ConnectionInfo, error) {
+func (jc *JupyterHttpClient) GetConnectionInfo(id string) (ConnectionInfo, error) {
   var connectionInfo ConnectionInfo
-  path := fmt.Sprintf("jupyter/api/kernels/%s/connection", ks.Id)
+  path := fmt.Sprintf("jupyter/api/kernels/%s/connection", id)
   req, err := jc.Get(path)
   if err != nil {
     return connectionInfo, err

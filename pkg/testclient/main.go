@@ -22,12 +22,16 @@ func main() {
     log.Fatal(err)
   }
 
-  ci, err := jc.GetConnectionInfo(&kernel)
+  ci, err := jc.GetConnectionInfo(kernel.Id)
   if err != nil {
     log.Fatal(err)
   }
 
-	js := jupyterclient.MakeJupyterSession(&ci)
+	js, err := jupyterclient.MakeJupyterSession(&ci)
+  if err != nil {
+    log.Fatal(err)
+  }
+
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Print("?> ")

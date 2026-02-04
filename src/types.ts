@@ -6,7 +6,7 @@ export interface MyQuery extends DataQuery {
 }
 
 export const DEFAULT_QUERY: Partial<MyQuery> = {
-  code: "12+34",
+  code: "[12+34, 56+78]",
 };
 
 export interface DataPoint {
@@ -18,17 +18,40 @@ export interface DataSourceResponse {
   datapoints: DataPoint[];
 }
 
+export enum Method {
+  Get = "GET",
+  Put = "PUT",
+}
+
+export enum AuthType {
+  None = "NONE",
+  RawToken = "RAW",
+  Fetch = "FETCH",
+}
+
+export enum ConnectionType {
+  Info = "INFO",
+  Existing = "EXISTING",
+  New = "NEW",
+}
+
 /**
  * These are options configured for each DataSource instance
  */
 export interface MyDataSourceOptions extends DataSourceJsonData {
-  notebook: string;
+  authType: AuthType;
+  rawToken?: string;
+  fetchRoute?: string;
+  fetchMethod?: Method;
+  connectionType: ConnectionType;
+  connectionInfo?: string;
+  jupyterUrl?: string;
+  existingKernelId?: string;
+  newKernelType?: string;
 }
 
 /**
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */
 export interface MySecureJsonData {
-  systemUrl: string;
-  jupyterUrl: string;
 }

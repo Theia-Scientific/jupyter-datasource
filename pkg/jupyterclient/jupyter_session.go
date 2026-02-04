@@ -62,14 +62,16 @@ type KernelSpec struct {
 }
 
 const DELIM = "<IDS|MSG>"
-func MakeJupyterSession(ci *ConnectionInfo) JupyterSession {
+
+func MakeJupyterSession(ci *ConnectionInfo) (*JupyterSession, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	rv := JupyterSession{
 		requests: make(chan requestMsg),
 		cancel: cancel,
 	}
 	go requestor(ctx, ci, rv.requests)
-	return rv
+	// @TODO detect errors
+	return &rv, nil
 }
 
 func (js *JupyterSession) Query(code string) string {

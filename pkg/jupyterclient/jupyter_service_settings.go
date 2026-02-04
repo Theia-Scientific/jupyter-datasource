@@ -9,11 +9,13 @@ import (
 
 type SystemServiceSettings struct {
 	BaseUrl string
+	Method string
 }
 
 func DefaultSystemServiceSettings() *SystemServiceSettings {
 	return &SystemServiceSettings{
-		BaseUrl: fmt.Sprintf("http://%s:%s", os.Getenv("SYSTEM_SERVICE_HOST"), os.Getenv("SYSTEM_SERVICE_PORT")),
+		BaseUrl: fmt.Sprintf("http://%s:%s/tokens/jupyter", os.Getenv("SYSTEM_SERVICE_HOST"), os.Getenv("SYSTEM_SERVICE_PORT")),
+		Method: "PUT",
 	}
 }
 
@@ -28,8 +30,7 @@ type JupyterHttpClient struct {
 }
 
 func GetJupyterToken(systemServiceSettings *SystemServiceSettings) (string, error) {
-  url := fmt.Sprintf("%s/tokens/jupyter", systemServiceSettings.BaseUrl)
-  req, err := http.NewRequest(http.MethodPut, url, http.NoBody)
+  req, err := http.NewRequest(systemServiceSettings.Method, systemServiceSettings.BaseUrl, http.NoBody)
   if err != nil {
     return "", err
   }
