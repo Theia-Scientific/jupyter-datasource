@@ -1,4 +1,4 @@
-module github.com/Theia-Scientific/theiascientific-jupyter-datasource
+module github.com/Theia-Scientific/jupyter-datasource
 
 go 1.24.6
 

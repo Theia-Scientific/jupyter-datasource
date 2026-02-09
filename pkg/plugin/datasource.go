@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Theia-Scientific/theiascientific-jupyter-datasource/pkg/jupyterclient"
-	"github.com/Theia-Scientific/theiascientific-jupyter-datasource/pkg/models"
+	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
+	"github.com/Theia-Scientific/jupyter-datasource/pkg/models"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"

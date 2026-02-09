@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"github.com/Theia-Scientific/theiascientific-jupyter-datasource/pkg/jupyterclient"
+	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
 	"log"
 	"os"
 	"strings"
