@@ -43,6 +43,9 @@ npx @grafana/sign-plugin@latest --rootUrls https://localhost/,http://localhost:3
 
 5. Install the updated plugin into our Grafana
 
+Take note!  If your Grafana checkout isn't in a folder named 'grafana' in a sibling
+directory to this one, update the PATH_TO_THEIA_GRAFANA_CHECKOUT variable below.
+
 ```bash
 export PATH_TO_THEIA_GRAFANA_CHECKOUT=../grafana
 rm -rf ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-datasource
