@@ -8,6 +8,49 @@ Grafana supports a wide range of data sources, including Prometheus, MySQL, and 
 
 ## Getting started
 
+### Theia-Specific info
+
+1. Install golang
+
+https://go.dev/doc/install
+
+2. Install Mage
+
+https://magefile.org
+
+3. Do a clean build
+
+n.b. this only builds the linux x64 and linux arm64 binaries for the
+backend, since that's what we ship Theiascope on - in the long run
+we'll want to just change the two `mage` lines to a single `mage -v`
+invocation, which will build windows and macos binaries as well.
+
+```bash
+rm -rf dist
+npm run build
+mage -v build:linux
+mage -v build:linuxARM64
+```
+
+4. Sign the plugin
+
+pls don't leak this!!  this is my precious token
+
+```bash
+export GRAFANA_ACCESS_POLICY_TOKEN=glc_eyJvIjoiMTY1NzYyNCIsIm4iOiJwbHVnaW4tc2lnbmluZy1ob25rIiwiayI6IlZ3OERFZjZQcW81RDgwME1KOE9RbzQ1NCIsIm0iOnsiciI6InVzIn19
+npx @grafana/sign-plugin@latest --rootUrls https://localhost/,http://localhost:3000/
+```
+
+5. Install the updated plugin into our Grafana
+
+```bash
+export PATH_TO_THEIA_GRAFANA_CHECKOUT=../grafana
+rm -rf ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-datasource
+cp -rp dist ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-datasource
+```
+
+6. run `npm build` and then `npm start` in the Grafana repo
+
 ### Backend
 
 1. Update [Grafana plugin SDK for Go](https://grafana.com/developers/plugin-tools/key-concepts/backend-plugins/grafana-plugin-sdk-for-go) dependency to the latest minor version:
