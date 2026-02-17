@@ -35,14 +35,15 @@ type InstanceSettings struct {
 	JupyterUrl       *string `json:"jupyterUrl"`
 	ExistingKernelId *string `json:"existingKernelId"`
 	NewKernelType    *string `json:"newKernelType"`
+	InitCode         *string `json:"initCode"`
+	TeardownCode     *string `json:"teardownCode"`
 }
 
-func MakeDatasource(ci *jupyterclient.ConnectionInfo) (*Datasource, error) {
-	session, err := jupyterclient.MakeJupyterSession(ci)
-	if err != nil {
-		return nil, err
-	}
-	return &Datasource{session: session}, nil
+// Datasource is an example datasource which can respond to data queries, reports
+// its health and has streaming skills.
+type Datasource struct {
+	session *jupyterclient.JupyterSession
+	teardownCode *string
 }
 
 // NewDatasource creates a new datasource instance.
@@ -51,6 +52,18 @@ func NewDatasource(_ context.Context, instanceSettings backend.DataSourceInstanc
 	err := json.Unmarshal(instanceSettings.JSONData, &settings)
 	if err != nil {
 		return nil, err
+	}
+
+	// create a datasource and run init on it
+	func MakeDatasource(ci *jupyterclient.ConnectionInfo) (*Datasource, error) {
+		session, err := jupyterclient.MakeJupyterSession(ci)
+		if err != nil {
+			return nil, err
+		}
+		if settings.InitCode != nil {
+			session.query(settings.InitCode)
+		}
+		return &Datasource{session: session, teardownCode: settings.TeardownCode}, nil
 	}
 
 	var jupyterToken string
@@ -90,7 +103,7 @@ func NewDatasource(_ context.Context, instanceSettings backend.DataSourceInstanc
 		if err != nil {
 			return nil, err
 		}
-		return MakeDatasource(&ci)
+		return MakeDatasource(&ci, settings.)
 	} else {
 		if settings.JupyterUrl == nil {
 			return nil, fmt.Errorf("Existing or New Kernel connection type selected, but no jupyterUrl supplied")
@@ -129,16 +142,13 @@ func NewDatasource(_ context.Context, instanceSettings backend.DataSourceInstanc
 	return nil, fmt.Errorf("Unknown connection type '%s'", settings.ConnectionType)
 }
 
-// Datasource is an example datasource which can respond to data queries, reports
-// its health and has streaming skills.
-type Datasource struct {
-	session *jupyterclient.JupyterSession
-}
-
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
 // created. As soon as datasource settings change detected by SDK old datasource instance will
 // be disposed and a new one will be created using NewSampleDatasource factory function.
 func (d *Datasource) Dispose() {
+	if d.teardownCode != nil {
+		d.query(d.teardownCode)
+	}
 	d.session.Quit()
 }
 

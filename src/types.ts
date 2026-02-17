@@ -48,6 +48,8 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
   jupyterUrl?: string;
   existingKernelId?: string;
   newKernelType?: string;
+  initCode?: string;
+  teardownCode?: string;
 }
 
 /**

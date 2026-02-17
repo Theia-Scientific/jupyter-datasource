@@ -116,6 +116,26 @@ export function ConfigEditor(props: Props) {
     });
   };
 
+  const onInitCodeChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...jsonData,
+        initCode: event.target.value,
+      },
+    });
+  };
+
+  const onTeardownCodeChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...jsonData,
+        teardownCode: event.target.value,
+      },
+    });
+  };
+
   return (
     <>
       <InlineField label="Auth Type" labelWidth={20} interactive tooltip={'Type of authentication'}>
@@ -214,6 +234,25 @@ export function ConfigEditor(props: Props) {
           />
         </InlineField>
       }
+
+      <TextArea
+        id="config-editor-init-code"
+        onChange={onInitChange}
+        value={jsonData.initCode || ''}
+        required
+        placeholder="Enter python initialization code"
+        width={40}
+        rows={12}
+      />
+      <TextArea
+        id="config-editor-teardown-code"
+        onChange={onTeardownCodeChange}
+        value={jsonData.teardownCode || ''}
+        required
+        placeholder="Enter python teardown code"
+        width={40}
+        rows={12}
+      />
     </>
   );
 }
