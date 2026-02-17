@@ -14,12 +14,14 @@ export function QueryEditor({ query, onChange, onRunQuery }: Props) {
   return (
     <Stack gap={0}>
       <InlineField label="Code" labelWidth={16} tooltip="Code to run">
-        <Input
+        <TextArea
           id="query-editor-code"
           onChange={onCodeChange}
           value={query.code || ''}
           required
           placeholder="Enter python code"
+          width={40}
+          rows={12}
         />
       </InlineField>
     </Stack>
