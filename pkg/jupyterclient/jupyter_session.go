@@ -232,7 +232,7 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			results[parentHeaderParsed.MsgId] = contentParsed.Data["text/plain"]
+			results[parentHeaderParsed.MsgId] = contentParsed.Data["application/json"]
 		} else if headerParsed.MsgType == "status" {
 			var contentParsed StatusContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
