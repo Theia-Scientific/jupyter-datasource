@@ -116,7 +116,7 @@ export function ConfigEditor(props: Props) {
     });
   };
 
-  const onInitCodeChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const onInitCodeChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onOptionsChange({
       ...options,
       jsonData: {
@@ -126,7 +126,7 @@ export function ConfigEditor(props: Props) {
     });
   };
 
-  const onTeardownCodeChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const onTeardownCodeChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     onOptionsChange({
       ...options,
       jsonData: {
@@ -237,7 +237,7 @@ export function ConfigEditor(props: Props) {
 
       <TextArea
         id="config-editor-init-code"
-        onChange={onInitChange}
+        onChange={onInitCodeChange}
         value={jsonData.initCode || ''}
         required
         placeholder="Enter python initialization code"

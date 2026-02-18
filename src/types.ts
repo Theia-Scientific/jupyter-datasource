@@ -3,20 +3,23 @@ import { DataQuery } from '@grafana/schema';
 
 export interface MyQuery extends DataQuery {
   code: string;
+  vars: string;
 }
 
 export const DEFAULT_QUERY: Partial<MyQuery> = {
-  code: "[12+34, 56+78]",
+  code: `base = datetime.datetime.now(timezone("EST"))
+timestamps = [(base - datetime.timedelta(seconds=i)).isoformat() for i in range(RANGE_MAX)]
+values0 = [random.random() * RANGE_MAX for i in range(RANGE_MAX)]
+values1 = [random.random() * RANGE_MAX for i in range(RANGE_MAX)]
+
+JSON([
+    {"name": "time", "values": timestamps},
+    {"name": "values0", "values": values0},
+    {"name": "values1", "values": values1}
+])`,
+  vars: `RANGE_MAX = 1000
+`,
 };
-
-export interface DataPoint {
-  Time: number;
-  Value: number;
-}
-
-export interface DataSourceResponse {
-  datapoints: DataPoint[];
-}
 
 export enum Method {
   Get = "GET",

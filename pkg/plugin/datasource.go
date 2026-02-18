@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/models"
@@ -55,13 +54,13 @@ func NewDatasource(_ context.Context, instanceSettings backend.DataSourceInstanc
 	}
 
 	// create a datasource and run init on it
-	func MakeDatasource(ci *jupyterclient.ConnectionInfo) (*Datasource, error) {
+	MakeDatasource := func(ci *jupyterclient.ConnectionInfo) (*Datasource, error) {
 		session, err := jupyterclient.MakeJupyterSession(ci)
 		if err != nil {
 			return nil, err
 		}
 		if settings.InitCode != nil {
-			session.query(settings.InitCode)
+			session.Query(*settings.InitCode)
 		}
 		return &Datasource{session: session, teardownCode: settings.TeardownCode}, nil
 	}
@@ -103,7 +102,7 @@ func NewDatasource(_ context.Context, instanceSettings backend.DataSourceInstanc
 		if err != nil {
 			return nil, err
 		}
-		return MakeDatasource(&ci, settings.)
+		return MakeDatasource(&ci)
 	} else {
 		if settings.JupyterUrl == nil {
 			return nil, fmt.Errorf("Existing or New Kernel connection type selected, but no jupyterUrl supplied")
@@ -147,7 +146,7 @@ func NewDatasource(_ context.Context, instanceSettings backend.DataSourceInstanc
 // be disposed and a new one will be created using NewSampleDatasource factory function.
 func (d *Datasource) Dispose() {
 	if d.teardownCode != nil {
-		d.query(d.teardownCode)
+		d.session.Query(*d.teardownCode)
 	}
 	d.session.Quit()
 }
@@ -179,6 +178,7 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 
 type queryModel struct {
 	Code string `json:"code"`
+	Vars string `json:"vars"`
 }
 
 func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
@@ -194,26 +194,28 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
 	}
 
-	result := d.session.Query(qm.Code)
-	logger.Error(fmt.Sprintf("jupyter query: '%s' -> '%s'\n", qm.Code, result))
+	queryText := fmt.Sprintf("%s\n%s", qm.Vars, qm.Code)
+	result := d.session.Query(queryText)
+	logger.Error(fmt.Sprintf("jupyter query: '%s' -> '%s'\n", queryText, result))
 
-	var values []float64
-	err = json.Unmarshal([]byte(result), &values)
+	type row struct {
+		Name string `json:"name"`
+		Values []json.RawMessage `json:"values"`
+	}
+	var rows []row
+	err = json.Unmarshal([]byte(result), &rows)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("result unmarshal: %v", err.Error()))
 	}
-	logger.Error(fmt.Sprintf("unmarshaled: '%s' -> %+v\n", result, values))
-
+	logger.Error(fmt.Sprintf("unmarshaled: '%s' -> %+v\n", result, rows))
+	
 	// create data frame response.
 	// For an overview on data frames and how grafana handles them:
 	// https://grafana.com/developers/plugin-tools/introduction/data-frames
 	frame := data.NewFrame("response")
-
-	// add fields.
-	frame.Fields = append(frame.Fields,
-		data.NewField("time", nil, []time.Time{query.TimeRange.From, query.TimeRange.To}),
-		data.NewField("value", nil, values),
-	)
+	for _, row := range rows {
+		frame.Fields = append(frame.Fields, data.NewField(row.Name, nil, row.Values))
+	}
 
 	// add the frames to the response.
 	response.Frames = append(response.Frames, frame)
