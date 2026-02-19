@@ -2,14 +2,10 @@ package jupyterclient
 
 import (
 	"context"
-  "crypto/hmac"
-  "crypto/sha256"
-  "encoding/hex"
   "encoding/json"
   "fmt"
 	"log"
 	"strings"
-  "time"
 
   zmq "github.com/go-zeromq/zmq4"
 )
@@ -77,8 +73,6 @@ type KernelSpec struct {
   Connections int `json:"connections"`
 }
 
-const DELIM = "<IDS|MSG>"
-
 func MakeJupyterSession(ci *ConnectionInfo) (*JupyterSession, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	rv := JupyterSession{
@@ -102,73 +96,17 @@ func (js *JupyterSession) Quit() {
 	js.cancel()
 }
 
-func encodeHeader(msgId string, sessionId string) (string, error) {
-  header, err := json.Marshal(Header{
-		MsgId: msgId,
-		Username: "scruffy",
-		Session: sessionId,
-		Date: time.Now().Format(time.RFC3339),
-		MsgType: "execute_request",
-		Version: "5.0",
-	})
-	return string(header), err
-}
-
-func encodeContent(code string) (string, error) {
-  content, err := json.Marshal(ExecuteRequestContent{
-		Code: code,
-	})
-	return string(content), err
-}
-
-func signMessage(plaintext [][]byte, k *ConnectionInfo) string {
-  key := []byte(k.Key)
-  mac := hmac.New(sha256.New, key)
-  for _, m := range plaintext {
-    mac.Write([]byte(m))
-  }
-  return hex.EncodeToString(mac.Sum(nil))
-}
-
-func sendMessage(content []byte, sessionId string, zmqId string, dealer zmq.Socket, ci *ConnectionInfo) (string, error) {
-	msgId := NewId()
-
-	header, err := encodeHeader(msgId, sessionId)
-	if err != nil { return "", err }
-
-	signed := []([]byte){
-		[]byte(header), // header
-		[]byte("{}"), // parentHeader
-		[]byte("{}"), // metadata
-		content, // content
-	}
-
-	signature := signMessage(signed, ci)
-
-	message := []([]byte){[]byte(zmqId), []byte(DELIM), []byte(signature)}
-	full_message := append(message, signed...)
-
-	err = dealer.SendMulti(zmq.NewMsgFrom(full_message...))
-	if err != nil { return "", err }
-
-	return msgId, nil
-}
-
 func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg) {
 	replies := make(chan replyMsg)
 	go listener(ctx, ci, replies)
 
 	liveRequests := make(map[string]chan resultMsg)
-	sessionId := NewId()
-	zmqId := NewId()
-
-  dealer := zmq.NewDealer(ctx, zmq.WithAutomaticReconnect(true))
-  var shellAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.ShellPort)
-  err := dealer.Dial(shellAddr)
+	shell, err := makeJupyterShellSocket(ctx, ci)
   if err != nil {
     log.Fatal(err)
   }
-	defer dealer.Close()
+
+	defer shell.Close()
 
 	for {
 		select {
@@ -179,7 +117,7 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 			if err != nil {
 				log.Fatal(err)
 			}
-			msgId, err := sendMessage(content, sessionId, zmqId, dealer, ci)
+			msgId, err := shell.sendMessage(content)
 			if err != nil {
 				log.Fatal(err)
 			}
