@@ -130,6 +130,30 @@ func signMessage(plaintext [][]byte, k *ConnectionInfo) string {
   return hex.EncodeToString(mac.Sum(nil))
 }
 
+func sendMessage(content []byte, sessionId string, zmqId string, dealer zmq.Socket, ci *ConnectionInfo) (string, error) {
+	msgId := NewId()
+
+	header, err := encodeHeader(msgId, sessionId)
+	if err != nil { return "", err }
+
+	signed := []([]byte){
+		[]byte(header), // header
+		[]byte("{}"), // parentHeader
+		[]byte("{}"), // metadata
+		content, // content
+	}
+
+	signature := signMessage(signed, ci)
+
+	message := []([]byte){[]byte(zmqId), []byte(DELIM), []byte(signature)}
+	full_message := append(message, signed...)
+
+	err = dealer.SendMulti(zmq.NewMsgFrom(full_message...))
+	if err != nil { return "", err }
+
+	return msgId, nil
+}
+
 func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg) {
 	replies := make(chan replyMsg)
 	go listener(ctx, ci, replies)
@@ -149,34 +173,17 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 	for {
 		select {
 		case request := <- requests: {
-			msgId := NewId()
+			content, err := json.Marshal(ExecuteRequestContent{
+				Code: request.code,
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+			msgId, err := sendMessage(content, sessionId, zmqId, dealer, ci)
+			if err != nil {
+				log.Fatal(err)
+			}
 			liveRequests[msgId] = request.resultChannel
-
-			header, err := encodeHeader(msgId, sessionId)
-			if err != nil {
-				log.Fatal(err)
-			}
-			content, err := encodeContent(request.code)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			signed := []([]byte){
-				[]byte(header), // header
-				[]byte("{}"), // parentHeader
-				[]byte("{}"), // metadata
-				[]byte(content), // content
-			}
-
-			signature := signMessage(signed, ci)
-
-			message := []([]byte){[]byte(zmqId), []byte(DELIM), []byte(signature)}
-			full_message := append(message, signed...)
-
-			err = dealer.SendMulti(zmq.NewMsgFrom(full_message...))
-			if err != nil {
-				log.Fatal(err)
-			}
 		}
 		case reply := <- replies: {
 			liveRequests[reply.id] <- reply.res
