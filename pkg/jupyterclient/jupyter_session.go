@@ -8,6 +8,7 @@ import (
   "encoding/json"
   "fmt"
 	"log"
+	"strings"
   "time"
 
   zmq "github.com/go-zeromq/zmq4"
@@ -40,6 +41,20 @@ type ExecuteResultContent struct {
 }
 type StatusContent struct {
 	ExecutionState string `json:"execution_state"`
+}
+
+type ErrorContent struct {
+	EName string `json:"ename"`
+	EValue string `json:"evalue"`
+	Traceback []string `json:"traceback"`
+}
+
+// I want ErrorContent to be useable as a go error, so:
+func (e ErrorContent) Error() string {
+	return fmt.Sprintf("Jupyter error %s: %s (at %s)",
+		e.EName, e.EValue,
+		strings.Join(e.Traceback, "\n"),
+	)
 }
 
 type ConnectionInfo struct {
@@ -235,6 +250,13 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
 				log.Fatal(err)
 			}
 			results[parentHeaderParsed.MsgId] = resultMsg{val: contentParsed.Data["application/json"], err:nil}
+		} else if headerParsed.MsgType == "error" {
+			var errorParsed ErrorContent
+			err = json.Unmarshal([]byte(content), &errorParsed)
+			if err != nil {
+				log.Fatal(err)
+			}
+			results[parentHeaderParsed.MsgId] = resultMsg{val: "", err: errorParsed}
 		} else if headerParsed.MsgType == "status" {
 			var contentParsed StatusContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
