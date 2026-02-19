@@ -195,7 +195,11 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 	}
 
 	queryText := fmt.Sprintf("%s\n%s", qm.Vars, qm.Code)
-	result := d.session.Query(queryText)
+	result, err := d.session.Query(queryText)
+	if err != nil {
+		// @TODO return this as error
+		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("jupyter error: %v", err.Error()))
+	}
 	logger.Error(fmt.Sprintf("jupyter query: '%s' -> '%s'\n", queryText, result))
 
 	type row struct {

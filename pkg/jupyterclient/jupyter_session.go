@@ -15,8 +15,9 @@ import (
 
 type Callback func(string)
 
-type requestMsg struct {code string; resultChannel chan string}
-type replyMsg struct {id string; val string}
+type resultMsg struct {val string; err error}
+type requestMsg struct {code string; resultChannel chan resultMsg}
+type replyMsg struct {id string; res resultMsg}
 
 type JupyterSession struct {
 	requests chan requestMsg
@@ -74,11 +75,12 @@ func MakeJupyterSession(ci *ConnectionInfo) (*JupyterSession, error) {
 	return &rv, nil
 }
 
-func (js *JupyterSession) Query(code string) string {
+func (js *JupyterSession) Query(code string) (string, error) {
 	// fake an await with channels
-	resultChannel := make(chan string)
+	resultChannel := make(chan resultMsg)
 	js.requests <- requestMsg{code: code, resultChannel: resultChannel}
-	return <- resultChannel
+	res := <- resultChannel
+	return res.val, res.err
 }
 
 func (js *JupyterSession) Quit() {
@@ -117,7 +119,7 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 	replies := make(chan replyMsg)
 	go listener(ctx, ci, replies)
 
-	liveRequests := make(map[string]chan string)
+	liveRequests := make(map[string]chan resultMsg)
 	sessionId := NewId()
 	zmqId := NewId()
 
@@ -162,12 +164,12 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 			}
 		}
 		case reply := <- replies: {
-			liveRequests[reply.id] <- reply.val
+			liveRequests[reply.id] <- reply.res
 			delete(liveRequests, reply.id)
 		}
 		case <-ctx.Done():
 			for _, resultChannel := range liveRequests {
-				resultChannel <- "null"
+				resultChannel <- resultMsg{val: "null", err: nil} // @TODO context close reason
 			}
 			return
 		}
@@ -187,7 +189,7 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
     log.Fatal(err)
   }
 
-	results := make(map[string]string)
+	results := make(map[string]resultMsg)
 
 	for {
 		select {
@@ -232,7 +234,7 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			results[parentHeaderParsed.MsgId] = contentParsed.Data["application/json"]
+			results[parentHeaderParsed.MsgId] = resultMsg{val: contentParsed.Data["application/json"], err:nil}
 		} else if headerParsed.MsgType == "status" {
 			var contentParsed StatusContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
@@ -243,13 +245,13 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
 				result, ok := results[parentHeaderParsed.MsgId]
 				if ok {
 					// got a result
-					replies <- replyMsg{id: parentHeaderParsed.MsgId, val: result}
+					replies <- replyMsg{id: parentHeaderParsed.MsgId, res: result}
 					delete(results, parentHeaderParsed.MsgId)
 				} else {
 					// computation terminated without result
 					// (like we did a print('something')
 					// just return a null
-					replies <- replyMsg{id: parentHeaderParsed.MsgId, val: "null"}
+					replies <- replyMsg{id: parentHeaderParsed.MsgId, res: resultMsg{val: "null", err: nil}}
 				}
 			}
 		}

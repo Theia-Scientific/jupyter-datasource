@@ -41,7 +41,11 @@ func main() {
 			os.Exit(0)
 		}
 		expr = strings.TrimRight(expr, "\r\n")
-		result := js.Query(expr)
-		fmt.Printf("'%s' => '%s'\n", expr, result)
+		result, err := js.Query(expr)
+		if err != nil {
+			fmt.Printf("[ERROR] %s\n", expr, err.Error())
+		} else {
+			fmt.Printf("'%s' => '%s'\n", expr, result)
+		}
 	}
 }
