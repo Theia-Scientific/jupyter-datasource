@@ -249,7 +249,11 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
 			if err != nil {
 				log.Fatal(err)
 			}
-			results[parentHeaderParsed.MsgId] = resultMsg{val: contentParsed.Data["application/json"], err:nil}
+			val, ok := contentParsed.Data["application/json"]
+			if !ok {
+				val = contentParsed.Data["text/plain"]
+			}
+			results[parentHeaderParsed.MsgId] = resultMsg{val: val, err:nil}
 		} else if headerParsed.MsgType == "error" {
 			var errorParsed ErrorContent
 			err = json.Unmarshal([]byte(content), &errorParsed)
