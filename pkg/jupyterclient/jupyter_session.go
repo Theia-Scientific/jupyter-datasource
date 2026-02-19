@@ -86,7 +86,7 @@ func MakeJupyterSession(ci *ConnectionInfo) (*JupyterSession, error) {
 		cancel: cancel,
 	}
 	go requestor(ctx, ci, rv.requests)
-	// @TODO detect errors
+	// @TODO roundtrip once to detect errors
 	return &rv, nil
 }
 
@@ -184,7 +184,7 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 		}
 		case <-ctx.Done():
 			for _, resultChannel := range liveRequests {
-				resultChannel <- resultMsg{val: "null", err: nil} // @TODO context close reason
+				resultChannel <- resultMsg{val: "null", err: context.Cause(ctx)}
 			}
 			return
 		}
