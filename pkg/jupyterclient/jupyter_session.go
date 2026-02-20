@@ -117,7 +117,7 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 			if err != nil {
 				log.Fatal(err)
 			}
-			msgId, err := shell.sendMessage(content)
+			msgId, err := shell.sendMessage("execute_request", content)
 			if err != nil {
 				log.Fatal(err)
 			}

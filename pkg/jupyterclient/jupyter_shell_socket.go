@@ -40,13 +40,13 @@ func (jss *JupyterShellSocket) Close() {
 	jss.dealer.Close()
 }
 
-func (jss *JupyterShellSocket) encodeHeader(msgId string) (string, error) {
+func (jss *JupyterShellSocket) encodeHeader(msgId string, msgType string) (string, error) {
   header, err := json.Marshal(Header{
 		MsgId: msgId,
 		Username: jss.username,
 		Session: jss.sessionId,
 		Date: time.Now().Format(time.RFC3339),
-		MsgType: "execute_request",
+		MsgType: msgType,
 		Version: "5.0",
 	})
 	return string(header), err
@@ -61,10 +61,10 @@ func (jss *JupyterShellSocket) signMessage(plaintext [][]byte) string {
   return hex.EncodeToString(mac.Sum(nil))
 }
 
-func (jss *JupyterShellSocket) sendMessage(content []byte) (string, error) {
+func (jss *JupyterShellSocket) sendMessage(msgType string, content []byte) (string, error) {
 	msgId := NewId()
 
-	header, err := jss.encodeHeader(msgId)
+	header, err := jss.encodeHeader(msgId, msgType)
 	if err != nil { return "", err }
 
 	signed := []([]byte){
