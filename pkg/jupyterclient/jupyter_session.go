@@ -4,6 +4,7 @@ import (
 	"context"
   "encoding/json"
   "fmt"
+	"io"
 	"log"
 	"strings"
 
@@ -112,7 +113,7 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 	liveRequests := make(map[string]chan resultMsg)
 	shell, err := makeJupyterShellSocket(ctx, ci)
   if err != nil {
-    log.Fatal(err)
+    log.Fatalf("xxxa %+v", err)
   }
 
 	defer shell.Close()
@@ -120,27 +121,30 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 	for {
 		select {
 		case <- resets: {
+			fmt.Printf("encoding shutdown request\n")
 			content, err := json.Marshal(ShutdownRequestContent{
 				Restart: true,
 			})
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("xxxb %+v", err)
 			}
+			fmt.Printf("sending shutdown request\n")
 			_, err = shell.sendMessage("shutdown_request", content)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("xxxc %+v", err)
 			}
+			fmt.Printf("sent shutdown request\n")
 		}
 		case request := <- requests: {
 			content, err := json.Marshal(ExecuteRequestContent{
 				Code: request.code,
 			})
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("xxxd %+v", err)
 			}
 			msgId, err := shell.sendMessage("execute_request", content)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("xxxf %+v", err)
 			}
 			liveRequests[msgId] = request.resultChannel
 		}
@@ -162,12 +166,12 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
   var ioPubAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.IOPubPort)
   err := sub.Dial(ioPubAddr)
   if err != nil {
-    log.Fatal(err)
+    log.Fatalf("xxxg %+v", err)
   }
 	defer sub.Close()
 	err = sub.SetOption(zmq.OptionSubscribe, "")
   if err != nil {
-    log.Fatal(err)
+    log.Fatalf("xxxh %+v", err)
   }
 
 	results := make(map[string]resultMsg)
@@ -183,8 +187,11 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
 		if err != nil {
 			if err == context.Canceled {
 				return
+			} else if err == io.EOF {
+				log.Printf("eof, continuing to hopefully reconnect\n")
+				continue
 			} else {
-				log.Fatal(err)
+				log.Fatalf("xxxi %+v", err)
 			}
 		}
 		parts := msg.Frames
@@ -200,20 +207,20 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
 		var headerParsed Header
 		err = json.Unmarshal([]byte(header), &headerParsed)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("xxxj %+v", err)
 		}
 
 		var parentHeaderParsed Header
 		err = json.Unmarshal([]byte(parentHeader), &parentHeaderParsed)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("xxxk %+v", err)
 		}
 
 		if headerParsed.MsgType == "execute_result" {
 			var contentParsed ExecuteResultContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("xxxl %+v", err)
 			}
 			val, ok := contentParsed.Data["application/json"]
 			if !ok {
@@ -224,14 +231,14 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
 			var errorParsed ErrorContent
 			err = json.Unmarshal([]byte(content), &errorParsed)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("xxxm %+v", err)
 			}
 			results[parentHeaderParsed.MsgId] = resultMsg{val: "", err: errorParsed}
 		} else if headerParsed.MsgType == "status" {
 			var contentParsed StatusContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
 			if err != nil {
-				log.Fatal(err)
+				log.Fatalf("xxxn %+v", err)
 			}
 			if contentParsed.ExecutionState == "idle" {
 				result, ok := results[parentHeaderParsed.MsgId]
@@ -246,6 +253,8 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
 					replies <- replyMsg{id: parentHeaderParsed.MsgId, res: resultMsg{val: "null", err: nil}}
 				}
 			}
+		} else {
+			fmt.Printf("unknown response: %s | %+v\n", headerParsed.MsgType, string(content))
 		}
 	}	
 }

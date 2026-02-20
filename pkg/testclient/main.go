@@ -47,5 +47,11 @@ func main() {
 		} else {
 			fmt.Printf("'%s' => '%s'\n", expr, result)
 		}
+		if strings.HasPrefix(expr, "%") || strings.HasPrefix(expr, "!") {
+			fmt.Printf("<restarting kernel>\n")
+			// js.Restart()
+			jc.Restart(kernel.Id)
+			fmt.Printf("<restarted kernel>\n")
+		}
 	}
 }

@@ -33,6 +33,10 @@ func (jc *JupyterHttpClient) Post(path string, body string) (*http.Request, erro
   return jc.NewRequest(http.MethodPost, path, strings.NewReader(body))
 }
 
+func (jc *JupyterHttpClient) PostEmpty(path string) (*http.Request, error) {
+  return jc.NewRequest(http.MethodPost, path, http.NoBody)
+}
+
 func (jc *JupyterHttpClient) PostBytes(path string, body []byte) (*http.Request, error) {
   return jc.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 }
@@ -122,4 +126,14 @@ func (jc *JupyterHttpClient) GetConnectionInfo(id string) (ConnectionInfo, error
   }
   err = json.Unmarshal(body, &connectionInfo)
   return connectionInfo, err
+}
+
+func (jc *JupyterHttpClient) Restart(id string) error {
+	path := fmt.Sprintf("jupyter/api/kernels/%s/restart", id)
+	req, err := jc.PostEmpty(path)
+	if err != nil {
+		return err
+	}
+	_, err = http.DefaultClient.Do(req)
+	return err
 }
