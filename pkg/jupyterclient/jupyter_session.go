@@ -18,6 +18,7 @@ type replyMsg struct {id string; res resultMsg}
 
 type JupyterSession struct {
 	requests chan requestMsg
+	resets chan int
 	cancel context.CancelFunc
 }
 
@@ -37,6 +38,9 @@ type ExecuteResultContent struct {
 }
 type StatusContent struct {
 	ExecutionState string `json:"execution_state"`
+}
+type ShutdownRequestContent struct {
+	Restart bool `json:"restart"`
 }
 
 type ErrorContent struct {
@@ -77,9 +81,10 @@ func MakeJupyterSession(ci *ConnectionInfo) (*JupyterSession, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	rv := JupyterSession{
 		requests: make(chan requestMsg),
+		resets: make(chan int),
 		cancel: cancel,
 	}
-	go requestor(ctx, ci, rv.requests)
+	go requestor(ctx, ci, rv.requests, rv.resets)
 	// @TODO roundtrip once to detect errors
 	return &rv, nil
 }
@@ -92,11 +97,15 @@ func (js *JupyterSession) Query(code string) (string, error) {
 	return res.val, res.err
 }
 
+func (js *JupyterSession) Restart() {
+	js.resets <- 0
+}
+
 func (js *JupyterSession) Quit() {
 	js.cancel()
 }
 
-func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg) {
+func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg, resets chan int) {
 	replies := make(chan replyMsg)
 	go listener(ctx, ci, replies)
 
@@ -110,6 +119,18 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 
 	for {
 		select {
+		case <- resets: {
+			content, err := json.Marshal(ShutdownRequestContent{
+				Restart: true,
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+			_, err = shell.sendMessage("shutdown_request", content)
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
 		case request := <- requests: {
 			content, err := json.Marshal(ExecuteRequestContent{
 				Code: request.code,
