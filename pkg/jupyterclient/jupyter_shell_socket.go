@@ -22,7 +22,7 @@ type JupyterShellSocket struct {
 const DELIM = "<IDS|MSG>"
 
 func makeJupyterShellSocket(ctx context.Context, connectionInfo *ConnectionInfo) (*JupyterShellSocket, error) {
-  dealer := zmq.NewDealer(ctx, zmq.WithAutomaticReconnect(true))
+  dealer := zmq.NewDealer(ctx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
   var shellAddr = fmt.Sprintf("tcp://%s:%d", connectionInfo.IP, connectionInfo.ShellPort)
   err := dealer.Dial(shellAddr)
   if err != nil { return nil, err }

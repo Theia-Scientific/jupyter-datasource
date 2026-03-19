@@ -149,20 +149,24 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 			liveRequests[msgId] = request.resultChannel
 		}
 		case reply := <- replies: {
-			liveRequests[reply.id] <- reply.res
+			replyChannel, ok := liveRequests[reply.id]
+			if ok {
+				replyChannel <- reply.res
+			}
 			delete(liveRequests, reply.id)
 		}
-		case <-ctx.Done():
+		case <-ctx.Done(): {
 			for _, resultChannel := range liveRequests {
 				resultChannel <- resultMsg{val: "null", err: context.Cause(ctx)}
 			}
 			return
 		}
+		}
 	}
 }
 
 func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
-  sub := zmq.NewSub(ctx, zmq.WithAutomaticReconnect(true))
+  sub := zmq.NewSub(ctx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
   var ioPubAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.IOPubPort)
   err := sub.Dial(ioPubAddr)
   if err != nil {
