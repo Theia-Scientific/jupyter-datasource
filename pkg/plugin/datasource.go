@@ -40,6 +40,54 @@ type Datasource struct {
 	httpClient *jupyterclient.JupyterHttpClient
 }
 
+func getJupyterToken(settings *InstanceSettings) (string, error) {
+	if settings.AuthType == "NONE" {
+		return "", nil
+	} else if settings.AuthType == "RAW" {
+		if settings.RawToken == nil {
+			return "", fmt.Errorf("Raw token auth selected, but no rawToken supplied")
+		}
+		return *settings.RawToken, nil
+	} else if settings.AuthType == "FETCH" {
+		if settings.FetchRoute == nil {
+			return "", fmt.Errorf("Fetch auth selected, but no fetchRoute supplied")
+		}
+		if settings.FetchMethod == nil {
+			return "", fmt.Errorf("Fetch auth selected, but no fetchMethod supplied")
+		}
+		systemSettings := jupyterclient.SystemServiceSettings{
+			BaseUrl: *settings.FetchRoute,
+			Method:  *settings.FetchMethod,
+		}
+		return jupyterclient.GetJupyterToken(&systemSettings)
+	} else {
+		return "", fmt.Errorf("Unknown auth type '%s'", settings.AuthType)
+	}
+}
+
+func createHttpClient(settings *InstanceSettings) (*jupyterclient.JupyterHttpClient, error) {
+	if settings.ConnectionType == "INFO" {
+		// ConnectionInfo style doesn't require a http client
+		return nil, nil
+	}
+
+	if settings.JupyterUrl == nil {
+		return nil, fmt.Errorf("AUTO connection type selected, but no jupyterUrl supplied")
+	}
+
+	jupyterToken, err := getJupyterToken(settings)
+	if err != nil {
+		return nil, err
+	}
+
+	jupyterSettings := &jupyterclient.JupyterServiceSettings{
+		BaseUrl: *settings.JupyterUrl,
+		Token:   jupyterToken,
+	}
+	client := jupyterclient.MakeJupyterHttpClient(jupyterSettings)
+	return &client, nil
+}
+
 // NewDatasource creates a new datasource instance.
 func NewDatasource(_ context.Context, instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	var settings InstanceSettings
@@ -48,45 +96,9 @@ func NewDatasource(_ context.Context, instanceSettings backend.DataSourceInstanc
 		return nil, err
 	}
 
-	var httpClient *jupyterclient.JupyterHttpClient = nil
-	if settings.ConnectionType == "AUTO" {
-		var jupyterToken string
-		if settings.AuthType == "NONE" {
-			jupyterToken = ""
-		} else if settings.AuthType == "RAW" {
-			if settings.RawToken == nil {
-				return nil, fmt.Errorf("Raw token auth selected, but no rawToken supplied")
-			}
-			jupyterToken = *settings.RawToken
-		} else if settings.AuthType == "FETCH" {
-			if settings.FetchRoute == nil {
-				return nil, fmt.Errorf("Fetch auth selected, but no fetchRoute supplied")
-			}
-			if settings.FetchMethod == nil {
-				return nil, fmt.Errorf("Fetch auth selected, but no fetchMethod supplied")
-			}
-			systemSettings := jupyterclient.SystemServiceSettings{
-				BaseUrl: *settings.FetchRoute,
-				Method:  *settings.FetchMethod,
-			}
-			jupyterToken, err = jupyterclient.GetJupyterToken(&systemSettings)
-			if err != nil {
-				return nil, err
-			}
-		} else {
-			return nil, fmt.Errorf("Unknown auth type '%s'", settings.AuthType)
-		}
-
-		// ok, we got a token at this point
-		if settings.JupyterUrl == nil {
-			return nil, fmt.Errorf("AUTO connection type selected, but no jupyterUrl supplied")
-		}
-		jupyterSettings := &jupyterclient.JupyterServiceSettings{
-			BaseUrl: *settings.JupyterUrl,
-			Token:   jupyterToken,
-		}
-		jc := jupyterclient.MakeJupyterHttpClient(jupyterSettings)
-		httpClient = &jc
+	httpClient, err := createHttpClient(&settings)
+	if err != nil {
+		return nil, err
 	}
 
 	return &Datasource{
@@ -268,11 +280,34 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 func (d *Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	res := &backend.CheckHealthResult{}
 	_, err := models.LoadPluginSettings(*req.PluginContext.DataSourceInstanceSettings)
-
 	if err != nil {
 		res.Status = backend.HealthStatusError
-		res.Message = "Unable to load settings"
+		res.Message = "Unable to load plugin settings"
 		return res, nil
+	}
+
+	var settings InstanceSettings
+	err = json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &settings)
+	if err != nil {
+		res.Status = backend.HealthStatusError
+		res.Message = fmt.Sprintf("Unable to parse settings: %v", err)
+		return res, nil
+	}
+
+	httpClient, err := createHttpClient(&settings)
+	if err != nil {
+		res.Status = backend.HealthStatusError
+		res.Message = fmt.Sprintf("Unable to create JupyterHttpClient: %v", err)
+		return res, nil
+	}
+
+	if httpClient != nil {
+		_, err = httpClient.GetKernels()
+		if err != nil {
+			res.Status = backend.HealthStatusError
+			res.Message = fmt.Sprintf("Unable to browse kernels: %v", err)
+			return res, nil
+		}
 	}
 
 	return &backend.CheckHealthResult{
