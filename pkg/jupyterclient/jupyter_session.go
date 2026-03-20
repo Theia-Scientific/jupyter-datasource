@@ -70,14 +70,6 @@ type ConnectionInfo struct {
   IP              string `json:"ip"`
 }
 
-type KernelSpec struct {
-  Id string `json:"id"`
-  Name string `json:"name"`
-  LastActivity string `json:"last_activity"`
-  ExecutionState string `json:"execution_state"`
-  Connections int `json:"connections"`
-}
-
 func MakeJupyterSession(ci *ConnectionInfo) (*JupyterSession, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	rv := JupyterSession{

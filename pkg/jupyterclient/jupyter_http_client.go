@@ -9,6 +9,14 @@ import (
 	"strings"
 )
 
+type KernelSpec struct {
+  Id string `json:"id"`
+  Name string `json:"name"`
+  LastActivity string `json:"last_activity"`
+  ExecutionState string `json:"execution_state"`
+  Connections int `json:"connections"`
+}
+
 func MakeJupyterHttpClient(settings *JupyterServiceSettings) JupyterHttpClient {
   return JupyterHttpClient{
     AuthHeader: fmt.Sprintf("Bearer %s", settings.Token),
