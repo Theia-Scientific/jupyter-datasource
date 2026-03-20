@@ -2,12 +2,25 @@ import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 export interface MyQuery extends DataQuery {
+  kernelId?: string;
+  kernelType: string;
+  connectionInfo?: string;
+  notebook?: string;
   code: string;
   vars: string;
 }
 
 export const DEFAULT_QUERY: Partial<MyQuery> = {
-  code: `base = datetime.datetime.now(timezone("EST"))
+  kernelId: undefined,
+  kernelType: 'python3',
+  connectionInfo: undefined,
+  notebook: undefined,
+  code: `%pip install pytz
+
+import datetime
+import random
+from pytz import timezone
+base = datetime.datetime.now(timezone("EST"))
 timestamps = [(base - datetime.timedelta(seconds=i)).isoformat() for i in range(RANGE_MAX)]
 values0 = [random.random() * RANGE_MAX for i in range(RANGE_MAX)]
 values1 = [random.random() * RANGE_MAX for i in range(RANGE_MAX)]
@@ -34,25 +47,19 @@ export enum AuthType {
 
 export enum ConnectionType {
   Info = "INFO",
-  Existing = "EXISTING",
-  New = "NEW",
+  Auto = "AUTO",
 }
 
 /**
  * These are options configured for each DataSource instance
  */
 export interface MyDataSourceOptions extends DataSourceJsonData {
+  connectionType: ConnectionType;
   authType: AuthType;
-  rawToken?: string;
   fetchRoute?: string;
   fetchMethod?: Method;
-  connectionType: ConnectionType;
-  connectionInfo?: string;
+  rawToken?: string;
   jupyterUrl?: string;
-  existingKernelId?: string;
-  newKernelType?: string;
-  initCode?: string;
-  teardownCode?: string;
 }
 
 /**

@@ -4,8 +4,11 @@ import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY } from './types';
 
 export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptions> {
+  options: MyDataSourceOptions;
+
   constructor(instanceSettings: DataSourceInstanceSettings<MyDataSourceOptions>) {
     super(instanceSettings);
+    this.options = instanceSettings.jsonData;
   }
 
   getDefaultQuery(_: CoreApp): Partial<MyQuery> {
