@@ -25,24 +25,19 @@ var (
 )
 
 type InstanceSettings struct {
+	ConnectionType   string  `json:"connectionType"`
 	AuthType         string  `json:"authType"`
-	RawToken         *string `json:"rawToken"`
 	FetchRoute       *string `json:"fetchRoute"`
 	FetchMethod      *string `json:"fetchMethod"`
-	ConnectionType   string  `json:"connectionType"`
-	ConnectionInfo   *string `json:"connectionInfo"`
+	RawToken         *string `json:"rawToken"`
 	JupyterUrl       *string `json:"jupyterUrl"`
-	ExistingKernelId *string `json:"existingKernelId"`
-	NewKernelType    *string `json:"newKernelType"`
-	InitCode         *string `json:"initCode"`
-	TeardownCode     *string `json:"teardownCode"`
 }
 
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
 type Datasource struct {
-	session *jupyterclient.JupyterSession
-	teardownCode *string
+	sessions map[string]*jupyterclient.JupyterSession
+	httpClient *jupyterclient.JupyterHttpClient
 }
 
 // NewDatasource creates a new datasource instance.
@@ -53,106 +48,66 @@ func NewDatasource(_ context.Context, instanceSettings backend.DataSourceInstanc
 		return nil, err
 	}
 
-	// create a datasource and run init on it
-	MakeDatasource := func(ci *jupyterclient.ConnectionInfo) (*Datasource, error) {
-		session, err := jupyterclient.MakeJupyterSession(ci)
-		if err != nil {
-			return nil, err
+	var httpClient *jupyterclient.JupyterHttpClient = nil
+	if settings.ConnectionType == "AUTO" {
+		var jupyterToken string
+		if settings.AuthType == "NONE" {
+			jupyterToken = ""
+		} else if settings.AuthType == "RAW" {
+			if settings.RawToken == nil {
+				return nil, fmt.Errorf("Raw token auth selected, but no rawToken supplied")
+			}
+			jupyterToken = *settings.RawToken
+		} else if settings.AuthType == "FETCH" {
+			if settings.FetchRoute == nil {
+				return nil, fmt.Errorf("Fetch auth selected, but no fetchRoute supplied")
+			}
+			if settings.FetchMethod == nil {
+				return nil, fmt.Errorf("Fetch auth selected, but no fetchMethod supplied")
+			}
+			systemSettings := jupyterclient.SystemServiceSettings{
+				BaseUrl: *settings.FetchRoute,
+				Method:  *settings.FetchMethod,
+			}
+			jupyterToken, err = jupyterclient.GetJupyterToken(&systemSettings)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, fmt.Errorf("Unknown auth type '%s'", settings.AuthType)
 		}
-		if settings.InitCode != nil {
-			session.Query(*settings.InitCode)
-		}
-		return &Datasource{session: session, teardownCode: settings.TeardownCode}, nil
-	}
 
-	var jupyterToken string
-	if settings.AuthType == "NONE" {
-		jupyterToken = ""
-	} else if settings.AuthType == "RAW" {
-		if settings.RawToken == nil {
-			return nil, fmt.Errorf("Raw token auth selected, but no rawToken supplied")
-		}
-		jupyterToken = *settings.RawToken
-	} else if settings.AuthType == "FETCH" {
-		if settings.FetchRoute == nil {
-			return nil, fmt.Errorf("Fetch auth selected, but no fetchRoute supplied")
-		}
-		if settings.FetchMethod == nil {
-			return nil, fmt.Errorf("Fetch auth selected, but no fetchMethod supplied")
-		}
-		systemSettings := jupyterclient.SystemServiceSettings{
-			BaseUrl: *settings.FetchRoute,
-			Method:  *settings.FetchMethod,
-		}
-		jupyterToken, err = jupyterclient.GetJupyterToken(&systemSettings)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		return nil, fmt.Errorf("Unknown auth type '%s'", settings.AuthType)
-	}
-
-	// @TODO if we fail to connect return an error here
-	if settings.ConnectionType == "INFO" {
-		if settings.ConnectionInfo == nil {
-			return nil, fmt.Errorf("Info connection type selected, but no connectionInfo supplied")
-		}
-		var ci jupyterclient.ConnectionInfo
-		err = json.Unmarshal([]byte(*settings.ConnectionInfo), &ci)
-		if err != nil {
-			return nil, err
-		}
-		return MakeDatasource(&ci)
-	} else {
+		// ok, we got a token at this point
 		if settings.JupyterUrl == nil {
-			return nil, fmt.Errorf("Existing or New Kernel connection type selected, but no jupyterUrl supplied")
+			return nil, fmt.Errorf("AUTO connection type selected, but no jupyterUrl supplied")
 		}
 		jupyterSettings := &jupyterclient.JupyterServiceSettings{
 			BaseUrl: *settings.JupyterUrl,
 			Token:   jupyterToken,
 		}
-		httpClient := jupyterclient.MakeJupyterHttpClient(jupyterSettings)
-
-		if settings.ConnectionType == "EXISTING" {
-			if settings.ExistingKernelId == nil {
-				return nil, fmt.Errorf("Existing Kernel connection type selected, but no existingKernelId supplied")
-			}
-			ci, err := httpClient.GetConnectionInfo(*settings.ExistingKernelId)
-			if err != nil {
-				return nil, err
-			}
-			return MakeDatasource(&ci)
-		} else if settings.ConnectionType == "NEW" {
-			if settings.NewKernelType == nil {
-				return nil, fmt.Errorf("New Kernel connection type selected, but no newKernelType supplied")
-			}
-			kernel, err := httpClient.CreateKernel(*settings.NewKernelType)
-			if err != nil {
-				return nil, err
-			}
-			ci, err := httpClient.GetConnectionInfo(kernel.Id)
-			if err != nil {
-				return nil, err
-			}
-			return MakeDatasource(&ci)
-		}
+		jc := jupyterclient.MakeJupyterHttpClient(jupyterSettings)
+		httpClient = &jc
 	}
 
-	return nil, fmt.Errorf("Unknown connection type '%s'", settings.ConnectionType)
+	return &Datasource{
+		sessions: make(map[string]*jupyterclient.JupyterSession),
+		httpClient: httpClient,
+	}, nil
 }
 
 // Dispose here tells plugin SDK that plugin wants to clean up resources when a new instance
 // created. As soon as datasource settings change detected by SDK old datasource instance will
 // be disposed and a new one will be created using NewSampleDatasource factory function.
 func (d *Datasource) Dispose() {
-	if d.teardownCode != nil {
-		d.session.Query(*d.teardownCode)
+	for _, session := range d.sessions {
+		// @TODO teardown?
+		session.Quit()
 	}
-	d.session.Quit()
 }
 
 func (d *Datasource) UpdateDatasourceFromQuery(req *backend.QueryDataRequest) error {
 	// queries don't change datasource
+	// @TODO this might be where to start kernels?
 	return nil
 }
 
@@ -177,25 +132,104 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 }
 
 type queryModel struct {
-	Code string `json:"code"`
-	Vars string `json:"vars"`
+  KernelId *string `json:"kernelId"`
+  KernelType string `json:"kernelType"`
+  ConnectionInfo *string `json:"connectionInfo"`
+  Notebook *string `json:"notebook"`
+  Code string `json:"code"`
+  Vars string `json:"vars"`
+}
+
+func (d *Datasource) createSession(settings *InstanceSettings, qm *queryModel) (string, *jupyterclient.JupyterSession, error) {
+	if settings.ConnectionType == "AUTO" {
+		if qm.KernelId != nil {
+			// we have an assigned kernel id - connect to that.
+			ci, err := d.httpClient.GetConnectionInfo(*qm.KernelId)
+			if err != nil {
+				return "", nil, err
+			}
+
+			session, err := jupyterclient.MakeJupyterSession(&ci)
+			return *qm.KernelId, session, err
+		} else {
+			// create a kernel of qm.KernelType
+			ks, err := d.httpClient.CreateKernel(qm.KernelType)
+			if err != nil {
+				return "", nil, err
+			}
+
+			ci, err := d.httpClient.GetConnectionInfo(ks.Id)
+			if err != nil {
+				return "", nil, err
+			}
+
+			session, err := jupyterclient.MakeJupyterSession(&ci)
+			return ks.Id, session, err
+		}
+	} else {
+		// we (should) have a connection file
+		var ci jupyterclient.ConnectionInfo
+		err := json.Unmarshal([]byte(*qm.ConnectionInfo), &ci)
+		if err != nil {
+			return "", nil, err
+		}
+		session, err := jupyterclient.MakeJupyterSession(&ci)
+		return *qm.ConnectionInfo, session, err
+	}
+}
+
+func sessionKey(settings *InstanceSettings, qm *queryModel) *string {
+	if settings.ConnectionType == "AUTO" {
+		return qm.KernelId
+	} else {
+		return qm.ConnectionInfo
+	}
 }
 
 func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	logger := log.New()
 	logger.Error(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
 
+	var settings InstanceSettings
+	err := json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &settings)
+	if err != nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("couldn't retrieve settings: %v", err.Error()))
+	}
+
 	var response backend.DataResponse
 
 	// Unmarshal the JSON into our queryModel.
 	var qm queryModel
-	err := json.Unmarshal(query.JSON, &qm)
+	err = json.Unmarshal(query.JSON, &qm)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
 	}
 
+	// first, find/create the session
+	var session *jupyterclient.JupyterSession = nil
+	sessionKey := sessionKey(&settings, &qm)
+	if sessionKey != nil {
+		session = d.sessions[*qm.KernelId]
+	}
+
+	if session == nil {
+		logger.Error("session not found, creating")
+		// @TODO create session, update kernelId in query
+		key, session, err := d.createSession(&settings, &qm)
+		if err != nil {
+			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
+		}
+
+		d.sessions[key] = session
+
+		// @TODO session.Initialize(qm.Code) to install packages etc
+	} else {
+		logger.Error("session found")
+	}
+
+	// got a session now
 	queryText := fmt.Sprintf("%s\n%s", qm.Vars, qm.Code)
-	result, err := d.session.Query(queryText)
+	result, err := session.Query(queryText)
 	if err != nil {
 		// @TODO return this as error
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("jupyter error: %v", err.Error()))
