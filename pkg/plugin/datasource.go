@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/models"
@@ -152,9 +153,11 @@ type queryModel struct {
   Vars string `json:"vars"`
 }
 
-func (d *Datasource) createSession(settings *InstanceSettings, qm *queryModel) (string, *jupyterclient.JupyterSession, error) {
+func (d *Datasource) createSession(settings *InstanceSettings, qm *queryModel, logger log.Logger) (string, *jupyterclient.JupyterSession, error) {
 	if settings.ConnectionType == "AUTO" {
+		logger.Error("AUTO type")
 		if qm.KernelId != nil {
+			logger.Error(fmt.Sprintf("given kernelid %v", qm.KernelId))
 			// we have an assigned kernel id - connect to that.
 			ci, err := d.httpClient.GetConnectionInfo(*qm.KernelId)
 			if err != nil {
@@ -164,17 +167,21 @@ func (d *Datasource) createSession(settings *InstanceSettings, qm *queryModel) (
 			session, err := jupyterclient.MakeJupyterSession(&ci)
 			return *qm.KernelId, session, err
 		} else {
+			logger.Error(fmt.Sprintf("no kernelid %v, creating %v", qm.KernelId, qm.KernelType))
 			// create a kernel of qm.KernelType
 			ks, err := d.httpClient.CreateKernel(qm.KernelType)
 			if err != nil {
 				return "", nil, err
 			}
 
+			logger.Error(fmt.Sprintf("kernel created, id %v", ks.Id))
+			time.Sleep(2*time.Second)
 			ci, err := d.httpClient.GetConnectionInfo(ks.Id)
 			if err != nil {
 				return "", nil, err
 			}
 
+			logger.Error(fmt.Sprintf("ci gotten %v", ci))
 			session, err := jupyterclient.MakeJupyterSession(&ci)
 			return ks.Id, session, err
 		}
@@ -216,6 +223,8 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
 	}
+
+	logger.Error(fmt.Sprintf("got query: %v", qm))
 
 	// first, find/create the session
 	var session *jupyterclient.JupyterSession = nil
