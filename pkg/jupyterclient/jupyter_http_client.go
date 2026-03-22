@@ -20,7 +20,7 @@ type KernelSpec struct {
 func MakeJupyterHttpClient(settings *JupyterServiceSettings) JupyterHttpClient {
   return JupyterHttpClient{
     AuthHeader: fmt.Sprintf("Bearer %s", settings.Token),
-		BasePath: settings.BaseUrl,
+		BasePath: strings.TrimRight(settings.BaseUrl, "/"),
 	}
 }
 
