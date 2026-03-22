@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import { InlineField, Stack, TextArea, Input, Select } from '@grafana/ui';
+import { InlineField, TextArea, Input, Select } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { ConnectionType, MyDataSourceOptions, MyQuery } from '../types';
@@ -47,7 +47,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   ];
 
   return (
-    <Stack gap={0}>
+    <>
       { connectionType === ConnectionType.Auto &&
         <InlineField label="Kernel ID" labelWidth={16} tooltip="Kernel ID for executing query">
           <Select
@@ -64,7 +64,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           <Input
             id="query-editor-kernel-type"
             onChange={onKernelTypeChange}
-            value={query.kernelType || 'python3'}
+            value={query.kernelType}
             placeholder="python3"
             width={40}
           />
@@ -75,7 +75,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           <TextArea
             id="query-editor-connection-info"
             onChange={onConnectionInfoChange}
-            value={query.connectionInfo || ''}
+            value={query.connectionInfo}
             required
             placeholder="Enter connection info"
             width={40}
@@ -96,7 +96,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         <TextArea
           id="query-editor-code"
           onChange={onCodeChange}
-          value={query.code || ''}
+          value={query.code}
           required
           placeholder="Enter python code"
           width={40}
@@ -107,13 +107,13 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         <TextArea
           id="query-editor-variables"
           onChange={onVariablesChange}
-          value={query.vars || ''}
+          value={query.vars}
           required
           placeholder="Enter python code (Grafana variables will be substituted)"
           width={40}
           rows={12}
         />
       </InlineField>
-    </Stack>
+    </>
   );
 }

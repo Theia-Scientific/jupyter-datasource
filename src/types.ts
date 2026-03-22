@@ -20,6 +20,7 @@ export const DEFAULT_QUERY: Partial<MyQuery> = {
 import datetime
 import random
 from pytz import timezone
+from IPython.display import JSON
 base = datetime.datetime.now(timezone("EST"))
 timestamps = [(base - datetime.timedelta(seconds=i)).isoformat() for i in range(RANGE_MAX)]
 values0 = [random.random() * RANGE_MAX for i in range(RANGE_MAX)]
