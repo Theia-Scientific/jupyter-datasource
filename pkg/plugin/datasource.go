@@ -227,19 +227,20 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 	if session == nil {
 		logger.Error("session not found, creating")
 		// @TODO create session, update kernelId in query
-		key, session, err := d.createSession(&settings, &qm)
+		key, newSession, err := d.createSession(&settings, &qm, logger)
 		if err != nil {
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
-		d.sessions[key] = session
-
+		d.sessions[key] = newSession
+		session = newSession
 		// @TODO session.Initialize(qm.Code) to install packages etc
 	} else {
 		logger.Error("session found")
 	}
 
 	// got a session now
+	logger.Error(fmt.Sprintf("session: %v", session))
 	queryText := fmt.Sprintf("%s\n%s", qm.Vars, qm.Code)
 	result, err := session.Query(queryText)
 	if err != nil {
