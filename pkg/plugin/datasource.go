@@ -160,7 +160,7 @@ func (wrapped Wrapped) Log(s string) {
 	wrapped.logger.Error(s)
 }
 
-func (d *Datasource) createSession(settings *InstanceSettings, qm *queryModel, logger log.Logger) (string, *jupyterclient.JupyterSession, error) {
+func (d *Datasource) createSession(pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (string, *jupyterclient.JupyterSession, error) {
 	wrapped := Wrapped{logger: logger}
 	if settings.ConnectionType == "AUTO" {
 		logger.Error("AUTO type")
@@ -172,7 +172,7 @@ func (d *Datasource) createSession(settings *InstanceSettings, qm *queryModel, l
 				return "", nil, err
 			}
 
-			session, err := jupyterclient.MakeJupyterSession(&ci, wrapped)
+			session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
 			return *qm.KernelId, session, err
 		} else {
 			logger.Error(fmt.Sprintf("no kernelid %v, creating %v", qm.KernelId, qm.KernelType))
@@ -190,7 +190,7 @@ func (d *Datasource) createSession(settings *InstanceSettings, qm *queryModel, l
 			}
 
 			logger.Error(fmt.Sprintf("ci gotten %v", ci))
-			session, err := jupyterclient.MakeJupyterSession(&ci, wrapped)
+			session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
 			return ks.Id, session, err
 		}
 	} else {
@@ -200,7 +200,7 @@ func (d *Datasource) createSession(settings *InstanceSettings, qm *queryModel, l
 		if err != nil {
 			return "", nil, err
 		}
-		session, err := jupyterclient.MakeJupyterSession(&ci, wrapped)
+		session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
 		return *qm.ConnectionInfo, session, err
 	}
 }
@@ -213,7 +213,7 @@ func sessionKey(settings *InstanceSettings, qm *queryModel) *string {
 	}
 }
 
-func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	logger := log.New()
 	logger.Error(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
 
@@ -244,7 +244,7 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 	if session == nil {
 		logger.Error("session not found, creating")
 		// @TODO create session, update kernelId in query
-		key, newSession, err := d.createSession(&settings, &qm, logger)
+		key, newSession, err := d.createSession(pctx, &settings, &qm, logger)
 		if err != nil {
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}

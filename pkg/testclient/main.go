@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
 	"log"
@@ -33,7 +34,7 @@ func main() {
     log.Fatal(err)
   }
 
-	js, err := jupyterclient.MakeJupyterSession(&ci, Logger{})
+	js, err := jupyterclient.MakeJupyterSession(context.Background(), &ci, Logger{})
   if err != nil {
     log.Fatal(err)
   }

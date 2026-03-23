@@ -74,8 +74,9 @@ type ConnectionInfo struct {
   IP              string `json:"ip"`
 }
 
-func MakeJupyterSession(ci *ConnectionInfo, logger Logger) (*JupyterSession, error) {
-	ctx, cancel := context.WithCancel(context.Background())
+// pctx should be a context that bounds the entire session (use context.Background() if unsure)
+func MakeJupyterSession(pctx context.Context, ci *ConnectionInfo, logger Logger) (*JupyterSession, error) {
+	ctx, cancel := context.WithCancel(pctx)
 	rv := &JupyterSession{
 		requests: make(chan requestMsg),
 		resets: make(chan int),
