@@ -222,7 +222,12 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 		header := parts[3]
 		parentHeader := parts[4]
 		// metadata := parts[5]
-		content := parts[6]
+		var content []byte
+		if len(parts) >= 7 {
+			content = parts[6]
+		} else {
+			content = []byte{}
+		}
 
 		var headerParsed Header
 		err = json.Unmarshal([]byte(header), &headerParsed)
