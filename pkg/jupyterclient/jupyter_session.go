@@ -25,7 +25,7 @@ type JupyterSession struct {
 	requests chan requestMsg
 	resets chan int
 	cancel context.CancelFunc
-	logger Logger
+	context context.Context
 }
 
 type Header struct {
@@ -76,13 +76,14 @@ type ConnectionInfo struct {
 }
 
 // pctx should be a context that bounds the entire session (use context.Background() if unsure)
-func MakeJupyterSession(pctx context.Context, ci *ConnectionInfo, logger Logger) (*JupyterSession, error) {
-	ctx, cancel := context.WithCancel(pctx)
+func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) (*JupyterSession, error) {
 	group, ctx := errgroup.WithContext(ctx)
+	ctx, cancel := context.WithCancel(ctx)
 	rv := &JupyterSession{
 		requests: make(chan requestMsg),
 		resets: make(chan int),
 		cancel: cancel,
+		context: ctx,
 	}
 	replies := make(chan replyMsg)
 	group.Go(func() error { return requestor(ctx, ci, rv.requests, replies, rv.resets, logger) })
@@ -96,6 +97,11 @@ func MakeJupyterSession(pctx context.Context, ci *ConnectionInfo, logger Logger)
 }
 
 func (js *JupyterSession) Query(code string) (*json.RawMessage, error) {
+	// if the session is already terminated, complain
+	if err := context.Cause(js.context); err != nil {
+		return nil, err
+	}
+
 	// fake an await with channels
 	resultChannel := make(chan resultMsg)
 	js.requests <- requestMsg{code: code, resultChannel: resultChannel}
