@@ -153,7 +153,15 @@ type queryModel struct {
   Vars string `json:"vars"`
 }
 
+type Wrapped struct {
+	logger log.Logger
+}
+func (wrapped Wrapped) Log(s string) {
+	wrapped.logger.Error(s)
+}
+
 func (d *Datasource) createSession(settings *InstanceSettings, qm *queryModel, logger log.Logger) (string, *jupyterclient.JupyterSession, error) {
+	wrapped := Wrapped{logger: logger}
 	if settings.ConnectionType == "AUTO" {
 		logger.Error("AUTO type")
 		if qm.KernelId != nil {
@@ -164,7 +172,7 @@ func (d *Datasource) createSession(settings *InstanceSettings, qm *queryModel, l
 				return "", nil, err
 			}
 
-			session, err := jupyterclient.MakeJupyterSession(&ci)
+			session, err := jupyterclient.MakeJupyterSession(&ci, wrapped)
 			return *qm.KernelId, session, err
 		} else {
 			logger.Error(fmt.Sprintf("no kernelid %v, creating %v", qm.KernelId, qm.KernelType))
@@ -182,7 +190,7 @@ func (d *Datasource) createSession(settings *InstanceSettings, qm *queryModel, l
 			}
 
 			logger.Error(fmt.Sprintf("ci gotten %v", ci))
-			session, err := jupyterclient.MakeJupyterSession(&ci)
+			session, err := jupyterclient.MakeJupyterSession(&ci, wrapped)
 			return ks.Id, session, err
 		}
 	} else {
@@ -192,7 +200,7 @@ func (d *Datasource) createSession(settings *InstanceSettings, qm *queryModel, l
 		if err != nil {
 			return "", nil, err
 		}
-		session, err := jupyterclient.MakeJupyterSession(&ci)
+		session, err := jupyterclient.MakeJupyterSession(&ci, wrapped)
 		return *qm.ConnectionInfo, session, err
 	}
 }
@@ -256,14 +264,14 @@ func (d *Datasource) query(_ context.Context, pCtx backend.PluginContext, query 
 		// @TODO return this as error
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("jupyter error: %v", err.Error()))
 	}
-	logger.Error(fmt.Sprintf("jupyter query: '%s' -> '%s'\n", queryText, result))
+	logger.Error(fmt.Sprintf("jupyter query: '%s' -> '%+v'\n", queryText, result))
 
 	type row struct {
 		Name string `json:"name"`
 		Values []json.RawMessage `json:"values"`
 	}
 	var rows []row
-	err = json.Unmarshal([]byte(result), &rows)
+	err = json.Unmarshal(*result, &rows)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("result unmarshal: %v", err.Error()))
 	}

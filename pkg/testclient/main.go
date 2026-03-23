@@ -9,6 +9,12 @@ import (
 	"strings"
 )
 
+// implement Logger for MakeJupyterSession
+type Logger struct {}
+func (_ Logger) Log(s string) {
+	fmt.Println(s)
+}
+
 func main() {
 	sys := jupyterclient.DefaultSystemServiceSettings()
 	jup, err := jupyterclient.DefaultJupyterServiceSettings(sys)
@@ -27,7 +33,7 @@ func main() {
     log.Fatal(err)
   }
 
-	js, err := jupyterclient.MakeJupyterSession(&ci)
+	js, err := jupyterclient.MakeJupyterSession(&ci, Logger{})
   if err != nil {
     log.Fatal(err)
   }
@@ -45,7 +51,7 @@ func main() {
 		if err != nil {
 			fmt.Printf("[ERROR] %s\n", expr, err.Error())
 		} else {
-			fmt.Printf("'%s' => '%s'\n", expr, result)
+			fmt.Printf("'%s' => '%+v'\n", expr, string(*result))
 		}
 		if strings.HasPrefix(expr, "%") || strings.HasPrefix(expr, "!") {
 			fmt.Printf("<restarting kernel>\n")

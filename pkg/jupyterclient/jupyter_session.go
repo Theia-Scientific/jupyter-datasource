@@ -5,15 +5,18 @@ import (
   "encoding/json"
   "fmt"
 	"io"
-	"log"
 	"strings"
 
   zmq "github.com/go-zeromq/zmq4"
 )
 
+type Logger interface {
+	Log(string)
+}
+
 type Callback func(string)
 
-type resultMsg struct {val string; err error}
+type resultMsg struct {val *json.RawMessage; err error}
 type requestMsg struct {code string; resultChannel chan resultMsg}
 type replyMsg struct {id string; res resultMsg}
 
@@ -21,6 +24,7 @@ type JupyterSession struct {
 	requests chan requestMsg
 	resets chan int
 	cancel context.CancelFunc
+	logger Logger
 }
 
 type Header struct {
@@ -35,7 +39,7 @@ type ExecuteRequestContent struct {
 	Code string `json:"code"`
 }
 type ExecuteResultContent struct {
-	Data map[string]string `json:"data"`
+	Data map[string]json.RawMessage `json:"data"`
 }
 type StatusContent struct {
 	ExecutionState string `json:"execution_state"`
@@ -70,19 +74,19 @@ type ConnectionInfo struct {
   IP              string `json:"ip"`
 }
 
-func MakeJupyterSession(ci *ConnectionInfo) (*JupyterSession, error) {
+func MakeJupyterSession(ci *ConnectionInfo, logger Logger) (*JupyterSession, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	rv := JupyterSession{
 		requests: make(chan requestMsg),
 		resets: make(chan int),
 		cancel: cancel,
 	}
-	go requestor(ctx, ci, rv.requests, rv.resets)
+	go requestor(ctx, ci, rv.requests, rv.resets, logger)
 	// @TODO roundtrip once to detect errors
 	return &rv, nil
 }
 
-func (js *JupyterSession) Query(code string) (string, error) {
+func (js *JupyterSession) Query(code string) (*json.RawMessage, error) {
 	// fake an await with channels
 	resultChannel := make(chan resultMsg)
 	js.requests <- requestMsg{code: code, resultChannel: resultChannel}
@@ -98,14 +102,14 @@ func (js *JupyterSession) Quit() {
 	js.cancel()
 }
 
-func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg, resets chan int) {
+func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg, resets chan int, logger Logger) {
 	replies := make(chan replyMsg)
-	go listener(ctx, ci, replies)
+	go listener(ctx, ci, replies, logger)
 
 	liveRequests := make(map[string]chan resultMsg)
 	shell, err := makeJupyterShellSocket(ctx, ci)
   if err != nil {
-    log.Fatalf("xxxa %+v", err)
+    logger.Log(fmt.Sprintf("xxxa %+v", err))
   }
 
 	defer shell.Close()
@@ -113,30 +117,30 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 	for {
 		select {
 		case <- resets: {
-			fmt.Printf("encoding shutdown request\n")
+			logger.Log(fmt.Sprintf("encoding shutdown request\n"))
 			content, err := json.Marshal(ShutdownRequestContent{
 				Restart: true,
 			})
 			if err != nil {
-				log.Fatalf("xxxb %+v", err)
+				logger.Log(fmt.Sprintf("xxxb %+v", err))
 			}
-			fmt.Printf("sending shutdown request\n")
+			logger.Log(fmt.Sprintf("sending shutdown request\n"))
 			_, err = shell.sendMessage("shutdown_request", content)
 			if err != nil {
-				log.Fatalf("xxxc %+v", err)
+				logger.Log(fmt.Sprintf("xxxc %+v", err))
 			}
-			fmt.Printf("sent shutdown request\n")
+			logger.Log(fmt.Sprintf("sent shutdown request\n"))
 		}
 		case request := <- requests: {
 			content, err := json.Marshal(ExecuteRequestContent{
 				Code: request.code,
 			})
 			if err != nil {
-				log.Fatalf("xxxd %+v", err)
+				logger.Log(fmt.Sprintf("xxxd %+v", err))
 			}
 			msgId, err := shell.sendMessage("execute_request", content)
 			if err != nil {
-				log.Fatalf("xxxf %+v", err)
+				logger.Log(fmt.Sprintf("xxxf %+v", err))
 			}
 			liveRequests[msgId] = request.resultChannel
 		}
@@ -149,7 +153,7 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 		}
 		case <-ctx.Done(): {
 			for _, resultChannel := range liveRequests {
-				resultChannel <- resultMsg{val: "null", err: context.Cause(ctx)}
+				resultChannel <- resultMsg{val: nil, err: context.Cause(ctx)}
 			}
 			return
 		}
@@ -157,17 +161,17 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 	}
 }
 
-func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
+func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, logger Logger) {
   sub := zmq.NewSub(ctx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
   var ioPubAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.IOPubPort)
   err := sub.Dial(ioPubAddr)
   if err != nil {
-    log.Fatalf("xxxg %+v", err)
+    logger.Log(fmt.Sprintf("xxxg %+v", err))
   }
 	defer sub.Close()
 	err = sub.SetOption(zmq.OptionSubscribe, "")
   if err != nil {
-    log.Fatalf("xxxh %+v", err)
+    logger.Log(fmt.Sprintf("xxxh %+v", err))
   }
 
 	results := make(map[string]resultMsg)
@@ -184,10 +188,10 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
 			if err == context.Canceled {
 				return
 			} else if err == io.EOF {
-				log.Printf("eof, continuing to hopefully reconnect\n")
+				logger.Log("eof, continuing to hopefully reconnect\n")
 				continue
 			} else {
-				log.Fatalf("xxxi %+v", err)
+				logger.Log(fmt.Sprintf("xxxi %+v", err))
 			}
 		}
 		parts := msg.Frames
@@ -203,38 +207,38 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
 		var headerParsed Header
 		err = json.Unmarshal([]byte(header), &headerParsed)
 		if err != nil {
-			log.Fatalf("xxxj %+v", err)
+			logger.Log(fmt.Sprintf("xxxj %+v", err))
 		}
 
 		var parentHeaderParsed Header
 		err = json.Unmarshal([]byte(parentHeader), &parentHeaderParsed)
 		if err != nil {
-			log.Fatalf("xxxk %+v", err)
+			logger.Log(fmt.Sprintf("xxxk %+v", err))
 		}
 
 		if headerParsed.MsgType == "execute_result" {
 			var contentParsed ExecuteResultContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
 			if err != nil {
-				log.Fatalf("xxxl %+v", err)
+				logger.Log(fmt.Sprintf("xxxl %+v", err))
 			}
 			val, ok := contentParsed.Data["application/json"]
 			if !ok {
 				val = contentParsed.Data["text/plain"]
 			}
-			results[parentHeaderParsed.MsgId] = resultMsg{val: val, err:nil}
+			results[parentHeaderParsed.MsgId] = resultMsg{val: &val, err:nil}
 		} else if headerParsed.MsgType == "error" {
 			var errorParsed ErrorContent
 			err = json.Unmarshal([]byte(content), &errorParsed)
 			if err != nil {
-				log.Fatalf("xxxm %+v", err)
+				logger.Log(fmt.Sprintf("xxxm %+v", err))
 			}
-			results[parentHeaderParsed.MsgId] = resultMsg{val: "", err: errorParsed}
+			results[parentHeaderParsed.MsgId] = resultMsg{val: nil, err: errorParsed}
 		} else if headerParsed.MsgType == "status" {
 			var contentParsed StatusContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
 			if err != nil {
-				log.Fatalf("xxxn %+v", err)
+				logger.Log(fmt.Sprintf("xxxn %+v", err))
 			}
 			if contentParsed.ExecutionState == "idle" {
 				result, ok := results[parentHeaderParsed.MsgId]
@@ -246,11 +250,11 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg) {
 					// computation terminated without result
 					// (like we did a print('something')
 					// just return a null
-					replies <- replyMsg{id: parentHeaderParsed.MsgId, res: resultMsg{val: "null", err: nil}}
+					replies <- replyMsg{id: parentHeaderParsed.MsgId, res: resultMsg{val: nil, err: nil}}
 				}
 			}
 		} else {
-			fmt.Printf("unknown response: %s | %+v\n", headerParsed.MsgType, string(content))
+			logger.Log(fmt.Sprintf("unknown response: %s | %+v\n", headerParsed.MsgType, string(content)))
 		}
 	}	
 }
