@@ -76,14 +76,18 @@ type ConnectionInfo struct {
 
 func MakeJupyterSession(ci *ConnectionInfo, logger Logger) (*JupyterSession, error) {
 	ctx, cancel := context.WithCancel(context.Background())
-	rv := JupyterSession{
+	rv := &JupyterSession{
 		requests: make(chan requestMsg),
 		resets: make(chan int),
 		cancel: cancel,
 	}
 	go requestor(ctx, ci, rv.requests, rv.resets, logger)
-	// @TODO roundtrip once to detect errors
-	return &rv, nil
+
+	// roundtrip once to detect errors
+	if _, err := rv.Query("None"); err != nil {
+		return nil, err
+	}
+	return rv, nil
 }
 
 func (js *JupyterSession) Query(code string) (*json.RawMessage, error) {
