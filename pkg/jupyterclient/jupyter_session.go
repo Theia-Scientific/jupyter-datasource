@@ -4,6 +4,7 @@ import (
 	"context"
   "encoding/json"
   "fmt"
+	"golang.org/x/sync/errgroup"
 	"io"
 	"strings"
 
@@ -77,12 +78,15 @@ type ConnectionInfo struct {
 // pctx should be a context that bounds the entire session (use context.Background() if unsure)
 func MakeJupyterSession(pctx context.Context, ci *ConnectionInfo, logger Logger) (*JupyterSession, error) {
 	ctx, cancel := context.WithCancel(pctx)
+	group, ctx := errgroup.WithContext(ctx)
 	rv := &JupyterSession{
 		requests: make(chan requestMsg),
 		resets: make(chan int),
 		cancel: cancel,
 	}
-	go requestor(ctx, ci, rv.requests, rv.resets, logger)
+	replies := make(chan replyMsg)
+	group.Go(func() error { return requestor(ctx, ci, rv.requests, replies, rv.resets, logger) })
+	group.Go(func() error { return listener(ctx, ci, replies, logger) })
 
 	// roundtrip once to detect errors
 	if _, err := rv.Query("None"); err != nil {
@@ -107,14 +111,12 @@ func (js *JupyterSession) Quit() {
 	js.cancel()
 }
 
-func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg, resets chan int, logger Logger) {
-	replies := make(chan replyMsg)
-	go listener(ctx, ci, replies, logger)
-
+func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg, replies chan replyMsg, resets chan int, logger Logger) error {
 	liveRequests := make(map[string]chan resultMsg)
 	shell, err := makeJupyterShellSocket(ctx, ci)
   if err != nil {
     logger.Log(fmt.Sprintf("xxxa %+v", err))
+		return err
   }
 
 	defer shell.Close()
@@ -122,19 +124,21 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 	for {
 		select {
 		case <- resets: {
-			logger.Log(fmt.Sprintf("encoding shutdown request\n"))
+			logger.Log(fmt.Sprintf("encoding shutdown request"))
 			content, err := json.Marshal(ShutdownRequestContent{
 				Restart: true,
 			})
 			if err != nil {
 				logger.Log(fmt.Sprintf("xxxb %+v", err))
+				return err
 			}
-			logger.Log(fmt.Sprintf("sending shutdown request\n"))
+			logger.Log(fmt.Sprintf("sending shutdown request"))
 			_, err = shell.sendMessage("shutdown_request", content)
 			if err != nil {
 				logger.Log(fmt.Sprintf("xxxc %+v", err))
+				return err
 			}
-			logger.Log(fmt.Sprintf("sent shutdown request\n"))
+			logger.Log(fmt.Sprintf("sent shutdown request"))
 		}
 		case request := <- requests: {
 			content, err := json.Marshal(ExecuteRequestContent{
@@ -142,10 +146,12 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 			})
 			if err != nil {
 				logger.Log(fmt.Sprintf("xxxd %+v", err))
+				return err
 			}
 			msgId, err := shell.sendMessage("execute_request", content)
 			if err != nil {
 				logger.Log(fmt.Sprintf("xxxf %+v", err))
+				return err
 			}
 			liveRequests[msgId] = request.resultChannel
 		}
@@ -160,23 +166,25 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 			for _, resultChannel := range liveRequests {
 				resultChannel <- resultMsg{val: nil, err: context.Cause(ctx)}
 			}
-			return
+			return nil
 		}
 		}
 	}
 }
 
-func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, logger Logger) {
+func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, logger Logger) error {
   sub := zmq.NewSub(ctx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
   var ioPubAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.IOPubPort)
   err := sub.Dial(ioPubAddr)
   if err != nil {
     logger.Log(fmt.Sprintf("xxxg %+v", err))
+		return err
   }
 	defer sub.Close()
 	err = sub.SetOption(zmq.OptionSubscribe, "")
   if err != nil {
     logger.Log(fmt.Sprintf("xxxh %+v", err))
+		return err
   }
 
 	results := make(map[string]resultMsg)
@@ -184,19 +192,20 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 	for {
 		select {
 		case <-ctx.Done():
-			return
+			return nil
 		default:
 		}
 		
 		msg, err := sub.Recv()
 		if err != nil {
 			if err == context.Canceled {
-				return
+				return nil
 			} else if err == io.EOF {
-				logger.Log("eof, continuing to hopefully reconnect\n")
+				logger.Log("eof, continuing to hopefully reconnect")
 				continue
 			} else {
 				logger.Log(fmt.Sprintf("xxxi %+v", err))
+				return err
 			}
 		}
 		parts := msg.Frames
@@ -213,12 +222,14 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 		err = json.Unmarshal([]byte(header), &headerParsed)
 		if err != nil {
 			logger.Log(fmt.Sprintf("xxxj %+v", err))
+			return err
 		}
 
 		var parentHeaderParsed Header
 		err = json.Unmarshal([]byte(parentHeader), &parentHeaderParsed)
 		if err != nil {
 			logger.Log(fmt.Sprintf("xxxk %+v", err))
+			return err
 		}
 
 		if headerParsed.MsgType == "execute_result" {
@@ -226,6 +237,7 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 			err = json.Unmarshal([]byte(content), &contentParsed)
 			if err != nil {
 				logger.Log(fmt.Sprintf("xxxl %+v", err))
+				return err
 			}
 			val, ok := contentParsed.Data["application/json"]
 			if !ok {
@@ -237,6 +249,7 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 			err = json.Unmarshal([]byte(content), &errorParsed)
 			if err != nil {
 				logger.Log(fmt.Sprintf("xxxm %+v", err))
+				return err
 			}
 			results[parentHeaderParsed.MsgId] = resultMsg{val: nil, err: errorParsed}
 		} else if headerParsed.MsgType == "status" {
@@ -244,6 +257,7 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 			err = json.Unmarshal([]byte(content), &contentParsed)
 			if err != nil {
 				logger.Log(fmt.Sprintf("xxxn %+v", err))
+				return err
 			}
 			if contentParsed.ExecutionState == "idle" {
 				result, ok := results[parentHeaderParsed.MsgId]
@@ -259,7 +273,7 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 				}
 			}
 		} else {
-			logger.Log(fmt.Sprintf("unknown response: %s | %+v\n", headerParsed.MsgType, string(content)))
+			logger.Log(fmt.Sprintf("unknown response: %s | %+v", headerParsed.MsgType, string(content)))
 		}
 	}	
 }
