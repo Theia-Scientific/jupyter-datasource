@@ -177,6 +177,10 @@ func (d *Datasource) createSession(pctx context.Context, settings *InstanceSetti
 			session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
 			return session, err
 		} else {
+			kt := qm.KernelType
+			if kt == "" {
+				kt = "python3"
+			}
 			logger.Debug(fmt.Sprintf("no kernelid %v, creating %v", qm.KernelId, qm.KernelType))
 			// create a kernel of qm.KernelType
 			ks, err := d.httpClient.CreateKernel(qm.KernelType)
