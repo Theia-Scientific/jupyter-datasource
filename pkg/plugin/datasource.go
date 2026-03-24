@@ -38,6 +38,8 @@ type InstanceSettings struct {
 type Datasource struct {
 	sessions map[string]*jupyterclient.JupyterSession
 	httpClient *jupyterclient.JupyterHttpClient
+	context context.Context
+	cancel context.CancelFunc
 }
 
 func getJupyterToken(settings *InstanceSettings) (string, error) {
@@ -101,9 +103,13 @@ func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInsta
 		return nil, err
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	return &Datasource{
 		sessions: make(map[string]*jupyterclient.JupyterSession),
 		httpClient: httpClient,
+		context: ctx,
+		cancel: cancel,
 	}, nil
 }
 
@@ -111,10 +117,7 @@ func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInsta
 // created. As soon as datasource settings change detected by SDK old datasource instance will
 // be disposed and a new one will be created using NewSampleDatasource factory function.
 func (d *Datasource) Dispose() {
-	for _, session := range d.sessions {
-		// @TODO teardown?
-		session.Quit()
-	}
+	d.cancel()
 }
 
 func (d *Datasource) UpdateDatasourceFromQuery(req *backend.QueryDataRequest) error {
@@ -245,7 +248,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 
 	if session == nil {
 		logger.Debug("session not found, creating")
-		newSession, err := d.createSession(context.Background(), &settings, &qm, logger)
+		newSession, err := d.createSession(d.context, &settings, &qm, logger)
 		if err != nil {
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}

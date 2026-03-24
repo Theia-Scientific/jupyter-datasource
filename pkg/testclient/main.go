@@ -34,7 +34,8 @@ func main() {
     log.Fatal(err)
   }
 
-	js, err := jupyterclient.MakeJupyterSession(context.Background(), &ci, Logger{})
+	ctx, cancel := context.WithCancel(context.Background())
+	js, err := jupyterclient.MakeJupyterSession(ctx, &ci, Logger{})
   if err != nil {
     log.Fatal(err)
   }
@@ -44,7 +45,7 @@ func main() {
 		fmt.Print("?> ")
 		expr, err := reader.ReadString('\n')
 		if err != nil {
-			js.Quit()
+			cancel()
 			os.Exit(0)
 		}
 		expr = strings.TrimRight(expr, "\r\n")

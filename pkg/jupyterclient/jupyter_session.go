@@ -24,7 +24,6 @@ type replyMsg struct {id string; res resultMsg}
 type JupyterSession struct {
 	requests chan requestMsg
 	resets chan int
-	cancel context.CancelFunc
 	context context.Context
 }
 
@@ -78,11 +77,9 @@ type ConnectionInfo struct {
 // pctx should be a context that bounds the entire session (use context.Background() if unsure)
 func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) (*JupyterSession, error) {
 	group, ctx := errgroup.WithContext(ctx)
-	ctx, cancel := context.WithCancel(ctx)
 	rv := &JupyterSession{
 		requests: make(chan requestMsg),
 		resets: make(chan int),
-		cancel: cancel,
 		context: ctx,
 	}
 	replies := make(chan replyMsg)
@@ -111,10 +108,6 @@ func (js *JupyterSession) Query(code string) (*json.RawMessage, error) {
 
 func (js *JupyterSession) Restart() {
 	js.resets <- 0
-}
-
-func (js *JupyterSession) Quit() {
-	js.cancel()
 }
 
 func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg, replies chan replyMsg, resets chan int, logger Logger) error {
