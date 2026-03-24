@@ -25,6 +25,7 @@ type JupyterSession struct {
 	requests chan requestMsg
 	resets chan int
 	context context.Context
+	logger Logger
 }
 
 type Header struct {
@@ -81,6 +82,7 @@ func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) 
 		requests: make(chan requestMsg),
 		resets: make(chan int),
 		context: ctx,
+		logger: logger,
 	}
 	replies := make(chan replyMsg)
 	group.Go(func() error { return requestor(ctx, ci, rv.requests, replies, rv.resets, logger) })
@@ -107,6 +109,7 @@ func (js *JupyterSession) Query(code string) (*json.RawMessage, error) {
 }
 
 func (js *JupyterSession) Restart() {
+	js.logger.Log("restarting")
 	js.resets <- 0
 }
 
