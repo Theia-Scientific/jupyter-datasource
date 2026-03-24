@@ -245,7 +245,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 
 	if session == nil {
 		logger.Debug("session not found, creating")
-		newSession, err := d.createSession(pctx, &settings, &qm, logger)
+		newSession, err := d.createSession(context.Background(), &settings, &qm, logger)
 		if err != nil {
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
