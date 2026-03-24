@@ -264,7 +264,6 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		// @TODO return this as error
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("jupyter error: %v", err.Error()))
 	}
-	logger.Error(fmt.Sprintf("jupyter query: '%s' -> '%+v'\n", queryText, result))
 
 	type row struct {
 		Name string `json:"name"`
@@ -275,7 +274,6 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("result unmarshal: %v", err.Error()))
 	}
-	logger.Error(fmt.Sprintf("unmarshaled: '%s' -> %+v\n", result, rows))
 	
 	// create data frame response.
 	// For an overview on data frames and how grafana handles them:
