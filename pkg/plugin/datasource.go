@@ -246,6 +246,9 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	sessionKey := sessionKey(&settings, &qm)
 	session = d.sessions[sessionKey]
 
+	// @TODO handle notebooks
+	code := qm.Code
+
 	if session == nil {
 		logger.Debug("session not found, creating")
 		newSession, err := d.createSession(d.context, &settings, &qm, logger)
@@ -255,14 +258,17 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 
 		d.sessions[sessionKey] = newSession
 		session = newSession
-		// @TODO session.Initialize(qm.Code) to install packages etc
+
+		logger.Debug("Initializing session")
+		session.Initialize(code)
+		logger.Debug("Initialized")
 	} else {
 		logger.Debug("session found")
 	}
 
 	// got a session now
 	logger.Debug(fmt.Sprintf("session: %v", session))
-	queryText := fmt.Sprintf("%s\n%s", qm.Vars, qm.Code)
+	queryText := fmt.Sprintf("%s\n%s", qm.Vars, code)
 	result, err := session.Query(queryText)
 	if err != nil {
 		// @TODO return this as error

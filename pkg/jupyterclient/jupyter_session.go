@@ -6,6 +6,7 @@ import (
   "fmt"
 	"golang.org/x/sync/errgroup"
 	"io"
+	"slices"
 	"strings"
 
   zmq "github.com/go-zeromq/zmq4"
@@ -95,7 +96,7 @@ func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) 
 	return rv, nil
 }
 
-func (js *JupyterSession) Query(code string) (*json.RawMessage, error) {
+func (js *JupyterSession) execute(code string) (*json.RawMessage, error) {
 	// if the session is already terminated, complain
 	if err := context.Cause(js.context); err != nil {
 		return nil, err
@@ -108,9 +109,35 @@ func (js *JupyterSession) Query(code string) (*json.RawMessage, error) {
 	return res.val, res.err
 }
 
+func (js *JupyterSession) Query(code string) (*json.RawMessage, error) {
+	lines := strings.Split(code, "\n")
+	nonSysLines := slices.DeleteFunc(lines, func(expr string) bool {
+		return strings.HasPrefix(expr, "%") || strings.HasPrefix(expr, "!")
+	})
+	code = strings.Join(nonSysLines, "\n")
+	js.logger.Log(fmt.Sprintf("query code: %+v", code))
+
+	return js.execute(code)
+}
+
 func (js *JupyterSession) Restart() {
-	js.logger.Log("restarting")
+	js.logger.Log("restarting jupytersession")
 	js.resets <- 0
+}
+
+// install all packages, do all system commands &c, and restart
+func (js *JupyterSession) Initialize(code string) {
+	js.logger.Log("Initializing")
+	lines := strings.Split(code, "\n")
+	sysLines := slices.DeleteFunc(lines, func(expr string) bool {
+		return !strings.HasPrefix(expr, "%") && !strings.HasPrefix(expr, "!")
+	})
+	if len(sysLines) > 0 {
+		sys := strings.Join(sysLines, "\n")
+		js.logger.Log(fmt.Sprintf("Initialization code: %+v", sys))
+		js.execute(sys)
+		js.Restart()
+	}
 }
 
 func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg, replies chan replyMsg, resets chan int, logger Logger) error {
