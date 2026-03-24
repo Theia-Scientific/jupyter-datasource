@@ -169,6 +169,7 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 			delete(liveRequests, reply.id)
 		}
 		case <-ctx.Done(): {
+			logger.Log("Got a done message, finishing requestor")
 			for _, resultChannel := range liveRequests {
 				resultChannel <- resultMsg{val: nil, err: context.Cause(ctx)}
 			}
@@ -198,6 +199,7 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 	for {
 		select {
 		case <-ctx.Done():
+			logger.Log("got a Done message, returning from listener")
 			return nil
 		default:
 		}
@@ -205,6 +207,7 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 		msg, err := sub.Recv()
 		if err != nil {
 			if err == context.Canceled {
+				logger.Log("got context.Canceled err on sub, returning from listener")
 				return nil
 			} else if err == io.EOF {
 				logger.Log("eof, continuing to hopefully reconnect")
@@ -286,5 +289,5 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 		} else {
 			logger.Log(fmt.Sprintf("unknown response: %s | %+v", headerParsed.MsgType, string(content)))
 		}
-	}	
+	}
 }

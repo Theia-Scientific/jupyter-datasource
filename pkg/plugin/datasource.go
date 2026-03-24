@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/models"
@@ -90,7 +89,7 @@ func createHttpClient(settings *InstanceSettings) (*jupyterclient.JupyterHttpCli
 }
 
 // NewDatasource creates a new datasource instance.
-func NewDatasource(_ context.Context, instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
+func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	var settings InstanceSettings
 	err := json.Unmarshal(instanceSettings.JSONData, &settings)
 	if err != nil {
@@ -157,65 +156,70 @@ type Wrapped struct {
 	logger log.Logger
 }
 func (wrapped Wrapped) Log(s string) {
-	wrapped.logger.Error(s)
+	wrapped.logger.Debug(s)
 }
 
-func (d *Datasource) createSession(pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (string, *jupyterclient.JupyterSession, error) {
+func (d *Datasource) createSession(pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (*jupyterclient.JupyterSession, error) {
 	wrapped := Wrapped{logger: logger}
 	if settings.ConnectionType == "AUTO" {
-		logger.Error("AUTO type")
+		logger.Debug("AUTO type")
 		if qm.KernelId != nil {
-			logger.Error(fmt.Sprintf("given kernelid %v", qm.KernelId))
+			logger.Debug(fmt.Sprintf("given kernelid %v", qm.KernelId))
 			// we have an assigned kernel id - connect to that.
 			ci, err := d.httpClient.GetConnectionInfo(*qm.KernelId)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 
 			session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-			return *qm.KernelId, session, err
+			return session, err
 		} else {
-			logger.Error(fmt.Sprintf("no kernelid %v, creating %v", qm.KernelId, qm.KernelType))
+			logger.Debug(fmt.Sprintf("no kernelid %v, creating %v", qm.KernelId, qm.KernelType))
 			// create a kernel of qm.KernelType
 			ks, err := d.httpClient.CreateKernel(qm.KernelType)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 
-			logger.Error(fmt.Sprintf("kernel created, id %v", ks.Id))
-			time.Sleep(2*time.Second)
+			logger.Debug(fmt.Sprintf("kernel created, id %v", ks.Id))
 			ci, err := d.httpClient.GetConnectionInfo(ks.Id)
 			if err != nil {
-				return "", nil, err
+				return nil, err
 			}
 
-			logger.Error(fmt.Sprintf("ci gotten %v", ci))
+			logger.Debug(fmt.Sprintf("ci gotten %v", ci))
 			session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-			return ks.Id, session, err
+			return session, err
 		}
 	} else {
 		// we (should) have a connection file
 		var ci jupyterclient.ConnectionInfo
 		err := json.Unmarshal([]byte(*qm.ConnectionInfo), &ci)
 		if err != nil {
-			return "", nil, err
+			return nil, err
 		}
 		session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-		return *qm.ConnectionInfo, session, err
+		return session, err
 	}
 }
 
-func sessionKey(settings *InstanceSettings, qm *queryModel) *string {
+func sessionKey(settings *InstanceSettings, qm *queryModel) string {
 	if settings.ConnectionType == "AUTO" {
-		return qm.KernelId
+		if qm.KernelId != nil {
+			return *qm.KernelId
+		} else if qm.Notebook != nil {
+			return *qm.Notebook
+		} else {
+			return qm.Code
+		}
 	} else {
-		return qm.ConnectionInfo
+		return *qm.ConnectionInfo
 	}
 }
 
 func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	logger := log.New()
-	logger.Error(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
+	logger.Debug(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
 
 	var settings InstanceSettings
 	err := json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &settings)
@@ -232,32 +236,29 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
 	}
 
-	logger.Error(fmt.Sprintf("got query: %v", qm))
+	logger.Debug(fmt.Sprintf("got query: %v", qm))
 
 	// first, find/create the session
 	var session *jupyterclient.JupyterSession = nil
 	sessionKey := sessionKey(&settings, &qm)
-	if sessionKey != nil {
-		session = d.sessions[*qm.KernelId]
-	}
+	session = d.sessions[sessionKey]
 
 	if session == nil {
-		logger.Error("session not found, creating")
-		// @TODO create session, update kernelId in query
-		key, newSession, err := d.createSession(pctx, &settings, &qm, logger)
+		logger.Debug("session not found, creating")
+		newSession, err := d.createSession(pctx, &settings, &qm, logger)
 		if err != nil {
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
-		d.sessions[key] = newSession
+		d.sessions[sessionKey] = newSession
 		session = newSession
 		// @TODO session.Initialize(qm.Code) to install packages etc
 	} else {
-		logger.Error("session found")
+		logger.Debug("session found")
 	}
 
 	// got a session now
-	logger.Error(fmt.Sprintf("session: %v", session))
+	logger.Debug(fmt.Sprintf("session: %v", session))
 	queryText := fmt.Sprintf("%s\n%s", qm.Vars, qm.Code)
 	result, err := session.Query(queryText)
 	if err != nil {
