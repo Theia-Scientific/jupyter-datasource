@@ -71,13 +71,14 @@ func (e ErrorContent) Error() string {
 type ConnectionInfo struct {
   SignatureScheme string `json:"signature_scheme"`
   Transport       string `json:"transport"`
+	KernelName      string `json:"kernel_name"`
+  Key             string `json:"key"`
+  IP              string `json:"ip"`
   StdinPort       int    `json:"stdin_port"`
   ControlPort     int    `json:"control_port"`
   IOPubPort       int    `json:"iopub_port"`
   HBPort          int    `json:"hb_port"`
   ShellPort       int    `json:"shell_port"`
-  Key             string `json:"key"`
-  IP              string `json:"ip"`
 }
 
 // pctx should be a context that bounds the entire session (use context.Background() if unsure)
@@ -143,7 +144,29 @@ func (js *JupyterSession) Restart() {
 	js.logger.Log("waiting on group")
 	js.group.Wait()
 	js.logger.Log("group finished")
-	time.Sleep(1 * time.Second)
+
+	// establish heartbeat channel and send heartbeats until we get a reply
+  hb := zmq.NewReq(js.ctx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1), zmq.WithTimeout(100 * time.Millisecond))
+  var hbAddr = fmt.Sprintf("tcp://%s:%d", js.connectionInfo.IP, js.connectionInfo.HBPort)
+	err := hb.Dial(hbAddr)
+	if err != nil {
+		js.logger.Log(fmt.Sprintf("hb error: %+v", err.Error()))
+		return
+	}
+	for {
+		js.logger.Log("sending heartbeat")
+		hb.Send(zmq.NewMsgString("woof"))
+		js.logger.Log("awaiting reply")
+		rep, err := hb.Recv()
+		if err == nil {
+			js.logger.Log(fmt.Sprintf("got reply: %+v", rep))
+			if string(rep.Frames[0]) == "woof" {
+				js.logger.Log("yay")
+				break
+			}
+		}
+	}
+
 	js.Start()
 	js.logger.Log("session restarted")
 }
