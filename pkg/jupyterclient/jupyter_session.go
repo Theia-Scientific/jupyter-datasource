@@ -109,7 +109,11 @@ func (js *JupyterSession) Start() error {
 func (js *JupyterSession) execute(code string) (*json.RawMessage, error) {
 	// if the session is already terminated, complain
 	if err := context.Cause(js.groupCtx); err != nil {
-		return nil, err
+		if err == io.EOF {
+			js.Start()
+		} else {
+			return nil, err
+		}
 	}
 
 	// fake an await with channels
@@ -281,8 +285,8 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 				logger.Log("got context.Canceled err on sub, returning from listener")
 				return nil
 			} else if err == io.EOF {
-				logger.Log("eof, continuing to hopefully reconnect")
-				continue
+				logger.Log("eof, aborting in hope of reconnection")
+				return err
 			} else {
 				return err
 			}
