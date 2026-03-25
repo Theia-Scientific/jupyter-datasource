@@ -142,13 +142,21 @@ func (js *JupyterSession) Initialize(code string) {
 
 func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg, replies chan replyMsg, resets chan int, logger Logger) error {
 	liveRequests := make(map[string]chan resultMsg)
-	shell, err := makeJupyterShellSocket(ctx, ci)
+	zmqId := NewId()
+	sessionId := NewId()
+	shell, err := makeJupyterShellSocket(ctx, ci, zmqId, sessionId)
   if err != nil {
     logger.Log(fmt.Sprintf("xxxa %+v", err))
 		return err
   }
-
 	defer shell.Close()
+
+	control, err := makeJupyterControlSocket(ctx, ci, zmqId, sessionId)
+  if err != nil {
+    logger.Log(fmt.Sprintf("xxxa2 %+v", err))
+		return err
+  }
+	defer control.Close()
 
 	for {
 		select {
@@ -162,7 +170,7 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 				return err
 			}
 			logger.Log(fmt.Sprintf("sending shutdown request"))
-			_, err = shell.sendMessage("shutdown_request", content)
+			_, err = control.sendMessage("shutdown_request", content)
 			if err != nil {
 				logger.Log(fmt.Sprintf("xxxc %+v", err))
 				return err
