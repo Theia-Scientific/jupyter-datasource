@@ -182,15 +182,15 @@ type queryModel struct {
   Vars string `json:"vars"`
 }
 
-type Wrapped struct {
+type WrappedLogger struct {
 	logger log.Logger
 }
-func (wrapped Wrapped) Log(s string) {
+func (wrapped WrappedLogger) Log(s string) {
 	wrapped.logger.Debug(s)
 }
 
 func (d *Datasource) createSession(pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (*jupyterclient.JupyterSession, error) {
-	wrapped := Wrapped{logger: logger}
+	wrapped := WrappedLogger{logger: logger}
 	if settings.ConnectionType == "AUTO" {
 		logger.Debug("AUTO type")
 		if qm.KernelId != nil {
