@@ -101,7 +101,7 @@ func (js *JupyterSession) Start() error {
 	js.group.Go(func() error { return listener(js.groupCtx, js.connectionInfo, replies, js.logger) })
 
 	// roundtrip once to detect errors
-	if _, err := js.Query("None"); err != nil {
+	if _, err := js.execute("None"); err != nil {
 		return err
 	}
 	return nil
@@ -144,19 +144,15 @@ func (js *JupyterSession) Restart() {
 	completionChannel := make(chan resultMsg)
 	js.resets <- completionChannel
   <- completionChannel
-	js.logger.Log("kernel restarted")
 	// shut down the group
 	js.group.Go(func() error { return ShutdownError })
-	js.logger.Log("waiting on group")
 	js.group.Wait()
-	js.logger.Log("group finished")
 	js.Start()
 	js.logger.Log("session restarted")
 }
 
 // install all packages, do all system commands &c, and restart
-func (js *JupyterSession) Initialize(code string) {
-	js.logger.Log("Initializing")
+func (js *JupyterSession) Initialize(code string) error {
 	lines := strings.Split(code, "\n")
 	sysLines := slices.DeleteFunc(lines, func(expr string) bool {
 		return !strings.HasPrefix(expr, "%") && !strings.HasPrefix(expr, "!")
@@ -164,10 +160,13 @@ func (js *JupyterSession) Initialize(code string) {
 	if len(sysLines) > 0 {
 		sys := strings.Join(sysLines, "\n")
 		js.logger.Log(fmt.Sprintf("Initialization code: %+v", sys))
-		val, _ := js.execute(sys) // @TODO consider error
-		js.logger.Log(fmt.Sprintf("Initialization result: %+v", val))
+		_, err := js.execute(sys)
+		if err != nil {
+			return err
+		}
 		js.Restart()
 	}
+	return nil
 }
 
 func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg, replies chan replyMsg, resets chan(chan resultMsg), logger Logger) error {
@@ -189,20 +188,17 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 	for {
 		select {
 		case resetChannel := <- resets: {
-			logger.Log(fmt.Sprintf("encoding shutdown request"))
 			content, err := json.Marshal(ShutdownRequestContent{
 				Restart: true,
 			})
 			if err != nil {
 				return err
 			}
-			logger.Log(fmt.Sprintf("sending shutdown request"))
 			msgId, err := control.sendMessage("shutdown_request", content)
 			if err != nil {
 				return err
 			}
 			liveRequests[msgId] = resetChannel
-			logger.Log(fmt.Sprintf("sent shutdown request"))
 		}
 		case request := <- requests: {
 			content, err := json.Marshal(ExecuteRequestContent{
@@ -225,7 +221,6 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 			delete(liveRequests, reply.id)
 		}
 		case <-ctx.Done(): {
-			logger.Log("Got a done message, finishing requestor")
 			for _, resultChannel := range liveRequests {
 				resultChannel <- resultMsg{val: nil, err: context.Cause(ctx)}
 			}
@@ -253,7 +248,6 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 	for {
 		select {
 		case <-ctx.Done():
-			logger.Log("got a Done message, returning from listener")
 			return nil
 		default:
 		}
@@ -261,7 +255,6 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 		msg, err := sub.Recv()
 		if err != nil {
 			if err == context.Canceled {
-				logger.Log("got context.Canceled err on sub, returning from listener")
 				return nil
 			} else if err == io.EOF {
 				logger.Log("eof, aborting in hope of reconnection")
@@ -297,7 +290,6 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 			return err
 		}
 
-		logger.Log(fmt.Sprintf("<- header: %+v, parentHeader: %+v, body: %+v", string(header), string(parentHeader), string(content)))
 		if headerParsed.MsgType == "execute_result" {
 			var contentParsed ExecuteResultContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
@@ -335,10 +327,6 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 					replies <- replyMsg{id: parentHeaderParsed.MsgId, res: resultMsg{val: nil, err: nil}}
 				}
 			}
-		} else if headerParsed.MsgType == "shutdown_reply" {
-			logger.Log("*** shutdown reply")
-		} else {
-			logger.Log(fmt.Sprintf("unknown response: %s | %+v", headerParsed.MsgType, string(content)))
 		}
 	}
 }

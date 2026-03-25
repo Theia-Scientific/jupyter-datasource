@@ -50,11 +50,14 @@ func main() {
 		}
 		expr = strings.TrimRight(expr, "\r\n")
 		if strings.HasPrefix(expr, "%") || strings.HasPrefix(expr, "!") {
-			js.Initialize(expr)
+			err = js.Initialize(expr)
+			if err != nil {
+				fmt.Printf("[ERROR] %s: %s\n", expr, err.Error())
+			}
 		} else {
 			result, err := js.Query(expr)
 			if err != nil {
-				fmt.Printf("[ERROR] %s\n", expr, err.Error())
+				fmt.Printf("[ERROR] %s: %s\n", expr, err.Error())
 			} else if result != nil {
 				fmt.Printf("'%s' => '%+v'\n", expr, string(*result))
 			} else {

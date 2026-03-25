@@ -291,7 +291,10 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		session = newSession
 
 		logger.Debug("Initializing session")
-		session.Initialize(code)
+		err = session.Initialize(code)
+		if err != nil {
+			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
+		}
 		logger.Debug("Initialized")
 	} else {
 		logger.Debug("session found")
