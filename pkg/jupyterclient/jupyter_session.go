@@ -146,14 +146,12 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 	sessionId := NewId()
 	shell, err := makeJupyterShellSocket(ctx, ci, zmqId, sessionId)
   if err != nil {
-    logger.Log(fmt.Sprintf("xxxa %+v", err))
 		return err
   }
 	defer shell.Close()
 
 	control, err := makeJupyterControlSocket(ctx, ci, zmqId, sessionId)
   if err != nil {
-    logger.Log(fmt.Sprintf("xxxa2 %+v", err))
 		return err
   }
 	defer control.Close()
@@ -166,13 +164,11 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 				Restart: true,
 			})
 			if err != nil {
-				logger.Log(fmt.Sprintf("xxxb %+v", err))
 				return err
 			}
 			logger.Log(fmt.Sprintf("sending shutdown request"))
 			_, err = control.sendMessage("shutdown_request", content)
 			if err != nil {
-				logger.Log(fmt.Sprintf("xxxc %+v", err))
 				return err
 			}
 			logger.Log(fmt.Sprintf("sent shutdown request"))
@@ -182,12 +178,10 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 				Code: request.code,
 			})
 			if err != nil {
-				logger.Log(fmt.Sprintf("xxxd %+v", err))
 				return err
 			}
 			msgId, err := shell.sendMessage("execute_request", content)
 			if err != nil {
-				logger.Log(fmt.Sprintf("xxxf %+v", err))
 				return err
 			}
 			liveRequests[msgId] = request.resultChannel
@@ -215,13 +209,11 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
   var ioPubAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.IOPubPort)
   err := sub.Dial(ioPubAddr)
   if err != nil {
-    logger.Log(fmt.Sprintf("xxxg %+v", err))
 		return err
   }
 	defer sub.Close()
 	err = sub.SetOption(zmq.OptionSubscribe, "")
   if err != nil {
-    logger.Log(fmt.Sprintf("xxxh %+v", err))
 		return err
   }
 
@@ -244,7 +236,6 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 				logger.Log("eof, continuing to hopefully reconnect")
 				continue
 			} else {
-				logger.Log(fmt.Sprintf("xxxi %+v", err))
 				return err
 			}
 		}
@@ -266,14 +257,12 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 		var headerParsed Header
 		err = json.Unmarshal([]byte(header), &headerParsed)
 		if err != nil {
-			logger.Log(fmt.Sprintf("xxxj %+v", err))
 			return err
 		}
 
 		var parentHeaderParsed Header
 		err = json.Unmarshal([]byte(parentHeader), &parentHeaderParsed)
 		if err != nil {
-			logger.Log(fmt.Sprintf("xxxk %+v", err))
 			return err
 		}
 
@@ -281,7 +270,6 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 			var contentParsed ExecuteResultContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
 			if err != nil {
-				logger.Log(fmt.Sprintf("xxxl %+v", err))
 				return err
 			}
 			val, ok := contentParsed.Data["application/json"]
@@ -293,7 +281,6 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 			var errorParsed ErrorContent
 			err = json.Unmarshal([]byte(content), &errorParsed)
 			if err != nil {
-				logger.Log(fmt.Sprintf("xxxm %+v", err))
 				return err
 			}
 			results[parentHeaderParsed.MsgId] = resultMsg{val: nil, err: errorParsed}
@@ -301,7 +288,6 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 			var contentParsed StatusContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
 			if err != nil {
-				logger.Log(fmt.Sprintf("xxxn %+v", err))
 				return err
 			}
 			if contentParsed.ExecutionState == "idle" {

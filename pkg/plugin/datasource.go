@@ -302,8 +302,17 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	queryText := fmt.Sprintf("%s\n%s", qm.Vars, code)
 	result, err := session.Query(queryText)
 	if err != nil {
-		// @TODO return this as error
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("jupyter error: %v", err.Error()))
+		switch err.(type) {
+		case jupyterclient.ErrorContent: {
+			// @TODO if it's an ErrorContent, return it as {error:}
+			return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
+		}
+		default: {
+			// goroutines have been terminated - restart the session next query
+			delete(d.sessions, sessionKey)
+			return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
+		}
+		}
 	}
 
 	type row struct {
