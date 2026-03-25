@@ -8,6 +8,7 @@ import (
 	"io"
 	"slices"
 	"strings"
+	"time"
 
   zmq "github.com/go-zeromq/zmq4"
 )
@@ -24,8 +25,11 @@ type replyMsg struct {id string; res resultMsg}
 
 type JupyterSession struct {
 	requests chan requestMsg
-	resets chan int
-	context context.Context
+	resets chan(chan resultMsg)
+	connectionInfo *ConnectionInfo
+	ctx context.Context
+	group *errgroup.Group
+	groupCtx context.Context
 	logger Logger
 }
 
@@ -78,27 +82,32 @@ type ConnectionInfo struct {
 
 // pctx should be a context that bounds the entire session (use context.Background() if unsure)
 func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) (*JupyterSession, error) {
-	group, ctx := errgroup.WithContext(ctx)
 	rv := &JupyterSession{
 		requests: make(chan requestMsg),
-		resets: make(chan int),
-		context: ctx,
+		resets: make(chan (chan resultMsg)),
+		connectionInfo: ci,
+		ctx: ctx,
 		logger: logger,
 	}
+	return rv, rv.Start()
+}
+
+func (js *JupyterSession) Start() error {
+	js.group, js.groupCtx = errgroup.WithContext(js.ctx)
 	replies := make(chan replyMsg)
-	group.Go(func() error { return requestor(ctx, ci, rv.requests, replies, rv.resets, logger) })
-	group.Go(func() error { return listener(ctx, ci, replies, logger) })
+	js.group.Go(func() error { return requestor(js.groupCtx, js.connectionInfo, js.requests, replies, js.resets, js.logger) })
+	js.group.Go(func() error { return listener(js.groupCtx, js.connectionInfo, replies, js.logger) })
 
 	// roundtrip once to detect errors
-	if _, err := rv.Query("None"); err != nil {
-		return nil, err
+	if _, err := js.Query("None"); err != nil {
+		return err
 	}
-	return rv, nil
+	return nil
 }
 
 func (js *JupyterSession) execute(code string) (*json.RawMessage, error) {
 	// if the session is already terminated, complain
-	if err := context.Cause(js.context); err != nil {
+	if err := context.Cause(js.groupCtx); err != nil {
 		return nil, err
 	}
 
@@ -115,14 +124,28 @@ func (js *JupyterSession) Query(code string) (*json.RawMessage, error) {
 		return strings.HasPrefix(expr, "%") || strings.HasPrefix(expr, "!")
 	})
 	code = strings.Join(nonSysLines, "\n")
-	js.logger.Log(fmt.Sprintf("query code: %+v", code))
+	js.logger.Log(fmt.Sprintf("query code: '%+v'", code))
 
 	return js.execute(code)
 }
 
+type ShutdownError struct {}
+func (e ShutdownError) Error() string { return "Session shutdown" }
+
 func (js *JupyterSession) Restart() {
 	js.logger.Log("restarting jupytersession")
-	js.resets <- 0
+	completionChannel := make(chan resultMsg)
+	js.resets <- completionChannel
+  <- completionChannel
+	js.logger.Log("kernel restarted")
+	// shut down the group
+	js.group.Go(func() error { return ShutdownError{} })
+	js.logger.Log("waiting on group")
+	js.group.Wait()
+	js.logger.Log("group finished")
+	time.Sleep(1 * time.Second)
+	js.Start()
+	js.logger.Log("session restarted")
 }
 
 // install all packages, do all system commands &c, and restart
@@ -135,12 +158,13 @@ func (js *JupyterSession) Initialize(code string) {
 	if len(sysLines) > 0 {
 		sys := strings.Join(sysLines, "\n")
 		js.logger.Log(fmt.Sprintf("Initialization code: %+v", sys))
-		js.execute(sys)
+		val, _ := js.execute(sys) // @TODO consider error
+		js.logger.Log(fmt.Sprintf("Initialization result: %+v", val))
 		js.Restart()
 	}
 }
 
-func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg, replies chan replyMsg, resets chan int, logger Logger) error {
+func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg, replies chan replyMsg, resets chan(chan resultMsg), logger Logger) error {
 	liveRequests := make(map[string]chan resultMsg)
 	zmqId := NewId()
 	sessionId := NewId()
@@ -158,7 +182,7 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 
 	for {
 		select {
-		case <- resets: {
+		case resetChannel := <- resets: {
 			logger.Log(fmt.Sprintf("encoding shutdown request"))
 			content, err := json.Marshal(ShutdownRequestContent{
 				Restart: true,
@@ -167,10 +191,11 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 				return err
 			}
 			logger.Log(fmt.Sprintf("sending shutdown request"))
-			_, err = control.sendMessage("shutdown_request", content)
+			msgId, err := control.sendMessage("shutdown_request", content)
 			if err != nil {
 				return err
 			}
+			liveRequests[msgId] = resetChannel
 			logger.Log(fmt.Sprintf("sent shutdown request"))
 		}
 		case request := <- requests: {
@@ -266,6 +291,7 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 			return err
 		}
 
+		logger.Log(fmt.Sprintf("<- header: %+v, parentHeader: %+v, body: %+v", string(header), string(parentHeader), string(content)))
 		if headerParsed.MsgType == "execute_result" {
 			var contentParsed ExecuteResultContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
@@ -303,6 +329,8 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 					replies <- replyMsg{id: parentHeaderParsed.MsgId, res: resultMsg{val: nil, err: nil}}
 				}
 			}
+		} else if headerParsed.MsgType == "shutdown_reply" {
+			logger.Log("*** shutdown reply")
 		} else {
 			logger.Log(fmt.Sprintf("unknown response: %s | %+v", headerParsed.MsgType, string(content)))
 		}
