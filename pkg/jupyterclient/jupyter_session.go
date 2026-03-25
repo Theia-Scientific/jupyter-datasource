@@ -3,6 +3,7 @@ package jupyterclient
 import (
 	"context"
   "encoding/json"
+	"errors"
   "fmt"
 	"golang.org/x/sync/errgroup"
 	"io"
@@ -79,6 +80,8 @@ type ConnectionInfo struct {
   IP              string `json:"ip"`
 }
 
+var ShutdownError = errors.New("Session shutdown")
+
 // pctx should be a context that bounds the entire session (use context.Background() if unsure)
 func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) (*JupyterSession, error) {
 	rv := &JupyterSession{
@@ -118,6 +121,10 @@ func (js *JupyterSession) execute(code string) (*json.RawMessage, error) {
 	resultChannel := make(chan resultMsg)
 	js.requests <- requestMsg{code: code, resultChannel: resultChannel}
 	res := <- resultChannel
+	if res.err == ShutdownError {
+		// retry
+		return js.execute(code)
+	}
 	return res.val, res.err
 }
 
@@ -132,9 +139,6 @@ func (js *JupyterSession) Query(code string) (*json.RawMessage, error) {
 	return js.execute(code)
 }
 
-type ShutdownError struct {}
-func (e ShutdownError) Error() string { return "Session shutdown" }
-
 func (js *JupyterSession) Restart() {
 	js.logger.Log("restarting jupytersession")
 	completionChannel := make(chan resultMsg)
@@ -142,7 +146,7 @@ func (js *JupyterSession) Restart() {
   <- completionChannel
 	js.logger.Log("kernel restarted")
 	// shut down the group
-	js.group.Go(func() error { return ShutdownError{} })
+	js.group.Go(func() error { return ShutdownError })
 	js.logger.Log("waiting on group")
 	js.group.Wait()
 	js.logger.Log("group finished")
