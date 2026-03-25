@@ -8,7 +8,6 @@ import (
 	"io"
 	"slices"
 	"strings"
-	"time"
 
   zmq "github.com/go-zeromq/zmq4"
 )
@@ -147,7 +146,6 @@ func (js *JupyterSession) Restart() {
 	js.logger.Log("waiting on group")
 	js.group.Wait()
 	js.logger.Log("group finished")
-	time.Sleep(1 * time.Second)
 	js.Start()
 	js.logger.Log("session restarted")
 }
