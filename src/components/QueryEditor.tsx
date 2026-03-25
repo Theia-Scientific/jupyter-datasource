@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useState, useEffect } from 'react';
 import { InlineField, TextArea, Input, Select } from '@grafana/ui';
 import { QueryEditorProps, SelectableValue } from '@grafana/data';
 import { DataSource } from '../datasource';
@@ -33,17 +33,26 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({ ...query, vars: event.target.value });
   };
 
+  let [notebooks, setNotebooks] = useState<Array<SelectableValue<string>>>([
+    {label: "Loading..."},
+  ]);
+
+  useEffect(() => {
+    datasource.getNotebooks().then((response: string[]) => {
+      let notebooks: Array<SelectableValue<string>> = response.map((s) => ({
+        label: s,
+        value: s,
+      }));
+      notebooks.unshift({label: "Literal code", description: "Enter code below"});
+      setNotebooks(notebooks);
+    });
+  }, [datasource]);
+
   // @TEMP
   let kernels = [
     {label: "New Kernel", description: "Start a new kernel"},
     {label: "python3 (foo)", value: 'foo'},
     {label: "python3 (bar)", value: 'bar'},
-  ];
-
-  let notebooks = [
-    {label: "Literal code", description: "Enter code below"},
-    {label: "Examples/untitled.ipynb", value: "Examples/untitled.ipynb"},
-    {label: "Examples/database.ipynb", value: "Examples/database.ipynb"},
   ];
 
   return (

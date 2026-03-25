@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/models"
@@ -19,6 +20,7 @@ import (
 // backend.CheckHealthHandler interfaces. Plugin should not implement all these
 // interfaces - only those which are required for a particular task.
 var (
+	_ backend.CallResourceHandler   = (*Datasource)(nil)
 	_ backend.QueryDataHandler      = (*Datasource)(nil)
 	_ backend.CheckHealthHandler    = (*Datasource)(nil)
 	_ instancemgmt.InstanceDisposer = (*Datasource)(nil)
@@ -40,6 +42,31 @@ type Datasource struct {
 	httpClient *jupyterclient.JupyterHttpClient
 	context context.Context
 	cancel context.CancelFunc
+}
+
+func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	logger := log.New()
+	logger.Debug(fmt.Sprintf("got a resource request for %+v", req.Path))
+	switch req.Path {
+	case "notebooks": {
+		notebooks, err := p.httpClient.GetNotebooks()
+		var jsonData []byte
+		if err == nil {
+			jsonData, err = json.Marshal(notebooks)
+		}
+		if err != nil {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: http.StatusInternalServerError,
+			})
+		} else {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: http.StatusOK,
+				Body:   jsonData,
+			})
+		}
+	}
+	}
+	return nil
 }
 
 func getJupyterToken(settings *InstanceSettings) (string, error) {

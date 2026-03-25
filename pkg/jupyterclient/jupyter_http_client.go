@@ -69,6 +69,114 @@ func (jc *JupyterHttpClient) GetKernels() ([]KernelSpec, error) {
   return kernels, err
 }
 
+type Cell struct {
+	CellType string `json:"cell_type"`
+	Source string `json:"source"`
+}
+
+type NotebookContent struct {
+	Cells []Cell `json:"cells"`
+	// also metadata i guess
+}
+
+type Notebook struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+	Type string `json:"type"`
+	Content *NotebookContent `json:"content"`
+}
+
+type PathEntry struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+	Type string `json:"type"`
+	Content *[]PathEntry `json:"content"`
+}
+
+func (jc *JupyterHttpClient) GetListing(path string) ([]PathEntry, error) {
+  var entry PathEntry
+
+  req, err := jc.Get(fmt.Sprintf("jupyter/api/contents/%s", path))
+  if err != nil {
+    return []PathEntry{}, err
+  }
+  res, err := http.DefaultClient.Do(req)
+  if err != nil {
+    return []PathEntry{}, err
+  }
+  defer res.Body.Close()
+  body, err := io.ReadAll(res.Body)
+  if err != nil {
+    return []PathEntry{}, err
+  }
+  err = json.Unmarshal(body, &entry)
+	if entry.Content == nil {
+    return []PathEntry{}, err
+	}
+  return *entry.Content, err
+}
+
+
+func (jc *JupyterHttpClient) GetNotebooks() ([]string, error) {
+	rv := []string{}
+	var recur func(string) error
+	recur = func(path string) error {
+		entries, err := jc.GetListing(path)
+		if err != nil {
+			return err
+		}
+		for _, entry := range(entries) {
+			if entry.Type == "notebook" {
+				rv = append(rv, entry.Path)
+			} else if entry.Type == "directory" {
+				err = recur(entry.Path)
+				if err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	}
+	err := recur("")
+	return rv, err
+}
+
+func (jc *JupyterHttpClient) GetNotebook(path string) (string, error) {
+  var notebook Notebook
+
+  req, err := jc.Get(fmt.Sprintf("jupyter/api/contents/%s", path))
+  if err != nil {
+    return "", err
+  }
+  res, err := http.DefaultClient.Do(req)
+  if err != nil {
+    return "", err
+  }
+  defer res.Body.Close()
+  body, err := io.ReadAll(res.Body)
+  if err != nil {
+    return "", err
+  }
+  err = json.Unmarshal(body, &notebook)
+  if err != nil {
+    return "", err
+  }
+
+	if notebook.Content == nil {
+		return "", err
+	}
+
+	var buffer bytes.Buffer
+	for _, cell := range(notebook.Content.Cells) {
+		if cell.CellType == "code" {
+			buffer.WriteString(cell.Source)
+			buffer.WriteString("\n")
+		}
+	}
+
+	return buffer.String(), nil
+}
+
 func (jc *JupyterHttpClient) CreateKernel(kernelType string) (KernelSpec, error) {
   var kernel KernelSpec
 

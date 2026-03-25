@@ -26,4 +26,8 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
     // if no query has been provided, prevent the query from being executed
     return !!query.code;
   }
+
+  getNotebooks(): Promise<string[]> {
+    return this.getResource('/notebooks');
+  }
 }
