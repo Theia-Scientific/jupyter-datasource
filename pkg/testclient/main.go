@@ -52,8 +52,10 @@ func main() {
 		result, err := js.Query(expr)
 		if err != nil {
 			fmt.Printf("[ERROR] %s\n", expr, err.Error())
-		} else {
+		} else if result != nil {
 			fmt.Printf("'%s' => '%+v'\n", expr, string(*result))
+		} else {
+			fmt.Printf("'%s' => '%+v'\n", expr, result)
 		}
 		if strings.HasPrefix(expr, "%") || strings.HasPrefix(expr, "!") {
 			fmt.Printf("<restarting kernel>\n")
