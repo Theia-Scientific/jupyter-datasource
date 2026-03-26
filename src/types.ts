@@ -71,6 +71,21 @@ export interface KernelSpec {
   connections: number;
 }
 
+export interface KernelSpecification {
+  name: string;
+  spec: {
+    display_name: string;
+  };
+  resources: {
+    "logo-svg": string
+  };
+}
+
+export interface KernelSpecResponse {
+  default: string;
+  kernelspecs: { [key: string]: KernelSpecification };
+}
+
 /**
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */

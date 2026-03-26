@@ -69,6 +69,20 @@ func (jc *JupyterHttpClient) GetKernels() ([]KernelSpec, error) {
   return kernels, err
 }
 
+func (jc *JupyterHttpClient) GetKernelSpecs() ([]byte, error) {
+  req, err := jc.Get("jupyter/api/kernelspecs")
+  if err != nil {
+    return nil, err
+  }
+  res, err := http.DefaultClient.Do(req)
+  if err != nil {
+    return nil, err
+  }
+  defer res.Body.Close()
+  body, err := io.ReadAll(res.Body)
+  return body, err
+}
+
 type Cell struct {
 	CellType string `json:"cell_type"`
 	Source string `json:"source"`

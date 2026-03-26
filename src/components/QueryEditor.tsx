@@ -2,7 +2,7 @@ import React, { ChangeEvent, useState, useEffect } from 'react';
 import { InlineField, TextArea, Input, Combobox, ComboboxOption } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
-import { ConnectionType, KernelSpec, MyDataSourceOptions, MyQuery } from '../types';
+import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery } from '../types';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
@@ -13,8 +13,12 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({ ...query, kernelId: selectableValue.value });
   };
 
-  const onKernelTypeChange = (event: ChangeEvent<HTMLInputElement>) => {
+  const onKernelTypeChangeInfo = (event: ChangeEvent<HTMLInputElement>) => {
     onChange({ ...query, kernelType: event.target.value });
+  };
+
+  const onKernelTypeChangeAuto = (selectableValue: ComboboxOption<string>) => {
+    onChange({ ...query, kernelType: selectableValue.value });
   };
 
   const onConnectionInfoChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
@@ -71,6 +75,23 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource]);
 
+  let [kernelTypes, setKernelTypes] = useState<Array<ComboboxOption<string>>>([]);
+
+  useEffect(() => {
+    datasource.getKernelSpecs().then((response: KernelSpecResponse) => {
+      let kernelTypes: Array<ComboboxOption<string>> =
+        Object.entries(response.kernelspecs).map(([_, spec]) => ({
+          label: spec.spec.display_name,
+          value: spec.name
+        }));
+      setKernelTypes(kernelTypes);
+      if (query.kernelType === undefined) {
+        onKernelTypeChangeAuto({value: response.default});
+      }
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [datasource]);
+
   return (
     <>
       { connectionType === ConnectionType.Auto &&
@@ -84,13 +105,24 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           />
         </InlineField>
       }
-      { connectionType === ConnectionType.Auto &&
+      { connectionType === ConnectionType.Info &&
         <InlineField label="Kernel Type" labelWidth={16} tooltip="Kernel type (e.g. python3)">
           <Input
-            id="query-editor-kernel-type"
-            onChange={onKernelTypeChange}
+            id="query-editor-kernel-type-info"
+            onChange={onKernelTypeChangeInfo}
             value={query.kernelType}
             placeholder="python3"
+            width={40}
+          />
+        </InlineField>
+      }
+      { connectionType === ConnectionType.Auto &&
+        <InlineField label="Kernel Type" labelWidth={16} tooltip="Kernel type (e.g. python3)">
+          <Combobox
+            id="query-editor-kernel-type-auto"
+            options={kernelTypes}
+            onChange={onKernelTypeChangeAuto}
+            value={query.kernelType}
             width={40}
           />
         </InlineField>

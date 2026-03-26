@@ -87,6 +87,19 @@ func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 			})
 		}
 	}
+	case "kernelspecs": {
+		kernelspecs, err := p.httpClient.GetKernelSpecs()
+		if err != nil {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: http.StatusInternalServerError,
+			})
+		} else {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: http.StatusOK,
+				Body:   kernelspecs,
+			})
+		}
+	}
 	default: {
 		return sender.Send(&backend.CallResourceResponse{
 			Status: http.StatusNotFound,
