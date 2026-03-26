@@ -38,6 +38,9 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   };
 
   let [notebooks, setNotebooks] = useState<Array<ComboboxOption<string>>>([]);
+  if (notebooks.length > 0 && query.notebook === undefined) {
+    onChange({...query, notebook: ''});
+  }
 
   useEffect(() => {
     datasource.getNotebooks().then((response: string[]) => {
@@ -48,14 +51,13 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       const defaultOption = {label: "Literal code", description: "Enter code below", value: ''};
       notebooks.unshift(defaultOption);
       setNotebooks(notebooks);
-      if (query.notebook === undefined) {
-        onNotebookChange(defaultOption);
-      }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource]);
 
   let [kernels, setKernels] = useState<Array<ComboboxOption<string>>>([]);
+  if (kernels.length > 0 && query.kernelId === undefined) {
+    onChange({...query, kernelId: ''});
+  }
 
   useEffect(() => {
     datasource.getKernels().then((response: KernelSpec[]) => {
@@ -66,16 +68,14 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       const defaultOption = {label: "New Kernel", description: "Start a new kernel", value: ''};
       kernels.unshift(defaultOption);
       setKernels(kernels);
-      console.log(`kernels loaded. current kernel id: `, query.kernelId);
-      if (query.kernelId === undefined) { 
-        console.log("selecting default kernel option");
-        onKernelIdChange(defaultOption);
-      }
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource]);
 
   let [kernelTypes, setKernelTypes] = useState<Array<ComboboxOption<string>>>([]);
+  let [defaultKernelType, setDefaultKernelType] = useState<string|undefined>(undefined);
+  if (defaultKernelType !== undefined && query.kernelType === undefined) {
+    onChange({...query, kernelType: defaultKernelType});
+  }
 
   useEffect(() => {
     datasource.getKernelSpecs().then((response: KernelSpecResponse) => {
@@ -85,9 +85,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           value: spec.name
         }));
       setKernelTypes(kernelTypes);
-      if (query.kernelType === undefined) {
-        onKernelTypeChangeAuto({value: response.default});
-      }
+      setDefaultKernelType(response.default);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource]);
