@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useState, useEffect } from 'react';
-import { InlineField, TextArea, Input, Select } from '@grafana/ui';
-import { QueryEditorProps, SelectableValue } from '@grafana/data';
+import { InlineField, TextArea, Input, Combobox, ComboboxOption } from '@grafana/ui';
+import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { ConnectionType, MyDataSourceOptions, MyQuery } from '../types';
 
@@ -9,7 +9,7 @@ type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) {
   const { connectionType } = datasource.options;
 
-  const onKernelIdChange = (selectableValue: SelectableValue<string>) => {
+  const onKernelIdChange = (selectableValue: ComboboxOption<string>) => {
     onChange({ ...query, kernelId: selectableValue.value });
   };
 
@@ -21,7 +21,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({ ...query, connectionInfo: event.target.value });
   };
 
-  const onNotebookChange = (selectableValue: SelectableValue<string>) => {
+  const onNotebookChange = (selectableValue: ComboboxOption<string>) => {
     onChange({ ...query, notebook: selectableValue.value });
   };
 
@@ -33,24 +33,24 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({ ...query, vars: event.target.value });
   };
 
-  let [notebooks, setNotebooks] = useState<Array<SelectableValue<string>>>([
-    {label: "Loading..."},
+  let [notebooks, setNotebooks] = useState<Array<ComboboxOption<string>>>([
+    {label: "Loading...", value: ''},
   ]);
 
   useEffect(() => {
     datasource.getNotebooks().then((response: string[]) => {
-      let notebooks: Array<SelectableValue<string>> = response.map((s) => ({
+      let notebooks: Array<ComboboxOption<string>> = response.map((s) => ({
         label: s,
         value: s,
       }));
-      notebooks.unshift({label: "Literal code", description: "Enter code below"});
+      notebooks.unshift({label: "Literal code", description: "Enter code below", value: ''});
       setNotebooks(notebooks);
     });
   }, [datasource]);
 
   // @TEMP
   let kernels = [
-    {label: "New Kernel", description: "Start a new kernel"},
+    {label: "New Kernel", description: "Start a new kernel", value: ''},
     {label: "python3 (foo)", value: 'foo'},
     {label: "python3 (bar)", value: 'bar'},
   ];
@@ -59,7 +59,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     <>
       { connectionType === ConnectionType.Auto &&
         <InlineField label="Kernel ID" labelWidth={16} tooltip="Kernel ID for executing query">
-          <Select
+          <Combobox
             id="query-editor-kernel-id"
             options={kernels}
             onChange={onKernelIdChange}
@@ -93,7 +93,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         </InlineField>
       }
       <InlineField label="Notebook" labelWidth={16} tooltip="Notebook to run">
-        <Select
+        <Combobox
           id="query-editor-notebook"
           options={notebooks}
           onChange={onNotebookChange}

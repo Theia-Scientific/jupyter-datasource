@@ -1,6 +1,6 @@
 import React, { ChangeEvent } from 'react';
-import { InlineField, Input, Select } from '@grafana/ui';
-import { DataSourcePluginOptionsEditorProps, SelectableValue } from '@grafana/data';
+import { InlineField, Input, Combobox, ComboboxOption } from '@grafana/ui';
+import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { AuthType, ConnectionType, Method, MyDataSourceOptions, MySecureJsonData } from '../types';
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData> {}
@@ -25,22 +25,22 @@ export function ConfigEditor(props: Props) {
   const { onOptionsChange, options } = props;
   const { jsonData } = options;
 
-  const onConnectionTypeChange = (selectableValue: SelectableValue<ConnectionType>) => {
+  const onConnectionTypeChange = (selectableValue: ComboboxOption<ConnectionType>) => {
     onOptionsChange({
       ...options,
       jsonData: {
         ...jsonData,
-        connectionType: selectableValue.value ?? ConnectionType.Info,
+        connectionType: selectableValue.value,
       },
     });
   };
 
-  const onAuthTypeChange = (selectableValue: SelectableValue<AuthType>) => {
+  const onAuthTypeChange = (selectableValue: ComboboxOption<AuthType>) => {
     onOptionsChange({
       ...options,
       jsonData: {
         ...jsonData,
-        authType: selectableValue.value ?? AuthType.None,
+        authType: selectableValue.value,
       },
     });
   };
@@ -55,12 +55,12 @@ export function ConfigEditor(props: Props) {
     });
   };
 
-  const onMethodChange = (selectableValue: SelectableValue<Method>) => {
+  const onMethodChange = (selectableValue: ComboboxOption<Method>) => {
     onOptionsChange({
       ...options,
       jsonData: {
         ...jsonData,
-        fetchMethod: selectableValue.value ?? Method.Get,
+        fetchMethod: selectableValue.value,
       },
     });
   };
@@ -88,7 +88,7 @@ export function ConfigEditor(props: Props) {
   return (
     <>
       <InlineField label="Connection Type" labelWidth={20} interactive tooltip={'Type of connection'}>
-        <Select
+        <Combobox
           id="config-editor-conn-type"
           options={CONN_OPTIONS}
           onChange={onConnectionTypeChange}
@@ -98,7 +98,7 @@ export function ConfigEditor(props: Props) {
       </InlineField>
       { jsonData.connectionType === ConnectionType.Auto &&
         <InlineField label="Auth Type" labelWidth={20} interactive tooltip={'Type of authentication'}>
-          <Select
+          <Combobox
             id="config-editor-auth-type"
             options={AUTH_OPTIONS}
             onChange={onAuthTypeChange}
@@ -131,7 +131,7 @@ export function ConfigEditor(props: Props) {
       }
       { jsonData.connectionType === ConnectionType.Auto && jsonData.authType === AuthType.Fetch &&
         <InlineField label="Method" labelWidth={20} interactive tooltip={'HTTP method for fetching the Jupyterlab token'}>
-          <Select
+          <Combobox
             id="config-editor-method"
             options={METHOD_OPTIONS}
             onChange={onMethodChange}
