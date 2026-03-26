@@ -154,7 +154,6 @@ func (d *Datasource) Dispose() {
 
 func (d *Datasource) UpdateDatasourceFromQuery(req *backend.QueryDataRequest) error {
 	// queries don't change datasource
-	// @TODO this might be where to start kernels?
 	return nil
 }
 
@@ -213,9 +212,9 @@ func (d *Datasource) createSession(pctx context.Context, settings *InstanceSetti
 			if kt == "" {
 				kt = "python3"
 			}
-			logger.Debug(fmt.Sprintf("no kernelid %v, creating %v", qm.KernelId, qm.KernelType))
+			logger.Debug(fmt.Sprintf("creating kernel of type '%v'", kt))
 			// create a kernel of qm.KernelType
-			ks, err := d.httpClient.CreateKernel(qm.KernelType)
+			ks, err := d.httpClient.CreateKernel(kt)
 			if err != nil {
 				return nil, err
 			}
