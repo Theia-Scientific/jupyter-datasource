@@ -108,26 +108,30 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           />
         </InlineField>
       }
-      <InlineField label="Notebook" labelWidth={16} tooltip="Notebook to run">
-        <Combobox
-          id="query-editor-notebook"
-          options={notebooks}
-          onChange={onNotebookChange}
-          value={query.notebook}
-          width={40}
-        />
-      </InlineField>
-      <InlineField label="Code" labelWidth={16} tooltip="Code to run">
-        <TextArea
-          id="query-editor-code"
-          onChange={onCodeChange}
-          value={query.code}
-          required
-          placeholder="Enter python code"
-          width={40}
-          rows={12}
-        />
-      </InlineField>
+      { connectionType === ConnectionType.Auto &&
+        <InlineField label="Notebook" labelWidth={16} tooltip="Notebook to run">
+          <Combobox
+            id="query-editor-notebook"
+            options={notebooks}
+            onChange={onNotebookChange}
+            value={query.notebook}
+            width={40}
+          />
+        </InlineField>
+      }
+      { (connectionType === ConnectionType.Info || query.notebook === "" || query.notebook === undefined) &&
+        <InlineField label="Code" labelWidth={16} tooltip="Code to run">
+          <TextArea
+            id="query-editor-code"
+            onChange={onCodeChange}
+            value={query.code}
+            required
+            placeholder="Enter python code"
+            width={40}
+            rows={12}
+          />
+        </InlineField>
+      }
       <InlineField label="Variables" labelWidth={16} tooltip="Variables to bind">
         <TextArea
           id="query-editor-variables"
