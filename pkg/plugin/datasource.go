@@ -70,6 +70,28 @@ func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 			})
 		}
 	}
+	case "kernels": {
+		kernels, err := p.httpClient.GetKernels()
+		var jsonData []byte
+		if err == nil {
+			jsonData, err = json.Marshal(kernels)
+		}
+		if err != nil {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: http.StatusInternalServerError,
+			})
+		} else {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: http.StatusOK,
+				Body:   jsonData,
+			})
+		}
+	}
+	default: {
+		return sender.Send(&backend.CallResourceResponse{
+			Status: http.StatusNotFound,
+		})
+	}
 	}
 	return nil
 }

@@ -63,6 +63,14 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
   jupyterUrl?: string;
 }
 
+export interface KernelSpec {
+  id: string;
+  name: string;
+  last_activity: string;
+  execution_state: string;
+  connections: number;
+}
+
 /**
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */

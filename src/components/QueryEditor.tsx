@@ -2,7 +2,7 @@ import React, { ChangeEvent, useState, useEffect } from 'react';
 import { InlineField, TextArea, Input, Combobox, ComboboxOption } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
-import { ConnectionType, MyDataSourceOptions, MyQuery } from '../types';
+import { ConnectionType, KernelSpec, MyDataSourceOptions, MyQuery } from '../types';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
@@ -48,12 +48,20 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     });
   }, [datasource]);
 
-  // @TEMP
-  let kernels = [
-    {label: "New Kernel", description: "Start a new kernel", value: ''},
-    {label: "python3 (foo)", value: 'foo'},
-    {label: "python3 (bar)", value: 'bar'},
-  ];
+  let [kernels, setKernels] = useState<Array<ComboboxOption<string>>>([
+    {label: "Loading...", value: ''},
+  ]);
+
+  useEffect(() => {
+    datasource.getKernels().then((response: KernelSpec[]) => {
+      let kernels: Array<ComboboxOption<string>> = response.map((ks) => ({
+        label: `${ks.name} (${ks.id})`,
+        value: ks.id,
+      }));
+      kernels.unshift({label: "New Kernel", description: "Start a new kernel", value: ''});
+      setKernels(kernels);
+    });
+  }, [datasource]);
 
   return (
     <>

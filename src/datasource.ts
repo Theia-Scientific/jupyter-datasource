@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings, CoreApp, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
-import { MyQuery, MyDataSourceOptions, DEFAULT_QUERY } from './types';
+import { KernelSpec, MyQuery, MyDataSourceOptions, DEFAULT_QUERY } from './types';
 
 export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptions> {
   options: MyDataSourceOptions;
@@ -29,5 +29,9 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
 
   getNotebooks(): Promise<string[]> {
     return this.getResource('/notebooks');
+  }
+
+  getKernels(): Promise<KernelSpec[]> {
+    return this.getResource('/kernels');
   }
 }
