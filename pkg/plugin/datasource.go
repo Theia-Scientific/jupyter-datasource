@@ -200,10 +200,10 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 }
 
 type queryModel struct {
-  KernelId *string `json:"kernelId"`
+  KernelId string `json:"kernelId"`
   KernelType string `json:"kernelType"`
   ConnectionInfo *string `json:"connectionInfo"`
-  Notebook *string `json:"notebook"`
+  Notebook string `json:"notebook"`
   Code string `json:"code"`
   Vars string `json:"vars"`
 }
@@ -219,10 +219,10 @@ func (d *Datasource) createSession(pctx context.Context, settings *InstanceSetti
 	wrapped := WrappedLogger{logger: logger}
 	if settings.ConnectionType == "AUTO" {
 		logger.Debug("AUTO type")
-		if qm.KernelId != nil {
+		if qm.KernelId != "" {
 			logger.Debug(fmt.Sprintf("given kernelid %v", qm.KernelId))
 			// we have an assigned kernel id - connect to that.
-			ci, err := d.httpClient.GetConnectionInfo(*qm.KernelId)
+			ci, err := d.httpClient.GetConnectionInfo(qm.KernelId)
 			if err != nil {
 				return nil, err
 			}
@@ -265,10 +265,10 @@ func (d *Datasource) createSession(pctx context.Context, settings *InstanceSetti
 
 func sessionKey(settings *InstanceSettings, qm *queryModel) string {
 	if settings.ConnectionType == "AUTO" {
-		if qm.KernelId != nil {
-			return *qm.KernelId
-		} else if qm.Notebook != nil {
-			return *qm.Notebook
+		if qm.KernelId != "" {
+			return qm.KernelId
+		} else if qm.Notebook != "" {
+			return qm.Notebook
 		} else {
 			return qm.Code
 		}
@@ -303,8 +303,8 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	sessionState, foundSession := d.sessions[sessionKey]
 
 	code := qm.Code
-	if settings.ConnectionType == "AUTO" && qm.Notebook != nil {
-		code, err = d.httpClient.GetNotebook(*qm.Notebook)
+	if settings.ConnectionType == "AUTO" && qm.Notebook != "" {
+		code, err = d.httpClient.GetNotebook(qm.Notebook)
 		if err != nil {
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("err fetching notebook %s: %v", qm.Notebook, err.Error()))
 		}

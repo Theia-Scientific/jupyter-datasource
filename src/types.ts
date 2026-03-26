@@ -2,10 +2,10 @@ import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 export interface MyQuery extends DataQuery {
-  kernelId?: string;
+  kernelId: string;
   kernelType: string;
   connectionInfo?: string;
-  notebook?: string;
+  notebook: string;
   code: string;
   vars: string;
 }
