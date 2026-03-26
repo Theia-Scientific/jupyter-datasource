@@ -280,8 +280,13 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	sessionKey := sessionKey(&settings, &qm)
 	sessionState, foundSession := d.sessions[sessionKey]
 
-	// @TODO handle notebooks
 	code := qm.Code
+	if settings.ConnectionType == "AUTO" && qm.Notebook != nil {
+		code, err = d.httpClient.GetNotebook(*qm.Notebook)
+		if err != nil {
+			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("err fetching notebook %s: %v", qm.Notebook, err.Error()))
+		}
+	}
 
 	if !foundSession {
 		logger.Debug("session not found, creating")

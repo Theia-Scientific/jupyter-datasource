@@ -24,7 +24,7 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
 
   filterQuery(query: MyQuery): boolean {
     // if no query has been provided, prevent the query from being executed
-    return !!query.code;
+    return true;
   }
 
   getNotebooks(): Promise<string[]> {
