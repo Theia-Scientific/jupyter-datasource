@@ -33,9 +33,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({ ...query, vars: event.target.value });
   };
 
-  let [notebooks, setNotebooks] = useState<Array<ComboboxOption<string>>>([
-    {label: "Loading...", value: ''},
-  ]);
+  let [notebooks, setNotebooks] = useState<Array<ComboboxOption<string>>>([]);
 
   useEffect(() => {
     datasource.getNotebooks().then((response: string[]) => {
@@ -43,14 +41,17 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         label: s,
         value: s,
       }));
-      notebooks.unshift({label: "Literal code", description: "Enter code below", value: ''});
+      const defaultOption = {label: "Literal code", description: "Enter code below", value: ''};
+      notebooks.unshift(defaultOption);
       setNotebooks(notebooks);
+      if (query.notebook === undefined) {
+        onNotebookChange(defaultOption);
+      }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource]);
 
-  let [kernels, setKernels] = useState<Array<ComboboxOption<string>>>([
-    {label: "Loading...", value: ''},
-  ]);
+  let [kernels, setKernels] = useState<Array<ComboboxOption<string>>>([]);
 
   useEffect(() => {
     datasource.getKernels().then((response: KernelSpec[]) => {
@@ -58,9 +59,16 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         label: `${ks.name} (${ks.id})`,
         value: ks.id,
       }));
-      kernels.unshift({label: "New Kernel", description: "Start a new kernel", value: ''});
+      const defaultOption = {label: "New Kernel", description: "Start a new kernel", value: ''};
+      kernels.unshift(defaultOption);
       setKernels(kernels);
+      console.log(`kernels loaded. current kernel id: `, query.kernelId);
+      if (query.kernelId === undefined) { 
+        console.log("selecting default kernel option");
+        onKernelIdChange(defaultOption);
+      }
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource]);
 
   return (
