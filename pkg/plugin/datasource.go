@@ -35,10 +35,15 @@ type InstanceSettings struct {
 	JupyterUrl       *string `json:"jupyterUrl"`
 }
 
+type SessionState struct {
+	session *jupyterclient.JupyterSession
+	code string
+}
+
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
 type Datasource struct {
-	sessions map[string]*jupyterclient.JupyterSession
+	sessions map[string]SessionState
 	httpClient *jupyterclient.JupyterHttpClient
 	context context.Context
 	cancel context.CancelFunc
@@ -133,7 +138,7 @@ func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInsta
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Datasource{
-		sessions: make(map[string]*jupyterclient.JupyterSession),
+		sessions: make(map[string]SessionState),
 		httpClient: httpClient,
 		context: ctx,
 		cancel: cancel,
@@ -273,37 +278,39 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	logger.Debug(fmt.Sprintf("got query: %v", qm))
 
 	// first, find/create the session
-	var session *jupyterclient.JupyterSession = nil
 	sessionKey := sessionKey(&settings, &qm)
-	session = d.sessions[sessionKey]
+	sessionState, foundSession := d.sessions[sessionKey]
 
 	// @TODO handle notebooks
 	code := qm.Code
 
-	if session == nil {
+	if !foundSession {
 		logger.Debug("session not found, creating")
-		newSession, err := d.createSession(d.context, &settings, &qm, logger)
+		sessionState.session, err = d.createSession(d.context, &settings, &qm, logger)
 		if err != nil {
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
-		d.sessions[sessionKey] = newSession
-		session = newSession
-
-		logger.Debug("Initializing session")
-		err = session.Initialize(code)
-		if err != nil {
-			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
-		}
-		logger.Debug("Initialized")
+		d.sessions[sessionKey] = sessionState
 	} else {
 		logger.Debug("session found")
 	}
 
+	if code != sessionState.code {
+		logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
+		err = sessionState.session.Initialize(code)
+		if err != nil {
+			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
+		}
+
+		logger.Debug("Initialized")
+		sessionState.code = code
+		d.sessions[sessionKey] = sessionState
+	}
+
 	// got a session now
-	logger.Debug(fmt.Sprintf("session: %v", session))
 	queryText := fmt.Sprintf("%s\n%s", qm.Vars, code)
-	result, err := session.Query(queryText)
+	result, err := sessionState.session.Query(queryText)
 	if err != nil {
 		switch err.(type) {
 		case jupyterclient.ErrorContent: {
