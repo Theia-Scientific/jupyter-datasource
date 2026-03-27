@@ -26,6 +26,7 @@ type replyMsg struct {id string; res resultMsg}
 type JupyterSession struct {
 	requests chan requestMsg
 	resets chan(chan resultMsg)
+	replies chan replyMsg
 	connectionInfo *ConnectionInfo
 	ctx context.Context
 	group *errgroup.Group
@@ -87,6 +88,7 @@ func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) 
 	rv := &JupyterSession{
 		requests: make(chan requestMsg),
 		resets: make(chan (chan resultMsg)),
+		replies: make(chan replyMsg),
 		connectionInfo: ci,
 		ctx: ctx,
 		logger: logger,
@@ -96,9 +98,8 @@ func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) 
 
 func (js *JupyterSession) Start() error {
 	js.group, js.groupCtx = errgroup.WithContext(js.ctx)
-	replies := make(chan replyMsg)
-	js.group.Go(func() error { return js.requestor(replies) })
-	js.group.Go(func() error { return js.listener(replies) })
+	js.group.Go(func() error { return js.requestor() })
+	js.group.Go(func() error { return js.listener() })
 
 	// roundtrip once to detect errors
 	if _, err := js.execute("None"); err != nil {
@@ -169,7 +170,7 @@ func (js *JupyterSession) Initialize(code string) error {
 	return nil
 }
 
-func (js *JupyterSession) requestor(replies chan replyMsg) error {
+func (js *JupyterSession) requestor() error {
 	liveRequests := make(map[string]chan resultMsg)
 	zmqId := NewId()
 	sessionId := NewId()
@@ -213,7 +214,7 @@ func (js *JupyterSession) requestor(replies chan replyMsg) error {
 			}
 			liveRequests[msgId] = request.resultChannel
 		}
-		case reply := <- replies: {
+		case reply := <- js.replies: {
 			replyChannel, ok := liveRequests[reply.id]
 			if ok {
 				replyChannel <- reply.res
@@ -230,7 +231,7 @@ func (js *JupyterSession) requestor(replies chan replyMsg) error {
 	}
 }
 
-func (js *JupyterSession) listener(replies chan replyMsg) error {
+func (js *JupyterSession) listener() error {
   sub := zmq.NewSub(js.groupCtx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
   var ioPubAddr = fmt.Sprintf("tcp://%s:%d", js.connectionInfo.IP, js.connectionInfo.IOPubPort)
   err := sub.Dial(ioPubAddr)
@@ -318,13 +319,13 @@ func (js *JupyterSession) listener(replies chan replyMsg) error {
 				result, ok := results[parentHeaderParsed.MsgId]
 				if ok {
 					// got a result
-					replies <- replyMsg{id: parentHeaderParsed.MsgId, res: result}
+					js.replies <- replyMsg{id: parentHeaderParsed.MsgId, res: result}
 					delete(results, parentHeaderParsed.MsgId)
 				} else {
 					// computation terminated without result
 					// (like we did a print('something')
 					// just return a null
-					replies <- replyMsg{id: parentHeaderParsed.MsgId, res: resultMsg{val: nil, err: nil}}
+					js.replies <- replyMsg{id: parentHeaderParsed.MsgId, res: resultMsg{val: nil, err: nil}}
 				}
 			}
 		}
