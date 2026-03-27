@@ -97,8 +97,8 @@ func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) 
 func (js *JupyterSession) Start() error {
 	js.group, js.groupCtx = errgroup.WithContext(js.ctx)
 	replies := make(chan replyMsg)
-	js.group.Go(func() error { return requestor(js.groupCtx, js.connectionInfo, js.requests, replies, js.resets, js.logger) })
-	js.group.Go(func() error { return listener(js.groupCtx, js.connectionInfo, replies, js.logger) })
+	js.group.Go(func() error { return js.requestor(replies) })
+	js.group.Go(func() error { return js.listener(replies) })
 
 	// roundtrip once to detect errors
 	if _, err := js.execute("None"); err != nil {
@@ -169,17 +169,17 @@ func (js *JupyterSession) Initialize(code string) error {
 	return nil
 }
 
-func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg, replies chan replyMsg, resets chan(chan resultMsg), logger Logger) error {
+func (js *JupyterSession) requestor(replies chan replyMsg) error {
 	liveRequests := make(map[string]chan resultMsg)
 	zmqId := NewId()
 	sessionId := NewId()
-	shell, err := makeJupyterShellSocket(ctx, ci, zmqId, sessionId)
+	shell, err := makeJupyterShellSocket(js.groupCtx, js.connectionInfo, zmqId, sessionId)
   if err != nil {
 		return err
   }
 	defer shell.Close()
 
-	control, err := makeJupyterControlSocket(ctx, ci, zmqId, sessionId)
+	control, err := makeJupyterControlSocket(js.groupCtx, js.connectionInfo, zmqId, sessionId)
   if err != nil {
 		return err
   }
@@ -187,7 +187,7 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 
 	for {
 		select {
-		case resetChannel := <- resets: {
+		case resetChannel := <- js.resets: {
 			content, err := json.Marshal(ShutdownRequestContent{
 				Restart: true,
 			})
@@ -200,7 +200,7 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 			}
 			liveRequests[msgId] = resetChannel
 		}
-		case request := <- requests: {
+		case request := <- js.requests: {
 			content, err := json.Marshal(ExecuteRequestContent{
 				Code: request.code,
 			})
@@ -220,9 +220,9 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 			}
 			delete(liveRequests, reply.id)
 		}
-		case <-ctx.Done(): {
+		case <-js.groupCtx.Done(): {
 			for _, resultChannel := range liveRequests {
-				resultChannel <- resultMsg{val: nil, err: context.Cause(ctx)}
+				resultChannel <- resultMsg{val: nil, err: context.Cause(js.groupCtx)}
 			}
 			return nil
 		}
@@ -230,9 +230,9 @@ func requestor(ctx context.Context, ci *ConnectionInfo, requests chan requestMsg
 	}
 }
 
-func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, logger Logger) error {
-  sub := zmq.NewSub(ctx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
-  var ioPubAddr = fmt.Sprintf("tcp://%s:%d", ci.IP, ci.IOPubPort)
+func (js *JupyterSession) listener(replies chan replyMsg) error {
+  sub := zmq.NewSub(js.groupCtx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
+  var ioPubAddr = fmt.Sprintf("tcp://%s:%d", js.connectionInfo.IP, js.connectionInfo.IOPubPort)
   err := sub.Dial(ioPubAddr)
   if err != nil {
 		return err
@@ -247,7 +247,7 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 
 	for {
 		select {
-		case <-ctx.Done():
+		case <-js.groupCtx.Done():
 			return nil
 		default:
 		}
@@ -257,7 +257,7 @@ func listener(ctx context.Context, ci *ConnectionInfo, replies chan replyMsg, lo
 			if err == context.Canceled {
 				return nil
 			} else if err == io.EOF {
-				logger.Log("eof, aborting in hope of reconnection")
+				js.logger.Log("eof, aborting in hope of reconnection")
 				return err
 			} else {
 				return err
