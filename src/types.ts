@@ -21,10 +21,11 @@ import datetime
 import random
 from pytz import timezone
 from IPython.display import JSON
-base = datetime.datetime.now(timezone("EST"))
+from math import sin, cos, pi
+base = datetime.datetime.now(timezone(TZ))
 timestamps = [(base - datetime.timedelta(seconds=i)).isoformat() for i in range(RANGE_MAX)]
-values0 = [random.random() * RANGE_MAX for i in range(RANGE_MAX)]
-values1 = [random.random() * RANGE_MAX for i in range(RANGE_MAX)]
+values0 = [sin(i/RANGE_MAX * FREQ0 * pi) for i in range(RANGE_MAX)]
+values1 = [cos(i/RANGE_MAX * FREQ1 * pi) for i in range(RANGE_MAX)]
 
 JSON([
     {"name": "time", "values": timestamps},
@@ -32,6 +33,9 @@ JSON([
     {"name": "values1", "values": values1}
 ])`,
   vars: `RANGE_MAX = 1000
+FREQ0 = 7
+FREQ1 = 13
+TZ = "$__timezone"
 `,
 };
 
