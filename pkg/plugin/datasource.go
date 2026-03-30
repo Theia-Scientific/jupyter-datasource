@@ -369,7 +369,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		Values []json.RawMessage `json:"values"`
 	}
 	var rows []row
-	err = json.Unmarshal(*result, &rows)
+	err = json.Unmarshal(*result.Val, &rows)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("result unmarshal: %v", err.Error()))
 	}
@@ -378,6 +378,14 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	// For an overview on data frames and how grafana handles them:
 	// https://grafana.com/developers/plugin-tools/introduction/data-frames
 	frame := data.NewFrame("response")
+	if frame.Meta == nil {
+		frame.Meta = &data.FrameMeta{}
+	}
+	frame.Meta.Custom = map[string]string{
+		"stdout": result.Stdout,
+		"stderr": result.Stderr,
+	}
+
 	for _, row := range rows {
 		frame.Fields = append(frame.Fields, data.NewField(row.Name, nil, row.Values))
 	}

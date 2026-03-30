@@ -19,9 +19,28 @@ type Logger interface {
 
 type Callback func(string)
 
-type resultMsg struct {val *json.RawMessage; err error}
-type requestMsg struct {code string; resultChannel chan resultMsg}
-type replyMsg struct {id string; res resultMsg}
+type resultMsg struct {
+	val *json.RawMessage
+	stdout string
+	stderr string
+	err error
+}
+
+type Result struct {
+	Val *json.RawMessage
+	Stdout string
+	Stderr string
+}
+
+type requestMsg struct {
+	code string
+	resultChannel chan resultMsg
+}
+
+type replyMsg struct {
+	id string
+	res resultMsg
+}
 
 type JupyterSession struct {
 	requests chan requestMsg
@@ -59,6 +78,11 @@ type ErrorContent struct {
 	EName string `json:"ename"`
 	EValue string `json:"evalue"`
 	Traceback []string `json:"traceback"`
+}
+
+type StreamContent struct {
+	Name string `json:"name"`
+	Text string `json:"text"`
 }
 
 // I want ErrorContent to be useable as a go error, so:
@@ -108,13 +132,13 @@ func (js *JupyterSession) Start() error {
 	return nil
 }
 
-func (js *JupyterSession) execute(code string) (*json.RawMessage, error) {
+func (js *JupyterSession) execute(code string) (Result, error) {
 	// if the session is already terminated, complain
 	if err := context.Cause(js.groupCtx); err != nil {
 		if err == io.EOF {
 			js.Start()
 		} else {
-			return nil, err
+			return Result{}, err
 		}
 	}
 
@@ -126,10 +150,10 @@ func (js *JupyterSession) execute(code string) (*json.RawMessage, error) {
 		// retry
 		return js.execute(code)
 	}
-	return res.val, res.err
+	return Result{Val: res.val, Stdout: res.stdout, Stderr: res.stderr}, res.err
 }
 
-func (js *JupyterSession) Query(code string) (*json.RawMessage, error) {
+func (js *JupyterSession) Query(code string) (Result, error) {
 	lines := strings.Split(code, "\n")
 	nonSysLines := slices.DeleteFunc(lines, func(expr string) bool {
 		return strings.HasPrefix(expr, "%") || strings.HasPrefix(expr, "!")
@@ -223,7 +247,7 @@ func (js *JupyterSession) requestor() error {
 		}
 		case <-js.groupCtx.Done(): {
 			for _, resultChannel := range liveRequests {
-				resultChannel <- resultMsg{val: nil, err: context.Cause(js.groupCtx)}
+				resultChannel <- resultMsg{err: context.Cause(js.groupCtx)}
 			}
 			return nil
 		}
@@ -291,6 +315,7 @@ func (js *JupyterSession) listener() error {
 			return err
 		}
 
+		// js.logger.Log(fmt.Sprintf("received %s message: %+v", headerParsed.MsgType, string(content)))
 		if headerParsed.MsgType == "execute_result" {
 			var contentParsed ExecuteResultContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
@@ -301,14 +326,33 @@ func (js *JupyterSession) listener() error {
 			if !ok {
 				val = contentParsed.Data["text/plain"]
 			}
-			results[parentHeaderParsed.MsgId] = resultMsg{val: &val, err:nil}
+			msg := results[parentHeaderParsed.MsgId]
+			msg.val = &val
+			results[parentHeaderParsed.MsgId] = msg
 		} else if headerParsed.MsgType == "error" {
 			var errorParsed ErrorContent
 			err = json.Unmarshal([]byte(content), &errorParsed)
 			if err != nil {
 				return err
 			}
-			results[parentHeaderParsed.MsgId] = resultMsg{val: nil, err: errorParsed}
+			msg := results[parentHeaderParsed.MsgId]
+			msg.err = errorParsed
+			results[parentHeaderParsed.MsgId] = msg
+		} else if headerParsed.MsgType == "stream" {
+			var streamParsed StreamContent
+			err = json.Unmarshal([]byte(content), &streamParsed)
+			if err != nil {
+				return err
+			}
+			msg := results[parentHeaderParsed.MsgId]
+			if streamParsed.Name == "stdout" {
+				msg.stdout += streamParsed.Text
+			} else if streamParsed.Name == "stderr" {
+				msg.stderr += streamParsed.Text
+			} else {
+				js.logger.Log(fmt.Sprintf("unknown stream '%s' in stream message", streamParsed.Name))
+			}
+			results[parentHeaderParsed.MsgId] = msg
 		} else if headerParsed.MsgType == "status" {
 			var contentParsed StatusContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
@@ -325,7 +369,7 @@ func (js *JupyterSession) listener() error {
 					// computation terminated without result
 					// (like we did a print('something')
 					// just return a null
-					js.replies <- replyMsg{id: parentHeaderParsed.MsgId, res: resultMsg{val: nil, err: nil}}
+					js.replies <- replyMsg{id: parentHeaderParsed.MsgId, res: resultMsg{}}
 				}
 			}
 		}
