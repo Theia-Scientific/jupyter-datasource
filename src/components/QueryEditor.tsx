@@ -133,8 +133,8 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
             value={query.connectionInfo}
             required
             placeholder="Enter connection info"
-            width={40}
             rows={12}
+            cols={80}
           />
         </InlineField>
       }
@@ -157,8 +157,8 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
             value={query.code}
             required
             placeholder="Enter python code"
-            width={40}
             rows={12}
+            cols={80}
           />
         </InlineField>
       }
@@ -169,8 +169,8 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           value={query.vars}
           required
           placeholder="Enter python code (Grafana variables will be substituted)"
-          width={40}
           rows={12}
+          cols={80}
         />
       </InlineField>
     </>
