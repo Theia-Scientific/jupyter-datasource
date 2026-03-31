@@ -138,6 +138,17 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           />
         </InlineField>
       }
+      <InlineField label="Variables" labelWidth={16} tooltip="Variables to bind">
+        <TextArea
+          id="query-editor-variables"
+          onChange={onVariablesChange}
+          value={query.vars}
+          required
+          placeholder="Enter python code (Grafana variables will be substituted)"
+          rows={12}
+          cols={80}
+        />
+      </InlineField>
       { connectionType === ConnectionType.Auto &&
         <InlineField label="Notebook" labelWidth={16} tooltip="Notebook to run">
           <Combobox
@@ -162,17 +173,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           />
         </InlineField>
       }
-      <InlineField label="Variables" labelWidth={16} tooltip="Variables to bind">
-        <TextArea
-          id="query-editor-variables"
-          onChange={onVariablesChange}
-          value={query.vars}
-          required
-          placeholder="Enter python code (Grafana variables will be substituted)"
-          rows={12}
-          cols={80}
-        />
-      </InlineField>
     </>
   );
 }
