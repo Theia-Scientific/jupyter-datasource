@@ -9,6 +9,8 @@ datasources:
     version: 1
     editable: true
     jsonData:
-      path: '/resources'
-    secureJsonData:
-      apiKey: 'api-key'
+      connectionType: AUTO
+      authType: FETCH
+      fetchRoute: http://localhost:7654/tokens/jupyter
+      fetchMethod: PUT
+      jupyterUrl: http://localhost:8888
