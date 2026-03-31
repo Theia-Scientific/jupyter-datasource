@@ -349,6 +349,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		}
 
 		logger.Debug("Initialized")
+		sessionState.session.Execute("from IPython.display import JSON")
 		sessionState.code = code
 		d.sessions[sessionKey] = sessionState
 	}

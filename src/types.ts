@@ -43,7 +43,6 @@ export const DEFAULT_QUERY: Partial<MyQuery> = {
 import datetime
 import random
 from pytz import timezone
-from IPython.display import JSON
 from math import sin, cos, pi
 base = datetime.datetime.now(timezone(TZ))
 timestamps = [(base - datetime.timedelta(seconds=i)).isoformat() for i in range(RANGE_MAX)]

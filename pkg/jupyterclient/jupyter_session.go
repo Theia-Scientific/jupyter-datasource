@@ -126,13 +126,13 @@ func (js *JupyterSession) Start() error {
 	js.group.Go(func() error { return js.listener() })
 
 	// roundtrip once to detect errors
-	if _, err := js.execute("None"); err != nil {
+	if _, err := js.Execute("None"); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (js *JupyterSession) execute(code string) (Result, error) {
+func (js *JupyterSession) Execute(code string) (Result, error) {
 	// if the session is already terminated, complain
 	if err := context.Cause(js.groupCtx); err != nil {
 		if err == io.EOF {
@@ -148,7 +148,7 @@ func (js *JupyterSession) execute(code string) (Result, error) {
 	res := <- resultChannel
 	if res.err == ShutdownError {
 		// retry
-		return js.execute(code)
+		return js.Execute(code)
 	}
 	return Result{Val: res.val, Stdout: res.stdout, Stderr: res.stderr}, res.err
 }
@@ -161,7 +161,7 @@ func (js *JupyterSession) Query(code string) (Result, error) {
 	code = strings.Join(nonSysLines, "\n")
 	js.logger.Log(fmt.Sprintf("query code: '%+v'", code))
 
-	return js.execute(code)
+	return js.Execute(code)
 }
 
 func (js *JupyterSession) Restart() {
@@ -185,7 +185,7 @@ func (js *JupyterSession) Initialize(code string) error {
 	if len(sysLines) > 0 {
 		sys := strings.Join(sysLines, "\n")
 		js.logger.Log(fmt.Sprintf("Initialization code: %+v", sys))
-		_, err := js.execute(sys)
+		_, err := js.Execute(sys)
 		if err != nil {
 			return err
 		}
