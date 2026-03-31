@@ -379,6 +379,10 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		}
 	}
 
+	if result.Val == nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, "No result returned from query")
+	}
+
 	type row struct {
 		Name string `json:"name"`
 		Values []json.RawMessage `json:"values"`
