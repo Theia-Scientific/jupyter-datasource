@@ -63,7 +63,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   useEffect(() => {
     datasource.getKernels().then((response: KernelSpec[]) => {
       let kernels: Array<ComboboxOption<string>> = response.map((ks) => ({
-        label: `${ks.name} (${ks.id})`,
+        label: `${ks.name} (${ks.id.slice(0,8)})`,
         value: ks.id,
       }));
       const defaultOption = {label: "New Kernel", description: "Start a new kernel", value: ''};
