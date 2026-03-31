@@ -16,11 +16,9 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
   }
 
   applyTemplateVariables(query: MyQuery, scopedVars: ScopedVars) {
-    return {
-      ...query,
-      code: getTemplateSrv().replace(query.code, scopedVars),
-      vars: getTemplateSrv().replace(query.vars, scopedVars),
-    };
+    const vars = query.vars.map(({name, value}) => ({name, value: getTemplateSrv().replace(value, scopedVars)}));
+    const code = getTemplateSrv().replace(query.code, scopedVars);
+    return { ...query, vars, code };
   }
 
   filterQuery(query: MyQuery): boolean {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/models"
@@ -212,13 +213,18 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 	return response, nil
 }
 
+type Var struct {
+	Name string `json:"name"`
+	Value string `json:"value"`
+}
+
 type queryModel struct {
   KernelId string `json:"kernelId"`
   KernelType string `json:"kernelType"`
   ConnectionInfo *string `json:"connectionInfo"`
   Notebook string `json:"notebook"`
   Code string `json:"code"`
-  Vars string `json:"vars"`
+  Vars []Var `json:"vars"`
 }
 
 type WrappedLogger struct {
@@ -348,7 +354,15 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	}
 
 	// got a session now
-	queryText := fmt.Sprintf("%s\n%s", qm.Vars, code)
+	var qb strings.Builder
+	for _, v := range qm.Vars {
+		qb.WriteString(v.Name)
+		qb.WriteString(" = ")
+		qb.WriteString(v.Value)
+		qb.WriteString("\n")
+	}
+	qb.WriteString(code)
+	queryText := qb.String()
 	result, err := sessionState.session.Query(queryText)
 	if err != nil {
 		switch err.(type) {

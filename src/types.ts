@@ -7,7 +7,24 @@ export interface MyQuery extends DataQuery {
   connectionInfo?: string;
   notebook: string;
   code: string;
-  vars: string;
+  vars: QueryFieldVariable[];
+}
+
+/**
+ * Query Field Variable
+ */
+export interface QueryFieldVariable {
+  /**
+   * Variable
+   */
+  name: string | '';
+
+  /**
+   * Value
+   *
+   * @type {string}
+   */
+  value: string;
 }
 
 export const DEFAULT_QUERY: Partial<MyQuery> = {
@@ -15,6 +32,12 @@ export const DEFAULT_QUERY: Partial<MyQuery> = {
   kernelType: 'python3',
   connectionInfo: undefined,
   notebook: undefined,
+  vars: [
+    { name: 'RANGE_MAX', value: '1000' },
+    { name: 'FREQ0', value: '7' },
+    { name: 'FREQ1', value: '13' },
+    { name: 'TZ', value: '"$__timezone"' },
+  ],
   code: `%pip install pytz
 
 import datetime
@@ -32,11 +55,6 @@ JSON([
     {"name": "values0", "values": values0},
     {"name": "values1", "values": values1}
 ])`,
-  vars: `RANGE_MAX = 1000
-FREQ0 = 7
-FREQ1 = 13
-TZ = "$__timezone"
-`,
 };
 
 export enum Method {

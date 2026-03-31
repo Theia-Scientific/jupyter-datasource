@@ -2,7 +2,8 @@ import React, { ChangeEvent, useState, useEffect } from 'react';
 import { InlineField, TextArea, Input, Combobox, ComboboxOption } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
-import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery } from '../types';
+import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable } from '../types';
+import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
@@ -33,8 +34,8 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({ ...query, code: event.target.value });
   };
 
-  const onVariablesChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    onChange({ ...query, vars: event.target.value });
+  const onVariablesChange = (variables: QueryFieldVariable[]) => {
+    onChange({ ...query, vars: variables });
   };
 
   let [notebooks, setNotebooks] = useState<Array<ComboboxOption<string>>>([]);
@@ -87,7 +88,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       setKernelTypes(kernelTypes);
       setDefaultKernelType(response.default);
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [datasource]);
 
   return (
@@ -139,14 +139,9 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         </InlineField>
       }
       <InlineField label="Variables" labelWidth={16} tooltip="Variables to bind">
-        <TextArea
-          id="query-editor-variables"
+        <QueryFieldVariablesEditor
+          value={query.vars ?? []}
           onChange={onVariablesChange}
-          value={query.vars}
-          required
-          placeholder="Enter python code (Grafana variables will be substituted)"
-          rows={12}
-          cols={80}
         />
       </InlineField>
       { connectionType === ConnectionType.Auto &&
