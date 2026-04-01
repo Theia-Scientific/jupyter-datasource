@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/acarl005/stripansi"
   zmq "github.com/go-zeromq/zmq4"
 )
 
@@ -87,10 +88,7 @@ type StreamContent struct {
 
 // I want ErrorContent to be useable as a go error, so:
 func (e ErrorContent) Error() string {
-	return fmt.Sprintf("Jupyter error %s: %s (at %s)",
-		e.EName, e.EValue,
-		strings.Join(e.Traceback, "\n"),
-	)
+	return stripansi.Strip(strings.Join(e.Traceback, "\n"))
 }
 
 type ConnectionInfo struct {
