@@ -1,5 +1,5 @@
-import React, { ChangeEvent, useState, useEffect } from 'react';
-import { InlineField, TextArea, Input, Combobox, ComboboxOption } from '@grafana/ui';
+import React, { ChangeEvent, useState, useEffect, useRef } from 'react';
+import { InlineField, TextArea, Input, Combobox, ComboboxOption, CodeEditor } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable } from '../types';
@@ -9,6 +9,12 @@ type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) {
   const { connectionType } = datasource.options;
+
+  // have to keep the latest version of query in a ref because the
+  // Monaco code editor caches it for some reason at mount time:
+  // https://github.com/grafana/grafana/issues/81687
+  const latestQuery = useRef(query);
+  latestQuery.current = query;
 
   const onKernelIdChange = (selectableValue: ComboboxOption<string>) => {
     onChange({ ...query, kernelId: selectableValue.value });
@@ -30,8 +36,8 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({ ...query, notebook: selectableValue.value });
   };
 
-  const onCodeChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    onChange({ ...query, code: event.target.value });
+  const onCodeChange = (value: string) => {
+    onChange({ ...latestQuery.current, code: value });
   };
 
   const onVariablesChange = (variables: QueryFieldVariable[]) => {
@@ -158,15 +164,12 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       }
       { (connectionType === ConnectionType.Info || query.notebook === "" || query.notebook === undefined) &&
         <InlineField label="Code" labelWidth={16} tooltip="Code to run">
-          <TextArea
-            style={{resize: 'both'}}
-            id="query-editor-code"
-            onChange={onCodeChange}
+          <CodeEditor
             value={query.code}
-            required
-            placeholder="Enter python code"
-            rows={12}
-            cols={80}
+            language="python"
+            onChange={onCodeChange}
+            width="80em"
+            height="12em"
           />
         </InlineField>
       }
