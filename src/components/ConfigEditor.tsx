@@ -164,6 +164,7 @@ export function ConfigEditor(props: Props) {
         }
       <InlineField label="Import Statements" labelWidth={20} interactive tooltip={'Import statements to run for every kernel'}>
         <TextArea
+          style={{resize: 'both'}}
           id="config-import-statements"
           onChange={onImportStatementsChange}
           value={jsonData.importStatements || ""}

@@ -128,6 +128,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       { connectionType === ConnectionType.Info &&
         <InlineField label="Connection Info" labelWidth={16} tooltip="Connection file from Jupyterlab">
           <TextArea
+            style={{resize: 'both'}}
             id="query-editor-connection-info"
             onChange={onConnectionInfoChange}
             value={query.connectionInfo}
@@ -158,6 +159,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       { (connectionType === ConnectionType.Info || query.notebook === "" || query.notebook === undefined) &&
         <InlineField label="Code" labelWidth={16} tooltip="Code to run">
           <TextArea
+            style={{resize: 'both'}}
             id="query-editor-code"
             onChange={onCodeChange}
             value={query.code}
