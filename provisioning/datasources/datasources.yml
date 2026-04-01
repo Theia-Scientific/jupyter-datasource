@@ -14,3 +14,4 @@ datasources:
       fetchRoute: http://localhost:7654/tokens/jupyter
       fetchMethod: PUT
       jupyterUrl: http://localhost:8888
+      importStatements: 'from IPython.display import JSON'

@@ -1,5 +1,5 @@
 import React, { ChangeEvent } from 'react';
-import { InlineField, Input, Combobox, ComboboxOption } from '@grafana/ui';
+import { Combobox, ComboboxOption, InlineField, Input, TextArea } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { AuthType, ConnectionType, Method, MyDataSourceOptions, MySecureJsonData } from '../types';
 
@@ -85,6 +85,17 @@ export function ConfigEditor(props: Props) {
     });
   };
 
+  const onImportStatementsChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const val = event.target.value;
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...jsonData,
+        importStatements: val.length > 0 ? val : undefined,
+      },
+    });
+  }
+
   return (
     <>
       <InlineField label="Connection Type" labelWidth={20} interactive tooltip={'Type of connection'}>
@@ -150,7 +161,17 @@ export function ConfigEditor(props: Props) {
             width={40}
           />
         </InlineField>
-      }
+        }
+      <InlineField label="Import Statements" labelWidth={20} interactive tooltip={'Import statements to run for every kernel'}>
+        <TextArea
+          id="config-import-statements"
+          onChange={onImportStatementsChange}
+          value={jsonData.importStatements || ""}
+          placeholder="Enter default import statements"
+          rows={12}
+          cols={80}
+        />
+      </InlineField>
     </>
   );
 }

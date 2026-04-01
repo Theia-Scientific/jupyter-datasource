@@ -82,6 +82,7 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
   fetchMethod?: Method;
   rawToken?: string;
   jupyterUrl?: string;
+  importStatements?: string;
 }
 
 export interface KernelSpec {

@@ -34,6 +34,7 @@ type InstanceSettings struct {
 	FetchMethod      *string `json:"fetchMethod"`
 	RawToken         *string `json:"rawToken"`
 	JupyterUrl       *string `json:"jupyterUrl"`
+	ImportStatements *string `json:"importStatements"`
 }
 
 type SessionState struct {
@@ -349,7 +350,9 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		}
 
 		logger.Debug("Initialized")
-		sessionState.session.Execute("from IPython.display import JSON")
+		if settings.ImportStatements != nil {
+			sessionState.session.Execute(*settings.ImportStatements)
+		}
 		sessionState.code = code
 		d.sessions[sessionKey] = sessionState
 	}
