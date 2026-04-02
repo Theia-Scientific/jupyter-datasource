@@ -410,18 +410,25 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		return backend.ErrDataResponse(backend.StatusBadRequest, "No result returned from query")
 	}
 
-	type row struct {
+	type pyfield struct {
 		Name string `json:"name"`
 		Values []json.RawMessage `json:"values"`
 	}
-	var rows []row
-	err = json.Unmarshal(*result.Val, &rows)
+	type pyframe struct {
+		Name string `json:"name"`
+		Data []pyfield `json:"data"`
+	}
+	
+	// expect a 2d array of rows - each outer array containing an array of rows which
+	// together make a frame.
+	var pyFrames []pyframe
+	err = json.Unmarshal(*result.Val, &pyFrames)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("result unmarshal: %v", err.Error()))
 	}
 
-	makeFrame := func(name string) *data.Frame {
-		frame := data.NewFrame(name)
+	for _, pyFrame := range pyFrames {
+		frame := data.NewFrame(pyFrame.Name)
 		if frame.Meta == nil {
 			frame.Meta = &data.FrameMeta{}
 		}
@@ -429,38 +436,10 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 			"stdout": result.Stdout,
 			"stderr": result.Stderr,
 		}
-		return frame
-	}
-
-	// IF there are no rows:  just return stdout/stderr.
-	if len(rows) == 0 {
-		frame := makeFrame("response")
+		for _, pyField := range pyFrame.Data {
+			frame.Fields = append(frame.Fields, data.NewField(pyField.Name, nil, pyField.Values))
+		}
 		response.Frames = append(response.Frames, frame)
-	} else {
-		// IF all the rows are the same length:  return a single frame.
-		r0len := len(rows[0].Values)
-		same := true
-		for _, r := range rows {
-			if len(r.Values) != r0len {
-				same = false
-				break
-			}
-		}
-
-		if same {
-			frame := makeFrame("response")
-			for _, row := range rows {
-				frame.Fields = append(frame.Fields, data.NewField(row.Name, nil, row.Values))
-			}
-			response.Frames = append(response.Frames, frame)
-		} else {
-			// if there are differences, do one frame per row.
-			for _, row := range rows {
-				frame := makeFrame(row.Name)
-				frame.Fields = append(frame.Fields, data.NewField(row.Name, nil, row.Values))
-				response.Frames = append(response.Frames, frame)
-			}
-		}
 	}
 
 	return response

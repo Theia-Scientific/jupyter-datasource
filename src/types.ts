@@ -50,9 +50,14 @@ values0 = [sin(i/RANGE_MAX * FREQ0 * pi) for i in range(RANGE_MAX)]
 values1 = [cos(i/RANGE_MAX * FREQ1 * pi) for i in range(RANGE_MAX)]
 
 JSON([
+  {"name": "t vs v0", "data": [
     {"name": "time", "values": timestamps},
-    {"name": "values0", "values": values0},
+    {"name": "values0", "values": values0}
+  ]},
+  {"name": "t vs v1", "data": [
+    {"name": "time", "values": timestamps},
     {"name": "values1", "values": values1}
+  ]},
 ])`,
 };
 
