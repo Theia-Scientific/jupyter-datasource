@@ -419,25 +419,49 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("result unmarshal: %v", err.Error()))
 	}
-	
-	// create data frame response.
-	// For an overview on data frames and how grafana handles them:
-	// https://grafana.com/developers/plugin-tools/introduction/data-frames
-	frame := data.NewFrame("response")
-	if frame.Meta == nil {
-		frame.Meta = &data.FrameMeta{}
-	}
-	frame.Meta.Custom = map[string]string{
-		"stdout": result.Stdout,
-		"stderr": result.Stderr,
+
+	makeFrame := func(name string) *data.Frame {
+		frame := data.NewFrame("response")
+		if frame.Meta == nil {
+			frame.Meta = &data.FrameMeta{}
+		}
+		frame.Meta.Custom = map[string]string{
+			"stdout": result.Stdout,
+			"stderr": result.Stderr,
+		}
+		return frame
 	}
 
-	for _, row := range rows {
-		frame.Fields = append(frame.Fields, data.NewField(row.Name, nil, row.Values))
-	}
+	// IF there are no rows:  just return stdout/stderr.
+	if len(rows) == 0 {
+		frame := makeFrame("response")
+		response.Frames = append(response.Frames, frame)
+	} else {
+		// IF all the rows are the same length:  return a single frame.
+		r0len := len(rows[0].Values)
+		same := true
+		for _, r := range rows {
+			if len(r.Values) != r0len {
+				same = false
+				break
+			}
+		}
 
-	// add the frames to the response.
-	response.Frames = append(response.Frames, frame)
+		if same {
+			frame := makeFrame("response")
+			for _, row := range rows {
+				frame.Fields = append(frame.Fields, data.NewField(row.Name, nil, row.Values))
+			}
+			response.Frames = append(response.Frames, frame)
+		} else {
+			// if there are differences, do one frame per row.
+			for _, row := range rows {
+				frame := makeFrame(row.Name)
+				frame.Fields = append(frame.Fields, data.NewField(row.Name, nil, row.Values))
+				response.Frames = append(response.Frames, frame)
+			}
+		}
+	}
 
 	return response
 }
