@@ -15,6 +15,7 @@ type KernelSpec struct {
   LastActivity string `json:"last_activity"`
   ExecutionState string `json:"execution_state"`
   Connections int `json:"connections"`
+	NotebookPath *string `json:"notebook_path"`
 }
 
 func MakeJupyterHttpClient(settings *JupyterServiceSettings) JupyterHttpClient {
@@ -47,6 +48,35 @@ func (jc *JupyterHttpClient) PostEmpty(path string) (*http.Request, error) {
 
 func (jc *JupyterHttpClient) PostBytes(path string, body []byte) (*http.Request, error) {
   return jc.NewRequest(http.MethodPost, path, bytes.NewReader(body))
+}
+
+type Session struct {
+	Id string `json:"id"`
+	Path string `json:"path"`
+	Name string `json:"name"`
+	Type string `json:"type"`
+	Kernel KernelSpec `json:"kernel"`
+	Notebook Notebook `json:"notebook"`
+}
+
+func (jc *JupyterHttpClient) GetSessions() ([]Session, error) {
+  var sessions []Session
+
+  req, err := jc.Get("jupyter/api/sessions")
+  if err != nil {
+    return sessions, err
+  }
+  res, err := http.DefaultClient.Do(req)
+  if err != nil {
+    return sessions, err
+  }
+  defer res.Body.Close()
+  body, err := io.ReadAll(res.Body)
+  if err != nil {
+    return sessions, err
+  }
+  err = json.Unmarshal(body, &sessions)
+  return sessions, err
 }
 
 func (jc *JupyterHttpClient) GetKernels() ([]KernelSpec, error) {

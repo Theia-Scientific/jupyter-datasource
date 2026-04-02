@@ -91,6 +91,7 @@ export interface KernelSpec {
   last_activity: string;
   execution_state: string;
   connections: number;
+  notebook_path?: number;
 }
 
 export interface KernelSpecification {

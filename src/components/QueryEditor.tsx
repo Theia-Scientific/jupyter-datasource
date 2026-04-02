@@ -68,8 +68,15 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
 
   const refreshKernels = () => {
     datasource.getKernels().then((response: KernelSpec[]) => {
+      const labelForSpec = (ks: KernelSpec): string => {
+        const base = `${ks.name} (${ks.id.slice(0,8)})`;
+        if (!!ks.notebook_path) {
+          return `${base} [${ks.notebook_path}]`;
+        }
+        return base;
+      };
       let kernels: Array<ComboboxOption<string>> = response.map((ks) => ({
-        label: `${ks.name} (${ks.id.slice(0,8)})`,
+        label: labelForSpec(ks),
         value: ks.id,
       }));
       const defaultOption = {label: "New Kernel", description: "Start a new kernel", value: ''};

@@ -64,6 +64,7 @@ func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 		if err != nil {
 			return sender.Send(&backend.CallResourceResponse{
 				Status: http.StatusInternalServerError,
+				Body: []byte(err.Error()),
 			})
 		} else {
 			return sender.Send(&backend.CallResourceResponse{
@@ -74,26 +75,49 @@ func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 	}
 	case "kernels": {
 		kernels, err := p.httpClient.GetKernels()
-		var jsonData []byte
-		if err == nil {
-			jsonData, err = json.Marshal(kernels)
-		}
 		if err != nil {
 			return sender.Send(&backend.CallResourceResponse{
 				Status: http.StatusInternalServerError,
-			})
-		} else {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusOK,
-				Body:   jsonData,
+				Body: []byte(err.Error()),
 			})
 		}
+
+		sessions, err := p.httpClient.GetSessions()
+		if err != nil {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: http.StatusInternalServerError,
+				Body: []byte(err.Error()),
+			})
+		}
+
+		for i, k := range kernels {
+			for _, s := range sessions {
+				if s.Kernel.Id == k.Id {
+					kernels[i].NotebookPath = &s.Path
+					break
+				}
+			}
+		}
+
+		jsonData, err := json.Marshal(kernels)
+		if err != nil {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: http.StatusInternalServerError,
+				Body: []byte(err.Error()),
+			})
+		}
+
+		return sender.Send(&backend.CallResourceResponse{
+			Status: http.StatusOK,
+			Body:   jsonData,
+		})
 	}
 	case "kernelspecs": {
 		kernelspecs, err := p.httpClient.GetKernelSpecs()
 		if err != nil {
 			return sender.Send(&backend.CallResourceResponse{
 				Status: http.StatusInternalServerError,
+				Body: []byte(err.Error()),
 			})
 		} else {
 			return sender.Send(&backend.CallResourceResponse{
