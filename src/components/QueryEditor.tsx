@@ -1,4 +1,5 @@
-import React, { ChangeEvent, useState, useEffect, useRef } from 'react';
+import React, { ChangeEvent, useState, useEffect } from 'react';
+import { useLatest } from 'react-use';
 import { InlineField, TextArea, Input, Combobox, ComboboxOption, CodeEditor } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
@@ -13,8 +14,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   // have to keep the latest version of query in a ref because the
   // Monaco code editor caches it for some reason at mount time:
   // https://github.com/grafana/grafana/issues/81687
-  const latestQuery = useRef(query);
-  latestQuery.current = query;
+  const latestQuery = useLatest(query);
 
   const onKernelIdChange = (selectableValue: ComboboxOption<string>) => {
     onChange({ ...query, kernelId: selectableValue.value });
