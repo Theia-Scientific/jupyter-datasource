@@ -418,13 +418,18 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		Name string `json:"name"`
 		Data []pyfield `json:"data"`
 	}
-	
-	// expect a 2d array of rows - each outer array containing an array of rows which
-	// together make a frame.
+
+	// expect an array of frames
 	var pyFrames []pyframe
 	err = json.Unmarshal(*result.Val, &pyFrames)
 	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("result unmarshal: %v", err.Error()))
+		// but allow for a single frame?
+		var pyFrame pyframe
+		err = json.Unmarshal(*result.Val, &pyFrame)
+		if err != nil {
+			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("result unmarshal: %v", err.Error()))
+		}
+		pyFrames = []pyframe{pyFrame}
 	}
 
 	for _, pyFrame := range pyFrames {
