@@ -421,7 +421,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	}
 
 	makeFrame := func(name string) *data.Frame {
-		frame := data.NewFrame("response")
+		frame := data.NewFrame(name)
 		if frame.Meta == nil {
 			frame.Meta = &data.FrameMeta{}
 		}
