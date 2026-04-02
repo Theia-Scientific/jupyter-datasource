@@ -180,7 +180,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
             language="python"
             onChange={onCodeChange}
             width="80em"
-            height="12em"
+            height="25em"
           />
         </InlineField>
       }
