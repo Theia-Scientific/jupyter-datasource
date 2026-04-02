@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useState, useEffect } from 'react';
 import { useLatest } from 'react-use';
-import { InlineField, TextArea, Input, Combobox, ComboboxOption, CodeEditor } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, TextArea, Input, Combobox, ComboboxOption, CodeEditor } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable } from '../types';
@@ -66,7 +66,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({...query, kernelId: ''});
   }
 
-  useEffect(() => {
+  const refreshKernels = () => {
     datasource.getKernels().then((response: KernelSpec[]) => {
       let kernels: Array<ComboboxOption<string>> = response.map((ks) => ({
         label: `${ks.name} (${ks.id.slice(0,8)})`,
@@ -76,7 +76,8 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       kernels.unshift(defaultOption);
       setKernels(kernels);
     });
-  }, [datasource]);
+  };
+  useEffect(refreshKernels, [datasource]);
 
   let [kernelTypes, setKernelTypes] = useState<Array<ComboboxOption<string>>>([]);
   let [defaultKernelType, setDefaultKernelType] = useState<string|undefined>(undefined);
@@ -97,17 +98,20 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   }, [datasource]);
 
   return (
-    <>
+      <>
       { connectionType === ConnectionType.Auto &&
-        <InlineField label="Kernel ID" labelWidth={16} tooltip="Kernel ID for executing query">
-          <Combobox
-            id="query-editor-kernel-id"
-            options={kernels}
-            onChange={onKernelIdChange}
-            value={query.kernelId}
-            width={40}
-          />
-        </InlineField>
+        <InlineFieldRow>
+          <InlineField label="Kernel ID" labelWidth={16} tooltip="Kernel ID for executing query">
+            <Combobox
+              id="query-editor-kernel-id"
+              options={kernels}
+              onChange={onKernelIdChange}
+              value={query.kernelId}
+              width={40}
+            />
+          </InlineField>
+          <Button aria-label="Refresh Kernels" icon="sync"onClick={refreshKernels} />
+        </InlineFieldRow>
       }
       { connectionType === ConnectionType.Info &&
         <InlineField label="Kernel Type" labelWidth={16} tooltip="Kernel type (e.g. python3)">
