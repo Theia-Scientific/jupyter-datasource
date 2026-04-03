@@ -1,3 +1,4 @@
+import { css } from '@emotion/css';
 import React, { ChangeEvent, useState, useEffect } from 'react';
 import { useLatest } from 'react-use';
 import { Button, InlineField, InlineFieldRow, TextArea, Input, Combobox, ComboboxOption, CodeEditor } from '@grafana/ui';
@@ -104,6 +105,9 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     });
   }, [datasource]);
 
+  // css style to allow the Monaco editor to be handle-resized
+  const containerStyle = css`overflow: hidden; resize: both; width: 80em; height: 25em`;
+
   return (
       <>
       { connectionType === ConnectionType.Auto &&
@@ -179,8 +183,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
             value={query.code}
             language="python"
             onChange={onCodeChange}
-            width="80em"
-            height="25em"
+            containerStyles={containerStyle}
           />
         </InlineField>
       }
