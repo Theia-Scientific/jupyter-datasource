@@ -180,3 +180,13 @@ Below you can find source code for existing app plugins and other related docume
 - [Basic data source plugin example](https://github.com/grafana/grafana-plugin-examples/tree/master/examples/datasource-basic#readme)
 - [`plugin.json` documentation](https://grafana.com/developers/plugin-tools/reference/plugin-json)
 - [How to sign a plugin?](https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin)
+
+### Development
+
+- start everything in ../grafana
+- docker compose down grafana
+- in this directory:
+- npm run dev to watch the .ts
+- npm run server to run the grafana backend
+- shut down server and mage -v if you make golang changes
+
