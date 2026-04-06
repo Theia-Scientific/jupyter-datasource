@@ -2,6 +2,7 @@ import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 export interface MyQuery extends DataQuery {
+  uuid?: string;
   kernelId: string;
   kernelType: string;
   connectionInfo?: string;
@@ -28,6 +29,7 @@ export interface QueryFieldVariable {
 }
 
 export const DEFAULT_QUERY: Partial<MyQuery> = {
+  uuid: undefined,
   kernelId: undefined,
   kernelType: 'python3',
   connectionInfo: undefined,

@@ -244,6 +244,7 @@ type Var struct {
 }
 
 type queryModel struct {
+	Uuid *string `json:"uuid"`
   KernelId string `json:"kernelId"`
   KernelType string `json:"kernelType"`
   ConnectionInfo *string `json:"connectionInfo"`
@@ -307,20 +308,6 @@ func (d *Datasource) createSession(pctx context.Context, settings *InstanceSetti
 	}
 }
 
-func sessionKey(settings *InstanceSettings, qm *queryModel) string {
-	if settings.ConnectionType == "AUTO" {
-		if qm.KernelId != "" {
-			return qm.KernelId
-		} else if qm.Notebook != "" {
-			return qm.Notebook
-		} else {
-			return qm.Code
-		}
-	} else {
-		return *qm.ConnectionInfo
-	}
-}
-
 func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
 	logger := log.New()
 	logger.Debug(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
@@ -343,8 +330,10 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	logger.Debug(fmt.Sprintf("got query: %v", qm))
 
 	// first, find/create the session
-	sessionKey := sessionKey(&settings, &qm)
-	sessionState, foundSession := d.sessions[sessionKey]
+	if (qm.Uuid == nil) {
+		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("query missing uuid"))
+	}
+	sessionState, foundSession := d.sessions[*qm.Uuid]
 
 	code := qm.Code
 	if settings.ConnectionType == "AUTO" && qm.Notebook != "" {
@@ -361,7 +350,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
-		d.sessions[sessionKey] = sessionState
+		d.sessions[*qm.Uuid] = sessionState
 	} else {
 		logger.Debug("session found")
 	}
@@ -378,7 +367,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 			sessionState.session.Execute(*settings.ImportStatements)
 		}
 		sessionState.code = code
-		d.sessions[sessionKey] = sessionState
+		d.sessions[*qm.Uuid] = sessionState
 	}
 
 	// got a session now
@@ -400,7 +389,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		}
 		default: {
 			// goroutines have been terminated - restart the session next query
-			delete(d.sessions, sessionKey)
+			delete(d.sessions, *qm.Uuid)
 			return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 		}
 		}

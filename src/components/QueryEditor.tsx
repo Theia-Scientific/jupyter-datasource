@@ -6,6 +6,7 @@ import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable } from '../types';
 import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
+import { v4 as uuidv4 } from 'uuid';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
@@ -16,6 +17,13 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   // Monaco code editor caches it for some reason at mount time:
   // https://github.com/grafana/grafana/issues/81687
   const latestQuery = useLatest(query);
+
+  // give every query a uuid
+  useEffect(() => {
+    if (query.uuid === undefined) {
+      query.uuid = uuidv4();
+    }
+  }, [query]);
 
   const onKernelIdChange = (selectableValue: ComboboxOption<string>) => {
     onChange({ ...query, kernelId: selectableValue.value });
