@@ -43,9 +43,14 @@ type replyMsg struct {
 	res resultMsg
 }
 
+type resetRequest struct {
+	completionChannel chan resultMsg
+	restart bool
+}
+
 type JupyterSession struct {
 	requests chan requestMsg
-	resets chan(chan resultMsg)
+	resets chan resetRequest
 	replies chan replyMsg
 	connectionInfo *ConnectionInfo
 	ctx context.Context
@@ -109,7 +114,7 @@ var ShutdownError = errors.New("Session shutdown")
 func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) (*JupyterSession, error) {
 	rv := &JupyterSession{
 		requests: make(chan requestMsg),
-		resets: make(chan (chan resultMsg)),
+		resets: make(chan resetRequest),
 		replies: make(chan replyMsg),
 		connectionInfo: ci,
 		ctx: ctx,
@@ -164,9 +169,7 @@ func (js *JupyterSession) Query(code string) (Result, error) {
 
 func (js *JupyterSession) Restart() {
 	js.logger.Log("restarting jupytersession")
-	completionChannel := make(chan resultMsg)
-	js.resets <- completionChannel
-  <- completionChannel
+	js.shutdown(true)
 	// shut down the group
 	js.group.Go(func() error { return ShutdownError })
 	js.group.Wait()
@@ -192,6 +195,25 @@ func (js *JupyterSession) Initialize(code string) error {
 	return nil
 }
 
+func (js *JupyterSession) shutdown(restart bool) {
+	// @TODO use restart param
+	completionChannel := make(chan resultMsg)
+	js.resets <- resetRequest{completionChannel, restart}
+	<- completionChannel
+}
+
+func (js *JupyterSession) Quit(killKernel bool) {
+	js.logger.Log("stopping jupytersession")
+	if killKernel {
+		js.shutdown(false)
+	}
+	
+	// shut down the group
+	js.group.Go(func() error { return ShutdownError })
+	js.group.Wait()
+	js.logger.Log("session stopped")
+}
+
 func (js *JupyterSession) requestor() error {
 	liveRequests := make(map[string]chan resultMsg)
 	zmqId := NewId()
@@ -210,9 +232,9 @@ func (js *JupyterSession) requestor() error {
 
 	for {
 		select {
-		case resetChannel := <- js.resets: {
+		case resetRequest := <- js.resets: {
 			content, err := json.Marshal(ShutdownRequestContent{
-				Restart: true,
+				Restart: resetRequest.restart,
 			})
 			if err != nil {
 				return err
@@ -221,7 +243,7 @@ func (js *JupyterSession) requestor() error {
 			if err != nil {
 				return err
 			}
-			liveRequests[msgId] = resetChannel
+			liveRequests[msgId] = resetRequest.completionChannel
 		}
 		case request := <- js.requests: {
 			content, err := json.Marshal(ExecuteRequestContent{

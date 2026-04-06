@@ -39,6 +39,7 @@ type InstanceSettings struct {
 
 type SessionState struct {
 	session *jupyterclient.JupyterSession
+	kernelId string
 	code string
 }
 
@@ -345,13 +346,29 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 
 	if !foundSession {
 		logger.Debug("session not found, creating")
+		sessionState.kernelId = qm.KernelId
 		sessionState.session, err = d.createSession(d.context, &settings, &qm, logger)
 		if err != nil {
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
 		d.sessions[*qm.Uuid] = sessionState
-	} else {
+	} else if (qm.KernelId != sessionState.kernelId) {
+		// if the kernel in the query differs from the session kernel, reconnect
+		logger.Debug("session kernel updated, reinitializing")
+		// if it was an owned kernel, kill it (@TODO refcount?)
+		killKernel := (sessionState.kernelId == "")
+		sessionState.session.Quit(killKernel)
+		// update the kernelId and reconnecct
+		sessionState.kernelId = qm.KernelId
+		sessionState.session, err = d.createSession(d.context, &settings, &qm, logger)
+
+		if err != nil {
+			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
+		}
+
+		d.sessions[*qm.Uuid] = sessionState
+  } else {
 		logger.Debug("session found")
 	}
 
@@ -389,6 +406,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		}
 		default: {
 			// goroutines have been terminated - restart the session next query
+			// @TODO may be too late to clean up here
 			delete(d.sessions, *qm.Uuid)
 			return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 		}
