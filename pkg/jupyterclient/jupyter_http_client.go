@@ -50,6 +50,10 @@ func (jc *JupyterHttpClient) PostBytes(path string, body []byte) (*http.Request,
   return jc.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 }
 
+func (jc *JupyterHttpClient) Delete(path string) (*http.Request, error) {
+  return jc.NewRequest(http.MethodDelete, path, http.NoBody)
+}
+
 type Session struct {
 	Id string `json:"id"`
 	Path string `json:"path"`
@@ -77,6 +81,16 @@ func (jc *JupyterHttpClient) GetSessions() ([]Session, error) {
   }
   err = json.Unmarshal(body, &sessions)
   return sessions, err
+}
+
+func (jc *JupyterHttpClient) KillKernel(id string) error {
+  req, err := jc.Delete(fmt.Sprintf("jupyter/api/kernels/%s", id))
+  if err != nil {
+    return err
+  }
+  res, err := http.DefaultClient.Do(req)
+  defer res.Body.Close()
+  return err
 }
 
 func (jc *JupyterHttpClient) GetKernels() ([]KernelSpec, error) {

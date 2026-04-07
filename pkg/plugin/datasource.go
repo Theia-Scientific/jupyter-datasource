@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
@@ -39,7 +40,8 @@ type InstanceSettings struct {
 
 type SessionState struct {
 	session *jupyterclient.JupyterSession
-	kernelId string
+	queryKernelId string
+	actualKernelId string
 	code string
 }
 
@@ -47,6 +49,7 @@ type SessionState struct {
 // its health and has streaming skills.
 type Datasource struct {
 	sessions map[string]SessionState
+	createdKernels []string
 	httpClient *jupyterclient.JupyterHttpClient
 	context context.Context
 	cancel context.CancelFunc
@@ -201,6 +204,7 @@ func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInsta
 
 	return &Datasource{
 		sessions: make(map[string]SessionState),
+		createdKernels: []string{},
 		httpClient: httpClient,
 		context: ctx,
 		cancel: cancel,
@@ -211,6 +215,13 @@ func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInsta
 // created. As soon as datasource settings change detected by SDK old datasource instance will
 // be disposed and a new one will be created using NewSampleDatasource factory function.
 func (d *Datasource) Dispose() {
+	for _, sessionState := range d.sessions {
+		killKernel := slices.Contains(d.createdKernels, sessionState.actualKernelId)
+		sessionState.session.Quit()
+		if killKernel {
+			_  = d.httpClient.KillKernel(sessionState.actualKernelId)
+		}
+	}
 	d.cancel()
 }
 
@@ -261,7 +272,7 @@ func (wrapped WrappedLogger) Log(s string) {
 	wrapped.logger.Debug(s)
 }
 
-func (d *Datasource) createSession(pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (*jupyterclient.JupyterSession, error) {
+func (d *Datasource) createSession(pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error) {
 	wrapped := WrappedLogger{logger: logger}
 	if settings.ConnectionType == "AUTO" {
 		logger.Debug("AUTO type")
@@ -270,11 +281,11 @@ func (d *Datasource) createSession(pctx context.Context, settings *InstanceSetti
 			// we have an assigned kernel id - connect to that.
 			ci, err := d.httpClient.GetConnectionInfo(qm.KernelId)
 			if err != nil {
-				return nil, err
+				return SessionState{}, err
 			}
 
 			session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-			return session, err
+			return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: qm.KernelId}, err
 		} else {
 			kt := qm.KernelType
 			if kt == "" {
@@ -284,28 +295,31 @@ func (d *Datasource) createSession(pctx context.Context, settings *InstanceSetti
 			// create a kernel of qm.KernelType
 			ks, err := d.httpClient.CreateKernel(kt)
 			if err != nil {
-				return nil, err
+				return SessionState{}, err
 			}
 
 			logger.Debug(fmt.Sprintf("kernel created, id %v", ks.Id))
+			d.createdKernels = append(d.createdKernels, ks.Id)
 			ci, err := d.httpClient.GetConnectionInfo(ks.Id)
 			if err != nil {
-				return nil, err
+				return SessionState{}, err
 			}
 
 			logger.Debug(fmt.Sprintf("ci gotten %v", ci))
 			session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-			return session, err
+			return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: ks.Id}, err
 		}
 	} else {
 		// we (should) have a connection file
 		var ci jupyterclient.ConnectionInfo
 		err := json.Unmarshal([]byte(*qm.ConnectionInfo), &ci)
 		if err != nil {
-			return nil, err
+			return SessionState{}, err
 		}
 		session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-		return session, err
+		// there's no way to know the ID of a kernel that we connect to
+		// via connectionfile.  this seems like a problem.
+		return SessionState{session: session}, err
 	}
 }
 
@@ -344,26 +358,49 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		}
 	}
 
+	logger.Debug(fmt.Sprintf("query uuid: %v", *qm.Uuid))
+	logger.Debug(fmt.Sprintf("foundSession=%v, qm.KernelId=%v, sessionState.queryKernelId=%v, sessionState.actualKernelId=%v",
+		foundSession, qm.KernelId, sessionState.queryKernelId, sessionState.actualKernelId))
 	if !foundSession {
 		logger.Debug("session not found, creating")
-		sessionState.kernelId = qm.KernelId
-		sessionState.session, err = d.createSession(d.context, &settings, &qm, logger)
+		sessionState, err = d.createSession(d.context, &settings, &qm, logger)
 		if err != nil {
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
 		d.sessions[*qm.Uuid] = sessionState
-	} else if (qm.KernelId != sessionState.kernelId) {
+	} else if (qm.KernelId != sessionState.queryKernelId) {
 		// if the kernel in the query differs from the session kernel, reconnect
 		logger.Debug("session kernel updated, reinitializing")
-		// if it was an owned kernel, kill it (@TODO refcount?)
-		killKernel := (sessionState.kernelId == "")
-		sessionState.session.Quit(killKernel)
+		oldKernel := sessionState.actualKernelId
+		// if it was an owned kernel, and this was the last use, kill it
+		killKernel := false
+		if slices.Contains(d.createdKernels, oldKernel) {
+			logger.Debug(fmt.Sprintf("kernel %v was created, checking if it should die", oldKernel))
+			uses := 0
+			for _, sessionState := range d.sessions {
+				if sessionState.actualKernelId == oldKernel {
+					uses += 1
+				}
+			}
+			killKernel = (uses == 1)
+			logger.Debug(fmt.Sprintf("uses=%v, killKernel=%v", uses, killKernel))
+		} else {
+			logger.Debug(fmt.Sprintf("kernel %v was NOT created, not killing", oldKernel))
+		}
+		sessionState.session.Quit()
+		if killKernel {
+			err  = d.httpClient.KillKernel(sessionState.actualKernelId)
+			if err != nil {
+				delete(d.sessions, *qm.Uuid)
+				return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session cleanup failure: %v", err.Error()))
+			}
+		}
 		// update the kernelId and reconnecct
-		sessionState.kernelId = qm.KernelId
-		sessionState.session, err = d.createSession(d.context, &settings, &qm, logger)
+		sessionState, err = d.createSession(d.context, &settings, &qm, logger)
 
 		if err != nil {
+			delete(d.sessions, *qm.Uuid)
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
@@ -376,6 +413,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
 		err = sessionState.session.Initialize(code)
 		if err != nil {
+			delete(d.sessions, *qm.Uuid)
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 

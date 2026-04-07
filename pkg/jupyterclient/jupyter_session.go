@@ -196,18 +196,13 @@ func (js *JupyterSession) Initialize(code string) error {
 }
 
 func (js *JupyterSession) shutdown(restart bool) {
-	// @TODO use restart param
 	completionChannel := make(chan resultMsg)
-	js.resets <- resetRequest{completionChannel, restart}
+	js.resets <- resetRequest{completionChannel: completionChannel, restart: restart}
 	<- completionChannel
 }
 
-func (js *JupyterSession) Quit(killKernel bool) {
+func (js *JupyterSession) Quit() {
 	js.logger.Log("stopping jupytersession")
-	if killKernel {
-		js.shutdown(false)
-	}
-	
 	// shut down the group
 	js.group.Go(func() error { return ShutdownError })
 	js.group.Wait()
