@@ -14,10 +14,6 @@ import (
   zmq "github.com/go-zeromq/zmq4"
 )
 
-type Logger interface {
-	Log(string)
-}
-
 type resultMsg struct {
 	val *json.RawMessage
 	stdout string

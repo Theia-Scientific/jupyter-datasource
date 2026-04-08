@@ -6,6 +6,10 @@ import (
 	"math/rand"
 )
 
+type Logger interface {
+	Log(string)
+}
+
 func NewId() string {
   part1 := make([]byte, 4)
   rand.Read(part1)
