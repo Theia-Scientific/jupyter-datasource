@@ -276,54 +276,8 @@ func (wrapped WrappedLogger) Log(s string) {
 }
 
 func (d *Datasource) createSession(pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error) {
-	wrapped := WrappedLogger{logger: logger}
-	if settings.ConnectionType == "AUTO" {
-		logger.Debug("AUTO type")
-		if qm.KernelId != "" {
-			logger.Debug(fmt.Sprintf("given kernelid %v", qm.KernelId))
-			// we have an assigned kernel id - connect to that.
-			ci, err := d.httpClient.GetConnectionInfo(qm.KernelId)
-			if err != nil {
-				return SessionState{}, err
-			}
-
-			session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-			return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: qm.KernelId}, err
-		} else {
-			kt := qm.KernelType
-			if kt == "" {
-				kt = "python3"
-			}
-			logger.Debug(fmt.Sprintf("creating kernel of type '%v'", kt))
-			// create a kernel of qm.KernelType
-			ks, err := d.httpClient.CreateKernel(kt)
-			if err != nil {
-				return SessionState{}, err
-			}
-
-			logger.Debug(fmt.Sprintf("kernel created, id %v", ks.Id))
-			d.createdKernels = append(d.createdKernels, ks.Id)
-			ci, err := d.httpClient.GetConnectionInfo(ks.Id)
-			if err != nil {
-				return SessionState{}, err
-			}
-
-			logger.Debug(fmt.Sprintf("ci gotten %v", ci))
-			session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-			return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: ks.Id}, err
-		}
-	} else {
-		// we (should) have a connection file
-		var ci jupyterclient.ConnectionInfo
-		err := json.Unmarshal([]byte(*qm.ConnectionInfo), &ci)
-		if err != nil {
-			return SessionState{}, err
-		}
-		session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-		// there's no way to know the ID of a kernel that we connect to
-		// via connectionfile.  this seems like a problem.
-		return SessionState{session: session}, err
-	}
+	return settings.connectionStrategy.createSession(
+		d, pctx, settings, qm, logger)
 }
 
 func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
