@@ -9,15 +9,6 @@ import (
 	"strings"
 )
 
-type KernelSpec struct {
-  Id string `json:"id"`
-  Name string `json:"name"`
-  LastActivity string `json:"last_activity"`
-  ExecutionState string `json:"execution_state"`
-  Connections int `json:"connections"`
-	NotebookPath *string `json:"notebook_path"`
-}
-
 func MakeJupyterHttpClient(settings *JupyterServiceSettings) JupyterHttpClient {
   return JupyterHttpClient{
     AuthHeader: fmt.Sprintf("Bearer %s", settings.Token),
@@ -52,15 +43,6 @@ func (jc *JupyterHttpClient) PostBytes(path string, body []byte) (*http.Request,
 
 func (jc *JupyterHttpClient) Delete(path string) (*http.Request, error) {
   return jc.NewRequest(http.MethodDelete, path, http.NoBody)
-}
-
-type Session struct {
-	Id string `json:"id"`
-	Path string `json:"path"`
-	Name string `json:"name"`
-	Type string `json:"type"`
-	Kernel KernelSpec `json:"kernel"`
-	Notebook Notebook `json:"notebook"`
 }
 
 func (jc *JupyterHttpClient) GetSessions() ([]Session, error) {
@@ -125,30 +107,6 @@ func (jc *JupyterHttpClient) GetKernelSpecs() ([]byte, error) {
   defer res.Body.Close()
   body, err := io.ReadAll(res.Body)
   return body, err
-}
-
-type Cell struct {
-	CellType string `json:"cell_type"`
-	Source string `json:"source"`
-}
-
-type NotebookContent struct {
-	Cells []Cell `json:"cells"`
-	// also metadata i guess
-}
-
-type Notebook struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-	Type string `json:"type"`
-	Content *NotebookContent `json:"content"`
-}
-
-type PathEntry struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-	Type string `json:"type"`
-	Content *[]PathEntry `json:"content"`
 }
 
 func (jc *JupyterHttpClient) GetListing(path string) ([]PathEntry, error) {
@@ -238,10 +196,10 @@ func (jc *JupyterHttpClient) GetNotebook(path string) (string, error) {
 func (jc *JupyterHttpClient) CreateKernel(kernelType string) (KernelSpec, error) {
   var kernel KernelSpec
 
-	type CreateKernelRequest struct {
+	type createKernelRequest struct {
 		Name string `json:"name"`
 	}
-	ckr := CreateKernelRequest{Name:kernelType}
+	ckr := createKernelRequest{Name:kernelType}
 	post, err := json.Marshal(ckr)
   if err != nil {
     return kernel, err

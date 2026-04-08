@@ -10,7 +10,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/acarl005/stripansi"
   zmq "github.com/go-zeromq/zmq4"
 )
 
@@ -51,55 +50,6 @@ type JupyterSession struct {
 	group *errgroup.Group
 	groupCtx context.Context
 	logger Logger
-}
-
-type Header struct {
-	MsgId string `json:"msg_id"`
-	Username string `json:"username"`
-	Session string `json:"session"`
-	Date string `json:"date"`
-	MsgType string `json:"msg_type"`
-	Version string `json:"version"`
-}
-type ExecuteRequestContent struct {
-	Code string `json:"code"`
-}
-type ExecuteResultContent struct {
-	Data map[string]json.RawMessage `json:"data"`
-}
-type StatusContent struct {
-	ExecutionState string `json:"execution_state"`
-}
-type ShutdownRequestContent struct {
-	Restart bool `json:"restart"`
-}
-
-type ErrorContent struct {
-	EName string `json:"ename"`
-	EValue string `json:"evalue"`
-	Traceback []string `json:"traceback"`
-}
-
-type StreamContent struct {
-	Name string `json:"name"`
-	Text string `json:"text"`
-}
-
-// I want ErrorContent to be useable as a go error, so:
-func (e ErrorContent) Error() string {
-	return stripansi.Strip(strings.Join(e.Traceback, "\n"))
-}
-
-type ConnectionInfo struct {
-  SignatureScheme string `json:"signature_scheme"`
-  Transport       string `json:"transport"`
-  StdinPort       int    `json:"stdin_port"`
-  ControlPort     int    `json:"control_port"`
-  IOPubPort       int    `json:"iopub_port"`
-  HBPort          int    `json:"hb_port"`
-  ShellPort       int    `json:"shell_port"`
-  Key             string `json:"key"`
-  IP              string `json:"ip"`
 }
 
 var ShutdownError = errors.New("Session shutdown")
