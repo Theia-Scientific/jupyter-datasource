@@ -18,8 +18,6 @@ type Logger interface {
 	Log(string)
 }
 
-type Callback func(string)
-
 type resultMsg struct {
 	val *json.RawMessage
 	stdout string
