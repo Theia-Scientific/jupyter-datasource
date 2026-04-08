@@ -36,6 +36,22 @@ type InstanceSettings struct {
 	RawToken         *string `json:"rawToken"`
 	JupyterUrl       *string `json:"jupyterUrl"`
 	ImportStatements *string `json:"importStatements"`
+	connectionStrategy ConnectionStrategy
+}
+
+func unmarshalInstanceSettings(src []byte) (*InstanceSettings, error) {
+	var settings InstanceSettings
+	err := json.Unmarshal(src, &settings)
+	if err != nil {
+		return nil, err
+	}
+
+	settings.connectionStrategy, err = makeConnectionStrategy(&settings)
+	if err != nil {
+		return nil, err
+	}
+
+	return &settings, nil
 }
 
 type SessionState struct {
@@ -164,38 +180,25 @@ func getJupyterToken(settings *InstanceSettings) (string, error) {
 	}
 }
 
-func createHttpClient(settings *InstanceSettings) (*jupyterclient.JupyterHttpClient, error) {
-	if settings.ConnectionType == "INFO" {
-		// ConnectionInfo style doesn't require a http client
-		return nil, nil
+func makeConnectionStrategy(settings *InstanceSettings) (ConnectionStrategy, error) {
+	switch settings.ConnectionType {
+	case "AUTO":
+		return ConnectionStrategyAuto{}, nil
+	case "INFO":
+		return ConnectionStrategyInfo{}, nil
+	default:
+		return nil, fmt.Errorf("Unknown connection type '%s'", settings.ConnectionType)
 	}
-
-	if settings.JupyterUrl == nil {
-		return nil, fmt.Errorf("AUTO connection type selected, but no jupyterUrl supplied")
-	}
-
-	jupyterToken, err := getJupyterToken(settings)
-	if err != nil {
-		return nil, err
-	}
-
-	jupyterSettings := &jupyterclient.JupyterServiceSettings{
-		BaseUrl: *settings.JupyterUrl,
-		Token:   jupyterToken,
-	}
-	client := jupyterclient.MakeJupyterHttpClient(jupyterSettings)
-	return &client, nil
 }
 
 // NewDatasource creates a new datasource instance.
 func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	var settings InstanceSettings
-	err := json.Unmarshal(instanceSettings.JSONData, &settings)
+	settings, err := unmarshalInstanceSettings(instanceSettings.JSONData)
 	if err != nil {
 		return nil, err
 	}
 
-	httpClient, err := createHttpClient(&settings)
+	httpClient, err := settings.connectionStrategy.createHttpClient(settings)
 	if err != nil {
 		return nil, err
 	}
@@ -327,8 +330,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	logger := log.New()
 	logger.Debug(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
 
-	var settings InstanceSettings
-	err := json.Unmarshal(pCtx.DataSourceInstanceSettings.JSONData, &settings)
+	settings, err := unmarshalInstanceSettings(pCtx.DataSourceInstanceSettings.JSONData)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("couldn't retrieve settings: %v", err.Error()))
 	}
@@ -363,7 +365,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		foundSession, qm.KernelId, sessionState.queryKernelId, sessionState.actualKernelId))
 	if !foundSession {
 		logger.Debug("session not found, creating")
-		sessionState, err = d.createSession(d.context, &settings, &qm, logger)
+		sessionState, err = d.createSession(d.context, settings, &qm, logger)
 		if err != nil {
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
@@ -397,7 +399,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 			}
 		}
 		// update the kernelId and reconnecct
-		sessionState, err = d.createSession(d.context, &settings, &qm, logger)
+		sessionState, err = d.createSession(d.context, settings, &qm, logger)
 
 		if err != nil {
 			delete(d.sessions, *qm.Uuid)
@@ -508,15 +510,14 @@ func (d *Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequ
 		return res, nil
 	}
 
-	var settings InstanceSettings
-	err = json.Unmarshal(req.PluginContext.DataSourceInstanceSettings.JSONData, &settings)
+	settings, err := unmarshalInstanceSettings(req.PluginContext.DataSourceInstanceSettings.JSONData)
 	if err != nil {
 		res.Status = backend.HealthStatusError
 		res.Message = fmt.Sprintf("Unable to parse settings: %v", err)
 		return res, nil
 	}
 
-	httpClient, err := createHttpClient(&settings)
+	httpClient, err := settings.connectionStrategy.createHttpClient(settings)
 	if err != nil {
 		res.Status = backend.HealthStatusError
 		res.Message = fmt.Sprintf("Unable to create JupyterHttpClient: %v", err)
