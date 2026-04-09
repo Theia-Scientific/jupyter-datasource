@@ -306,12 +306,9 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 	}
 	sessionState, foundSession := d.sessions[*qm.Uuid]
 
-	code := qm.Code
-	if settings.ConnectionType == "AUTO" && qm.Notebook != "" {
-		code, err = d.httpClient.GetNotebook(qm.Notebook)
-		if err != nil {
-			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("err fetching notebook %s: %v", qm.Notebook, err.Error()))
-		}
+	code, err := settings.connectionStrategy.fetchCode(d, settings, &qm)
+	if err != nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("err fetching notebook %s: %v", qm.Notebook, err.Error()))
 	}
 
 	logger.Debug(fmt.Sprintf("query uuid: %v", *qm.Uuid))

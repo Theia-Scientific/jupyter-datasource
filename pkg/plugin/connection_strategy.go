@@ -12,7 +12,7 @@ import (
 type ConnectionStrategy interface {
 	createHttpClient(settings *InstanceSettings) (*jupyterclient.JupyterHttpClient, error)
 	createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error)
-	// querySomething()
+	fetchCode(d *Datasource, settings *InstanceSettings, qm *queryModel) (string, error)
 }
 
 type ConnectionStrategyInfo struct {}
@@ -34,6 +34,10 @@ func (_ ConnectionStrategyInfo) createSession(d *Datasource, pctx context.Contex
 	// there's no way to know the ID of a kernel that we connect to
 	// via connectionfile.  this seems like a problem.
 	return SessionState{session: session}, err
+}
+
+func (_ ConnectionStrategyInfo) fetchCode(d *Datasource, settings *InstanceSettings, qm *queryModel) (string, error) {
+	return qm.Code, nil
 }
 
 type ConnectionStrategyAuto struct {}
@@ -93,3 +97,12 @@ func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Contex
 		return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: ks.Id}, err
 	}
 }	
+
+func (_ ConnectionStrategyAuto) fetchCode(d *Datasource, settings *InstanceSettings, qm *queryModel) (string, error) {
+	if qm.Notebook != "" {
+		return d.httpClient.GetNotebook(qm.Notebook)
+	} else {
+		return qm.Code, nil
+	}
+}
+
