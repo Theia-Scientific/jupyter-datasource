@@ -65,6 +65,16 @@ export function ConfigEditor(props: Props) {
     });
   };
 
+  const onFetchTokenChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onOptionsChange({
+      ...options,
+      jsonData: {
+        ...jsonData,
+        fetchToken: event.target.value,
+      },
+    });
+  };
+
   const onRawTokenChange = (event: ChangeEvent<HTMLInputElement>) => {
     onOptionsChange({
       ...options,
@@ -147,6 +157,17 @@ export function ConfigEditor(props: Props) {
             options={METHOD_OPTIONS}
             onChange={onMethodChange}
             value={jsonData.fetchMethod}
+            width={40}
+          />
+        </InlineField>
+      }
+      { jsonData.connectionType === ConnectionType.Auto && jsonData.authType === AuthType.Fetch &&
+        <InlineField label="Fetch Token" labelWidth={20} interactive tooltip={'Bearer token for fetching the Jupyterlab token'}>
+          <Input
+            id="config-editor-fetch-token"
+            onChange={onFetchTokenChange}
+            value={jsonData.fetchToken}
+            placeholder="Enter the Bearer token for fetching the Jupyter token"
             width={40}
           />
         </InlineField>

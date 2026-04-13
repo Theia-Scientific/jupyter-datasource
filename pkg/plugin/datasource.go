@@ -33,6 +33,7 @@ type InstanceSettings struct {
 	AuthType         string  `json:"authType"`
 	FetchRoute       *string `json:"fetchRoute"`
 	FetchMethod      *string `json:"fetchMethod"`
+	FetchToken         *string `json:"fetchToken"`
 	RawToken         *string `json:"rawToken"`
 	JupyterUrl       *string `json:"jupyterUrl"`
 	ImportStatements *string `json:"importStatements"`
@@ -173,6 +174,7 @@ func getJupyterToken(settings *InstanceSettings) (string, error) {
 		systemSettings := jupyterclient.SystemServiceSettings{
 			BaseUrl: *settings.FetchRoute,
 			Method:  *settings.FetchMethod,
+			Token:   settings.FetchToken,
 		}
 		return jupyterclient.GetJupyterToken(&systemSettings)
 	} else {

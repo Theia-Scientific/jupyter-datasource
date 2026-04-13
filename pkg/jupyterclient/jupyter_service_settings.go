@@ -10,6 +10,7 @@ import (
 type SystemServiceSettings struct {
 	BaseUrl string
 	Method string
+	Token *string
 }
 
 func DefaultSystemServiceSettings() *SystemServiceSettings {
@@ -34,6 +35,9 @@ func GetJupyterToken(systemServiceSettings *SystemServiceSettings) (string, erro
   if err != nil {
     return "", err
   }
+	if systemServiceSettings.Token != nil {
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", *systemServiceSettings.Token))
+	}
   res, err := http.DefaultClient.Do(req)
   if err != nil {
     return "", err
