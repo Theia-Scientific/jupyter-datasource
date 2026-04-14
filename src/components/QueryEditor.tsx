@@ -21,9 +21,9 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   // give every query a uuid
   useEffect(() => {
     if (query.uuid === undefined) {
-      query.uuid = uuidv4();
+      onChange({...query, uuid: uuidv4() })
     }
-  }, [query]);
+  }, [query, onChange]);
 
   const onKernelIdChange = (selectableValue: ComboboxOption<string>) => {
     onChange({ ...query, kernelId: selectableValue.value });
