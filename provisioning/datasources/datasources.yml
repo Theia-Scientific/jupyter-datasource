@@ -13,5 +13,6 @@ datasources:
       authType: FETCH
       fetchRoute: http://localhost:7654/tokens/jupyter
       fetchMethod: PUT
+      fetchToken: '${SYSTEM_SERVICE_TOKEN}'
       jupyterUrl: http://localhost:8888
       importStatements: 'from IPython.display import JSON'
