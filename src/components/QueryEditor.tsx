@@ -58,7 +58,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({...query, notebook: ''});
   }
 
-  useEffect(() => {
+  const refreshNotebooks = () => {
     datasource.getNotebooks().then((response: string[]) => {
       let notebooks: Array<ComboboxOption<string>> = response.map((s) => ({
         label: s,
@@ -68,7 +68,8 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       notebooks.unshift(defaultOption);
       setNotebooks(notebooks);
     });
-  }, [datasource]);
+  };
+  useEffect(refreshNotebooks, [datasource]);
 
   let [kernels, setKernels] = useState<Array<ComboboxOption<string>>>([]);
   if (kernels.length > 0 && query.kernelId === undefined) {
@@ -175,15 +176,18 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         />
       </InlineField>
       { connectionType === ConnectionType.Auto &&
-        <InlineField label="Notebook" labelWidth={16} tooltip="Notebook to run">
-          <Combobox
-            id="query-editor-notebook"
-            options={notebooks}
-            onChange={onNotebookChange}
-            value={query.notebook}
-            width={40}
-          />
-        </InlineField>
+        <InlineFieldRow>
+          <InlineField label="Notebook" labelWidth={16} tooltip="Notebook to run">
+            <Combobox
+              id="query-editor-notebook"
+              options={notebooks}
+              onChange={onNotebookChange}
+              value={query.notebook}
+              width={40}
+            />
+          </InlineField>
+          <Button aria-label="Refresh Notebooks" icon="sync"onClick={refreshNotebooks} />
+        </InlineFieldRow>
       }
       { (connectionType === ConnectionType.Info || query.notebook === "" || query.notebook === undefined) &&
         <InlineField label="Code" labelWidth={16} tooltip="Code to run">
