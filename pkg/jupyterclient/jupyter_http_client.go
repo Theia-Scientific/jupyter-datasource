@@ -2,6 +2,7 @@ package jupyterclient
 
 import (
 	"bytes"
+	"errors"
   "encoding/json"
   "fmt"
   "io"
@@ -45,24 +46,52 @@ func (jc *JupyterHttpClient) Delete(path string) (*http.Request, error) {
   return jc.NewRequest(http.MethodDelete, path, http.NoBody)
 }
 
-func (jc *JupyterHttpClient) GetSessions() ([]Session, error) {
-  var sessions []Session
-
-  req, err := jc.Get("jupyter/api/sessions")
-  if err != nil {
-    return sessions, err
-  }
+func requestBody(req *http.Request) (io.ReadCloser, error) {
   res, err := http.DefaultClient.Do(req)
   if err != nil {
-    return sessions, err
+    return nil, err
   }
-  defer res.Body.Close()
-  body, err := io.ReadAll(res.Body)
+	if res.StatusCode < 200 || res.StatusCode >= 300 {
+		return res.Body, errors.New(res.Status)
+	}
+	return res.Body, err
+}
+
+func requestBytes(req *http.Request) ([]byte, error) {
+  body, err := requestBody(req)
+	if body != nil {
+		defer body.Close()
+	}
   if err != nil {
-    return sessions, err
+    return []byte{}, err
   }
-  err = json.Unmarshal(body, &sessions)
-  return sessions, err
+	return io.ReadAll(body)
+}
+
+func requestJSON(req *http.Request, val any) error {
+	bytes, err := requestBytes(req)
+  if err != nil {
+    return err
+  }
+  return json.Unmarshal(bytes, val)
+}
+
+func request(req *http.Request) error {
+	body, err := requestBody(req)
+	if body != nil {
+		defer body.Close()
+	}
+	return err
+}
+
+func (jc *JupyterHttpClient) GetSessions() ([]Session, error) {
+  var sessions []Session
+	req, err := jc.Get("jupyter/api/sessions")
+	if err != nil {
+		return sessions, err
+	}
+	err = requestJSON(req, &sessions)
+	return sessions, err
 }
 
 func (jc *JupyterHttpClient) KillKernel(id string) error {
@@ -70,63 +99,35 @@ func (jc *JupyterHttpClient) KillKernel(id string) error {
   if err != nil {
     return err
   }
-  res, err := http.DefaultClient.Do(req)
-  defer res.Body.Close()
-  return err
+	return request(req)
 }
 
 func (jc *JupyterHttpClient) GetKernels() ([]KernelSpec, error) {
   var kernels []KernelSpec
-
-  req, err := jc.Get("jupyter/api/kernels")
-  if err != nil {
-    return kernels, err
-  }
-  res, err := http.DefaultClient.Do(req)
-  if err != nil {
-    return kernels, err
-  }
-  defer res.Body.Close()
-  body, err := io.ReadAll(res.Body)
-  if err != nil {
-    return kernels, err
-  }
-  err = json.Unmarshal(body, &kernels)
-  return kernels, err
+	req, err := jc.Get("jupyter/api/kernels")
+	if err != nil {
+		return kernels, err
+	}
+	err = requestJSON(req, &kernels)
+	return kernels, err
 }
 
 func (jc *JupyterHttpClient) GetKernelSpecs() ([]byte, error) {
-  req, err := jc.Get("jupyter/api/kernelspecs")
-  if err != nil {
-    return nil, err
-  }
-  res, err := http.DefaultClient.Do(req)
-  if err != nil {
-    return nil, err
-  }
-  defer res.Body.Close()
-  body, err := io.ReadAll(res.Body)
-  return body, err
+	req, err := jc.Get("jupyter/api/kernelspecs")
+	if err != nil {
+		return []byte{}, err
+	}
+	return requestBytes(req)
 }
 
 func (jc *JupyterHttpClient) GetListing(path string) ([]PathEntry, error) {
   var entry PathEntry
-
-  req, err := jc.Get(fmt.Sprintf("jupyter/api/contents/%s", path))
-  if err != nil {
-    return []PathEntry{}, err
-  }
-  res, err := http.DefaultClient.Do(req)
-  if err != nil {
-    return []PathEntry{}, err
-  }
-  defer res.Body.Close()
-  body, err := io.ReadAll(res.Body)
-  if err != nil {
-    return []PathEntry{}, err
-  }
-  err = json.Unmarshal(body, &entry)
-	if entry.Content == nil {
+	req, err := jc.Get(fmt.Sprintf("jupyter/api/contents/%s", path))
+	if err != nil {
+		return []PathEntry{}, err
+	}
+	err = requestJSON(req, &entry)
+	if err != nil {
     return []PathEntry{}, err
 	}
   return *entry.Content, err
@@ -159,27 +160,16 @@ func (jc *JupyterHttpClient) GetNotebooks() ([]string, error) {
 
 func (jc *JupyterHttpClient) GetNotebook(path string) (string, error) {
   var notebook Notebook
-
-  req, err := jc.Get(fmt.Sprintf("jupyter/api/contents/%s", path))
-  if err != nil {
-    return "", err
-  }
-  res, err := http.DefaultClient.Do(req)
-  if err != nil {
-    return "", err
-  }
-  defer res.Body.Close()
-  body, err := io.ReadAll(res.Body)
-  if err != nil {
-    return "", err
-  }
-  err = json.Unmarshal(body, &notebook)
-  if err != nil {
-    return "", err
-  }
-
-	if notebook.Content == nil {
+	req, err := jc.Get(fmt.Sprintf("jupyter/api/contents/%s", path))
+	if err != nil {
 		return "", err
+	}
+	err = requestJSON(req, &notebook)
+	if err != nil {
+    return "", err
+	}
+	if notebook.Content == nil {
+		return "", nil
 	}
 
 	var buffer bytes.Buffer
@@ -195,7 +185,6 @@ func (jc *JupyterHttpClient) GetNotebook(path string) (string, error) {
 
 func (jc *JupyterHttpClient) CreateKernel(kernelType string) (KernelSpec, error) {
   var kernel KernelSpec
-
 	type createKernelRequest struct {
 		Name string `json:"name"`
 	}
@@ -209,16 +198,7 @@ func (jc *JupyterHttpClient) CreateKernel(kernelType string) (KernelSpec, error)
   if err != nil {
     return kernel, err
   }
-  res, err := http.DefaultClient.Do(req)
-  if err != nil {
-    return kernel, err
-  }
-  defer res.Body.Close()
-  body, err := io.ReadAll(res.Body)
-  if err != nil {
-    return kernel, err
-  }
-  err = json.Unmarshal(body, &kernel)
+	err = requestJSON(req, &kernel)
   return kernel, err
 }
 
@@ -242,30 +222,18 @@ func (jc *JupyterHttpClient) SelectKernel() (KernelSpec, error) {
 
 func (jc *JupyterHttpClient) GetConnectionInfo(id string) (ConnectionInfo, error) {
   var connectionInfo ConnectionInfo
-  path := fmt.Sprintf("jupyter/api/kernels/%s/connection", id)
-  req, err := jc.Get(path)
+  req, err := jc.Get(fmt.Sprintf("jupyter/api/kernels/%s/connection", id))
   if err != nil {
     return connectionInfo, err
   }
-  res, err := http.DefaultClient.Do(req)
-  if err != nil {
-    return connectionInfo, err
-  }
-  defer res.Body.Close()
-  body, err := io.ReadAll(res.Body)
-  if err != nil {
-    return connectionInfo, err
-  }
-  err = json.Unmarshal(body, &connectionInfo)
-  return connectionInfo, err
+	err = requestJSON(req, &connectionInfo)
+	return connectionInfo, err
 }
 
 func (jc *JupyterHttpClient) Restart(id string) error {
-	path := fmt.Sprintf("jupyter/api/kernels/%s/restart", id)
-	req, err := jc.PostEmpty(path)
+	req, err := jc.PostEmpty(fmt.Sprintf("jupyter/api/kernels/%s/restart", id))
 	if err != nil {
 		return err
 	}
-	_, err = http.DefaultClient.Do(req)
-	return err
+	return request(req)
 }
