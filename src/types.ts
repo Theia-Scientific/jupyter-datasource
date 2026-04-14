@@ -44,21 +44,21 @@ export const DEFAULT_QUERY: Partial<MyQuery> = {
 
 import datetime
 import random
+
 from pytz import timezone
 from math import sin, cos, pi
+
 base = datetime.datetime.now(timezone(TZ))
+
 timestamps = [(base - datetime.timedelta(seconds=i)).isoformat() for i in range(RANGE_MAX)]
-values0 = [sin(i/RANGE_MAX * FREQ0 * pi) for i in range(RANGE_MAX)]
-values1 = [cos(i/RANGE_MAX * FREQ1 * pi) for i in range(RANGE_MAX)]
+sine_wave = [sin(i/RANGE_MAX * FREQ0 * pi) for i in range(RANGE_MAX)]
+cosine_wave = [cos(i/RANGE_MAX * FREQ1 * pi) for i in range(RANGE_MAX)]
 
 JSON([
-  {"name": "t vs v0", "data": [
+  {"name": "frame", "data": [
     {"name": "time", "values": timestamps},
-    {"name": "values0", "values": values0}
-  ]},
-  {"name": "t vs v1", "data": [
-    {"name": "time", "values": timestamps},
-    {"name": "values1", "values": values1}
+    {"name": "sine", "values": sine_wave},
+    {"name": "cosine", "values": cosine_wave}
   ]},
 ])`,
 };
