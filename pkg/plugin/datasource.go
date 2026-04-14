@@ -333,6 +333,11 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		if slices.Contains(d.createdKernels, oldKernel) {
 			logger.Debug(fmt.Sprintf("kernel %v was created, checking if it should die", oldKernel))
 			uses := 0
+			if qm.KernelId == oldKernel {
+				// we're switching from 'new kernel' to this very kernel. this
+				// counts as a use.  don't kill it.
+				uses += 1
+			}
 			for _, sessionState := range d.sessions {
 				if sessionState.actualKernelId == oldKernel {
 					uses += 1
