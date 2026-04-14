@@ -192,6 +192,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
             language="python"
             onChange={onCodeChange}
             containerStyles={containerStyle}
+            showLineNumbers={true}
           />
         </InlineField>
       }
