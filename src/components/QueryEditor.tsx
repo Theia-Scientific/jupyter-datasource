@@ -4,7 +4,7 @@ import { useLatest } from 'react-use';
 import { Button, InlineField, InlineFieldRow, TextArea, Input, Combobox, ComboboxOption, CodeEditor } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
-import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable } from '../types';
+import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable, PathEntry } from '../types';
 import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -59,8 +59,19 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   }
 
   const refreshNotebooks = () => {
-    datasource.getNotebooks().then((response: string[]) => {
-      let notebooks: Array<ComboboxOption<string>> = response.map((s) => ({
+    datasource.getNotebooks().then((response: PathEntry[]) => {
+      const paths: string[] = [];
+      const visitor = (ps: PathEntry[]) => {
+        for (const p of ps) {
+          if (p.type === 'directory' && p.content !== undefined) {
+            visitor(p.content);
+          } else {
+            paths.push(p.path);
+          }
+        }
+      };
+      visitor(response);
+      let notebooks: Array<ComboboxOption<string>> = paths.map((s) => ({
         label: s,
         value: s,
       }));
