@@ -7,6 +7,7 @@ import React, { useMemo } from 'react';
 import { FilesList } from './FilesList';
 import { useWebDavApi } from './hooks/useWebDavApi';
 import { Sort } from './types';
+import { t } from 'i18next';
 
 /**
  * Props

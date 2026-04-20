@@ -1,3 +1,3 @@
-export * from './api.ts';
-export * from './files.ts';
-export * from './tests.ts';
+export * from './api';
+export * from './files';
+export * from './tests';

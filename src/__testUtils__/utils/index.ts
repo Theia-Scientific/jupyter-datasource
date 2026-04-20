@@ -1,5 +1,11 @@
 import { Observable } from 'rxjs';
 
+export const publishMock = jest.fn().mockImplementation(() => null);
+
+export const dataSourceSrvMock = {
+  get: jest.fn(() => Promise.resolve({})),
+};
+
 export const backendSrvMock = {
   fetch: jest.fn().mockImplementation(() => getResponse({})),
   get: jest.fn().mockImplementation(() => ({})),
