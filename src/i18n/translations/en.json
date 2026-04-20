@@ -1,0 +1,2407 @@
+{
+  "acquisitionPanel": {
+    "acquisitionDrawer": {
+      "acquisitionLabel": "Acquisition",
+      "cameraLabel": "Camera",
+      "dimensionLabel": "Dimension",
+      "dimensionTooltip": "Indicating the maximum dimension of the frame.",
+      "facingMode": {
+        "description": "Indicating the facing mode for the camera",
+        "label": "Facing Mode",
+        "options": {
+          "env": "Environment",
+          "user": "User"
+        }
+      },
+      "fovLabel": "Field of View",
+      "fovPositionLabel": "Position",
+      "fovPositionOptions": {
+        "center": "Center",
+        "custom": "Custom",
+        "full": "Full"
+      },
+      "frameRateLabel": "Frame Rate",
+      "frameRateTooltip": "Indicating the frame rate, in frames per second.",
+      "imageProcessingLabel": "Image Processing",
+      "subtitle": "Please adjust settings as required.",
+      "title": "{{mode}} Settings",
+      "videoContentHintDescription": "Optimizing video for different content type.",
+      "videoContentHintLabel": "Video Encoding"
+    },
+    "panel": {
+      "actorFailedTitle": "Actor Failed",
+      "confirmAcquisitionModal": {
+        "body": "Please check the variables have been updated",
+        "cancelButton": "Cancel",
+        "confirmButton": "Confirm",
+        "title": "Confirmation"
+      },
+      "errorModalCloseButton": "Close",
+      "errorModalTitle": "Error",
+      "inferenceRunningMessage": "Please wait while another inference is running.",
+      "inferenceRunningTitle": "Processing",
+      "modelCard": {
+        "analyzeButton": "Analyze",
+        "analyzeMode": {
+          "auto": "Auto",
+          "manual": "Manual"
+        },
+        "analyzingStatus": {
+          "analyze": "Analyzing...",
+          "none": "",
+          "preview": "Generating preview..."
+        },
+        "cameraButton": "Camera",
+        "fovLabel": "FOV",
+        "pauseButton": "Pause",
+        "recordButton": "Record",
+        "screenButton": "Screen",
+        "settingsButton": "Acquisition sidebar",
+        "snapshotButton": "Snapshot",
+        "status": {
+          "connected": "Connected",
+          "created": "Peer Connection: created",
+          "error": "Error",
+          "negotiating": "Negotiating",
+          "progress": "In Progress"
+        },
+        "stopButton": "Stop",
+        "unselectButton": "Unselect"
+      },
+      "modelReadyMessage": "Please wait until model is ready.",
+      "modelReadyTitle": "Processing",
+      "noActorsMessage": "Please add one or more models to start.",
+      "noActorsTitle": "Getting Started",
+      "noImageMessage": "Please select Screen or Camera for real-time video capture or upload a media file.",
+      "noImageTitle": "Getting Started",
+      "selectModel": {
+        "failedModal": {
+          "cancelButton": "Cancel",
+          "confirmButton": "Stop",
+          "modelLabel": "Model to stop",
+          "title": "No available resources"
+        },
+        "fieldLabel": "Model",
+        "fieldPlaceholder": "Please choose the Model"
+      },
+      "unableToAcquireMediaMessage": "{{origin}}: Could not acquire media",
+      "unableToCreateConnectionMessage": "{{origin}}: Could not create Stream connection",
+      "unableToCreateOfferMessage": "Could not create offer: {{details}}"
+    },
+    "panelOptions": {
+      "confirmAcquisition": {
+        "enabled": {
+          "label": "Confirmation Dialog"
+        },
+        "label": "Acquisition Confirmation",
+        "variables": {
+          "label": "Variables"
+        }
+      },
+      "dimension": {
+        "description": "Indicating the maximum dimension of the frame.",
+        "label": "Dimension"
+      },
+      "facingMode": {
+        "description": "Indicating the facing mode for the camera",
+        "label": "Facing Mode",
+        "options": {
+          "env": "Environment",
+          "user": "User"
+        }
+      },
+      "fov": {
+        "color": {
+          "description": "The color",
+          "label": "Color"
+        },
+        "label": "Field of View",
+        "lineWidth": {
+          "description": "The line width and/or thickness",
+          "label": "Line Width"
+        },
+        "position": {
+          "label": "Initial Position"
+        },
+        "timeout": {
+          "description": "Timeout to prevent multiple updates",
+          "label": "Timeout"
+        }
+      },
+      "frameRate": {
+        "description": "Indicating the frame rate, in frames per second.",
+        "label": "Frame Rate"
+      },
+      "imageSize": {
+        "label": "Output Image Size"
+      },
+      "originalMediaFilename": {
+        "label": "Original Media Filename"
+      },
+      "originalMediaPath": {
+        "label": "Original Media Path"
+      },
+      "scalingMode": {
+        "description": "Indicating the scaling mode",
+        "label": "Scaling Mode"
+      },
+      "videoContentHint": {
+        "description": "Optimizing video for different content type.",
+        "label": "Video Encoding",
+        "options": {
+          "detail": "Details",
+          "none": "Default",
+          "text": "Text"
+        }
+      }
+    }
+  },
+  "apiDatasource": {
+    "configEditor": {
+      "urlLabel": "API URL"
+    },
+    "exportParameters": {
+      "binaryMask": {
+        "dilate": {
+          "label": "Dilate"
+        },
+        "dilateIterations": {
+          "label": "Dilate Iterations"
+        },
+        "dilateKernelSize": {
+          "label": "Dilate Kernel Size"
+        },
+        "enabled": {
+          "label": "Display"
+        },
+        "erode": {
+          "label": "Erode"
+        },
+        "erodeIterations": {
+          "label": "Erode Iterations"
+        },
+        "erodeKernelSize": {
+          "label": "Erode Kernel Size"
+        },
+        "invert": {
+          "label": "Invert"
+        },
+        "label": "Binary Mask"
+      },
+      "boundingBoxes": {
+        "classColors": {
+          "label": "Class Colors"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "colorMode": {
+          "label": "Color Mode",
+          "options": {
+            "class": "By Class",
+            "static": "Static",
+            "threshold": "By Threshold"
+          }
+        },
+        "enabled": {
+          "label": "Display"
+        },
+        "label": "Bounding Boxes",
+        "lineWidth": {
+          "description": "The line width and/or thickness",
+          "label": "Line Width"
+        },
+        "opacity": {
+          "label": "Opacity, %"
+        },
+        "opacityMode": {
+          "label": "Opacity Mode",
+          "options": {
+            "score": "By Score",
+            "value": "By Value"
+          }
+        },
+        "opacityScale": {
+          "label": "Opacity Scale",
+          "options": {
+            "linear": "Linear",
+            "logarithmic": "Logarithmic"
+          }
+        },
+        "thresholdField": {
+          "label": "Threshold Field"
+        },
+        "toneDown": {
+          "label": "Tone down Opacity, %"
+        }
+      },
+      "distances": {
+        "bounds": {
+          "label": "Bounds Filter"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "enabled": {
+          "label": "Display"
+        },
+        "fontSize": {
+          "label": "Font Size"
+        },
+        "greaterThan": {
+          "label": "Greater Than"
+        },
+        "label_csv": "Distances (CSV)",
+        "label": "Distances",
+        "lessThan": {
+          "label": "Less Than"
+        },
+        "lineWidth": {
+          "label": "Line Width"
+        },
+        "method": {
+          "label": "Method",
+          "options": {
+            "delaunay_all": "Delaunay All",
+            "delaunay_max": "Delaunay Max",
+            "delaunay_min": "Delaunay Min",
+            "aa_separation_horizontal": "Axis-Aligned Separation (Horizontal)",
+            "aa_separation_vertical": "Axis-Aligned Separation (Vertical)",
+            "aa_separation_both": "Axis-Aligned Separation (Both)",
+            "none": "None"
+          }
+        },
+        "overlay": {
+          "label": "Enable Overlay"
+        },
+        "use": {
+          "label": "Use",
+          "placeholder": "Specify points otherwise centroids will be used",
+          "options": {
+            "bottomMost": "Bottom Most",
+            "centroid": "Centroid",
+            "leftMost": "Left Most",
+            "rightMost": "Right Most",
+            "topMost": "Top Most"
+          }
+        }
+      },
+      "file": {
+        "counter": {
+          "label": "Include Counter"
+        },
+        "counterDelimiter": {
+          "label": "Counter Delimiter"
+        },
+        "counterMinWidth": {
+          "label": "Counter Min Width"
+        },
+        "displayMs": {
+          "label": "Display Milliseconds"
+        },
+        "enablePrefix": {
+          "label": "Include Prefix"
+        },
+        "enableSuffix": {
+          "label": "Include Suffix"
+        },
+        "label": "Export File Name",
+        "msDelimiter": {
+          "label": "Delimiter",
+          "placeholder": "."
+        },
+        "prefix": {
+          "label": "Prefix"
+        },
+        "suffix": {
+          "label": "Suffix"
+        },
+        "systemName": {
+          "label": "Include System Name"
+        },
+        "timestamp": {
+          "label": "Timestamp"
+        },
+        "timezone": {
+          "label": "Include Time Zone"
+        },
+        "useOriginalFilename": {
+          "label": "Original File Name"
+        }
+      },
+      "fileNameAddition": {
+        "options": {
+          "custom": "Custom",
+          "disabled": "Disabled",
+          "original": "Original"
+        }
+      },
+      "fov": {
+        "color": {
+          "label": "Color"
+        },
+        "cropMode": {
+          "label": "Crop Mode",
+          "options": {
+            "disabled": "Full Image",
+            "enabled": "Cropped"
+          }
+        },
+        "enabled": {
+          "label": "Display"
+        },
+        "label": "Field of View",
+        "lineWidth": {
+          "description": "The line width and/or thickness",
+          "label": "Line Width"
+        },
+        "opacity": {
+          "label": "Opacity, %"
+        }
+      },
+      "includes": {
+        "classes": {
+          "label": "Classes",
+          "placeholder": "Specify classes otherwise all will be exported"
+        },
+        "dataConfigYaml": {
+          "label": "YOLO Data Configuration (yaml)"
+        },
+        "distancesCsv": {
+          "label": "Distances (csv)"
+        },
+        "distances": {
+          "label": "Distances (overlay)"
+        },
+        "label": "Includes",
+        "measurementsCsv": {
+          "label": "Measurements (csv)"
+        },
+        "modelConfigJson": {
+          "label": "Model Configuration (json)"
+        },
+        "noDetections": {
+          "label": "No Detections"
+        },
+        "yoloTxt": {
+          "label": "YOLO Annotations (txt)"
+        }
+      },
+      "interval": {
+        "from": {
+          "label": "From"
+        },
+        "label": "Time Range",
+        "to": {
+          "label": "To"
+        }
+      },
+      "label": {
+        "backgroundColor": {
+          "label": "Background Color"
+        },
+        "enabled": {
+          "label": "Display"
+        },
+        "fontSize": {
+          "label": "Font Size"
+        },
+        "includeConfidence": {
+          "label": "Include Confidence"
+        },
+        "includeId": {
+          "label": "Include ID"
+        },
+        "includeName": {
+          "label": "Include Name"
+        },
+        "label": "Labels",
+        "textColor": {
+          "label": "Text Color"
+        }
+      },
+      "measurements": {
+        "label": "Measurements",
+        "length": {
+          "label": "Length"
+        },
+        "ruler": {
+          "angleIncrement": {
+            "label": "Angle Increment"
+          },
+          "borderEnabled": {
+            "label": "Border",
+            "options": {
+              "disabled": "Hide",
+              "enabled": "Display"
+            }
+          },
+          "color": {
+            "label": "Color"
+          },
+          "enabled": {
+            "label": "Display"
+          },
+          "label": "Ruler",
+          "lineWidth": {
+            "description": "The line width and/or thickness",
+            "label": "Line Width"
+          },
+          "snapLength": {
+            "label": "Snap Length"
+          }
+        },
+        "scaleBar": {
+          "backgroundBorder": {
+            "label": "Background Border"
+          },
+          "backgroundColor": {
+            "label": "Background Color"
+          },
+          "backgroundEnabled": {
+            "label": "Background"
+          },
+          "color": {
+            "label": "Color"
+          },
+          "enabled": {
+            "label": "Display"
+          },
+          "label": "Scale Bar",
+          "lineWidth": {
+            "description": "The line width and/or thickness",
+            "label": "Line Width"
+          },
+          "paddingX": {
+            "label": "Horizontal Padding"
+          },
+          "paddingY": {
+            "label": "Vertical Padding"
+          },
+          "position": {
+            "label": "Position"
+          },
+          "textColor": {
+            "label": "Text Color"
+          },
+          "textEnabled": {
+            "label": "Show Text"
+          },
+          "textFont": {
+            "label": "Text Font"
+          },
+          "textPosition": {
+            "label": "Text Position"
+          },
+          "textSize": {
+            "label": "Text Size"
+          }
+        },
+        "scaleFactor": {
+          "description": "Pixel to measurement units conversion ratio",
+          "label": "Conversion Factor"
+        },
+        "unitsAbbr": {
+          "label": "Units Abbreviation"
+        },
+        "unitsFactor": {
+          "description": "Conversion factor of the 1 custom unit to the millimeters (mm)",
+          "label": "Factor"
+        },
+        "unitsName": {
+          "label": "Units",
+          "options": {
+            "angstrom": "Å",
+            "centimeter": "cm",
+            "custom": "Custom",
+            "micrometer": "μm",
+            "millimeter": "mm",
+            "nanometer": "nm",
+            "pixels": "px"
+          }
+        }
+      },
+      "outputFormat": {
+        "formats": {
+          "label": "Format",
+          "options": {
+            "archive": "Archive",
+            "gif": "GIF",
+            "video": "Video"
+          }
+        },
+        "fps": {
+          "label": "FPS"
+        },
+        "intervalSeparator": {
+          "label": "Interval Separator"
+        },
+        "label": "Format",
+        "systemName": {
+          "label": "Include System Name"
+        },
+        "timestamp": {
+          "label": "Include Timestamp"
+        }
+      },
+      "points": {
+        "color": {
+          "label": "Color"
+        },
+        "colorMode": {
+          "label": "Color Mode",
+          "options": {
+            "linked": "Inherit Bounding Boxes Colors",
+            "static": "Static"
+          }
+        },
+        "enabled": {
+          "label": "Enabled"
+        },
+        "extremePoints": {
+          "label": "Extreme Points"
+        },
+        "label": "Points",
+        "size": {
+          "label": "Size"
+        }
+      },
+      "segmentation": {
+        "classColors": {
+          "label": "Class Colors"
+        },
+        "color": {
+          "label": "Color"
+        },
+        "colorMode": {
+          "label": "Color Mode",
+          "options": {
+            "class": "By Class",
+            "linked": "Inherit Bounding Boxes Colors",
+            "static": "Static"
+          }
+        },
+        "enabled": {
+          "label": "Display"
+        },
+        "label": "Segmentation",
+        "lineWidth": {
+          "description": "The line width and/or thickness",
+          "label": "Outline Size"
+        },
+        "opacity": {
+          "label": "Fill Opacity, %"
+        },
+        "outline": {
+          "label": "Outline Color"
+        },
+        "outlineCustomColorEnabled": {
+          "label": "Outline Custom Color"
+        },
+        "toneDown": {
+          "label": "Tone down opacity, %"
+        }
+      },
+      "tracks": {
+        "color": {
+          "label": "Color"
+        },
+        "colorMode": {
+          "label": "Color Mode",
+          "options": {
+            "linked": "Inherit Bounding Boxes Colors",
+            "static": "Static"
+          }
+        },
+        "count": {
+          "label": "Points Count"
+        },
+        "enabled": {
+          "label": "Display"
+        },
+        "label": "Tracks",
+        "lineWidth": {
+          "label": "Line Width"
+        }
+      },
+      "ui": {
+        "annotationsOrderDirection": {
+          "label": "Overlays Z Ordering Direction",
+          "options": {
+            "asc": "A to Z",
+            "desc": "Z to A"
+          }
+        },
+        "annotationsOrderField": {
+          "label": "Overlays Z Ordering By",
+          "options": {
+            "label": "Label",
+            "x_n": "Start X",
+            "y_n": "Start Y"
+          }
+        },
+        "controlColor": {
+          "label": "Controls Color"
+        },
+        "label": "Tools"
+      }
+    },
+    "filterOperatorOptions": {
+      "eq": "=",
+      "ge": ">=",
+      "gt": ">",
+      "le": "=<",
+      "lt": "<",
+      "ne": "!="
+    },
+    "fovPositionOptions": {
+      "center": "Center",
+      "custom": "Custom",
+      "full": "Full",
+      "squareCenter": "Square Center"
+    },
+    "modelParameters": {
+      "advanced": {
+        "amp": {
+          "label": "Auto Mixed Prec."
+        },
+        "blockSize": {
+          "label": "Block Size"
+        },
+        "cConstant": {
+          "label": "C"
+        },
+        "chainMethod": {
+          "errorMessage": "Please select a chain method",
+          "label": "Chain Method"
+        },
+        "classAgnostic": {
+          "label": "Class Agnostic"
+        },
+        "cropNLayers": {
+          "label": "Crop N Layers"
+        },
+        "cropNPoints": {
+          "label": "Crop N Points"
+        },
+        "cuDNNBenchmark": {
+          "label": "cuDNN Benchmark"
+        },
+        "label": "Advanced Parameters",
+        "multipleLabels": {
+          "label": "Multiple Labels"
+        },
+        "networkInputChannel": {
+          "label": "Network Input Channel",
+          "errorMessage": "Please enter a non-negative integer."
+        },
+        "networkHiddenSize": {
+          "label": "Network Hidden Size",
+          "errorMessage": "Please enter a non-negative integer."
+        },
+        "networkOutputChannel": {
+          "label": "Network Output Channel",
+          "errorMessage": "Please enter a non-negative integer."
+        },
+        "quantized": {
+          "label": "Quantized"
+        },
+        "retinaMasks": {
+          "label": "Retina Masks"
+        },
+        "retrievalMode": {
+          "errorMessage": "Please select an retrieval mode",
+          "label": "Retrieval Mode"
+        },
+        "stabilityScoreOffset": {
+          "label": "Stab. Score Offset"
+        },
+        "stabilityScoreThreshold": {
+          "label": "Stab. Score Threshold"
+        },
+        "streamBuffer": {
+          "label": "Stream Buffer"
+        },
+        "stride": {
+          "label": "Stride"
+        }
+      },
+      "basic": {
+        "alphabet": {
+          "errorMessage": "Please select an alphabet",
+          "label": "Alphabet"
+        },
+        "baseline": {
+          "errorMessage": "Please select baseline",
+          "label": "Baseline"
+        },
+        "boxNMSThreshold": {
+          "label": "Box NMS Threshold"
+        },
+        "classNames": {
+          "label": "Class Names",
+          "noOptionsMessage": "Please add class names"
+        },
+        "confidenceThreshold": {
+          "label": "Conf. Threshold"
+        },
+        "confidenceThresholdLevel": {
+          "label": "Conf. Threshold Level",
+          "options": {
+            "normal": {
+              "label": "Normal",
+              "description": "0-100%"
+            },
+            "low": {
+              "label": "Low",
+              "description": "0-1%"
+            }
+          }
+        },
+        "cropNMSThreshold": {
+          "label": "Crop NMS Threshold"
+        },
+        "detectorWeightsFile": {
+          "errorMessage": "Please add the path to the Detector Weights File",
+          "label": "Detector Weights File"
+        },
+        "generation": {
+          "errorMessage": "Please select a generation",
+          "label": "Generation"
+        },
+        "iouThreshold": {
+          "label": "IoU Threshold"
+        },
+        "label": "Parameters",
+        "language": {
+          "errorMessage": "Please select a language using the two character code",
+          "label": "Language"
+        },
+        "maximumDetections": {
+          "label": "Maximum Detections"
+        },
+        "promptFree": {
+          "label": "Prompt Free"
+        },
+        "names": {
+          "label": "Names",
+          "noOptionsMessage": "Please add names",
+          "errorMessage": "Please add at least one name"
+        },
+        "pixelLimitLower": {
+          "label": "Lower Pixel Limit"
+        },
+        "pixelLimitUpper": {
+          "label": "Upper Pixel Limit"
+        },
+        "pointsPerBatch": {
+          "label": "Points per Batch"
+        },
+        "pointsPerSide": {
+          "label": "Points per Side"
+        },
+        "predIoUThreshold": {
+          "label": "Pred IoU Threshold"
+        },
+        "prompts": {
+          "label": "Prompts",
+          "errorMessage": "Please add at least one prompt"
+        },
+        "resolution": {
+          "label": "Resolution"
+        },
+        "prompt": {
+          "label": "Prompt",
+          "errorMessage": "Please add a prompt less than 50 characters"
+        },
+        "labelSam3": {
+          "label": "Class",
+          "errorMessage": "Please limit the class label to 20 characters."
+        }
+      }
+    },
+    "noTargetMessage": {
+      "body": "Please add Api Data Source request to panel query",
+      "title": "No Api Data Source"
+    },
+    "queryEditor": {
+      "binaryMaskSectionLabel": "Binary Mask",
+      "blueLabel": "Blue",
+      "grayLabel": "Gray",
+      "greenLabel": "Green",
+      "hts": {
+        "body": {
+          "label": "JSON Lookup Table"
+        },
+        "clusterSeverity": {
+          "label": "Cluster Severity"
+        },
+        "maximumLength": {
+          "label": "Maximum Length"
+        },
+        "minimumLength": {
+          "label": "Minimum Length"
+        },
+        "minimumSpacing": {
+          "label": "Minimum Spacing"
+        },
+        "pancakeType": {
+          "label": "Pancake Type"
+        },
+        "partLabel": {
+          "label": "Part Label"
+        },
+        "shotNumber": {
+          "label": "Shot Number"
+        },
+        "thumbnailPadding": {
+          "label": "Thumbnail Padding"
+        },
+        "turnOrderDir": {
+          "label": "Turn Order Direction",
+          "options": {
+            "asc": "Asc",
+            "desc": "Desc"
+          }
+        },
+        "voidLabel": {
+          "label": "Void Label"
+        }
+      },
+      "imageSizeLabel": "Image Size",
+      "inferenceAnnotationId": "Inference Annotation Id",
+      "inferenceAnnotationIgnore": "Ignore",
+      "inferenceFilters": {
+        "fieldOptions": {
+          "area": "Area",
+          "aspectRatio": "Aspect Ratio",
+          "class": "Class",
+          "confidence": "Confidence",
+          "equivalentDiameter": "Equivalent Diameter",
+          "extent": "Extent",
+          "height": "Height",
+          "majorAxis": "Major Axis",
+          "minorAxis": "Minor Axis",
+          "orientation": "Orientation",
+          "perimeter": "Perimeter",
+          "width": "Width"
+        },
+        "label": "Filters"
+      },
+      "inferenceIdLabel": "Inference Id",
+      "jupyter": {
+        "notebookName": {
+          "label": "Notebook"
+        },
+        "kernelId": {
+          "label": "Kernel"
+        },
+        "body": {
+          "label": "Code"
+        },
+        "startKernel": "Start Kernel",
+        "variables": {
+          "label": "Variables"
+        }
+      },
+      "maskByIdLabel": "Mask By Id",
+      "maskByIdToleranceLabel": "Mask By Id Tolerance",
+      "modelIdLabel": "Model Id",
+      "redLabel": "Red",
+      "requestLabel": "Request",
+      "scaleFactorLabel": "Scale Factor",
+      "thicknessLabel": "Thickness",
+      "thresholdLabel": "Threshold",
+      "thumbnailPaddingLabel": "Thumbnail Padding",
+      "thumbnailsLabel": "Include Thumbnails",
+      "variableOptionsLabel": "Variables"
+    },
+    "queryFieldFiltersEditor": {
+      "addButton": "Add Filter"
+    },
+    "queryFieldVariablesEditor": {
+      "addButton": "Add Variable"
+    },
+    "queryValueOrVariableEditor": {
+      "type": {
+        "options": {
+          "number": "Number",
+          "string": "String",
+          "variable": "Variable"
+        }
+      }
+    },
+    "requestTypeOptions": {
+      "actors": {
+        "description": "Returns registered actors",
+        "label": "Actors"
+      },
+      "disk": {
+        "description": "Returns disk usage",
+        "label": "Disk Usage"
+      },
+      "inferenceAnnotations": {
+        "description": "Returns inference annotations",
+        "label": "Inference Annotations"
+      },
+      "inferenceAnnotationsDelete": {
+        "description": "Delete Inference Annotation by id",
+        "label": "Inference Annotations Delete"
+      },
+      "inferenceAnnotationsFields": {
+        "description": "Returns inference annotations fields",
+        "label": "Inference Annotations Fields"
+      },
+      "inferenceAnnotationsUpdate": {
+        "description": "Update Inference Annotation by id",
+        "label": "Inference Annotations Update"
+      },
+      "inferenceHts": {
+        "description": "Returns inference HTS",
+        "label": "HTS"
+      },
+      "inferenceMeasurements": {
+        "description": "Returns inference measurements",
+        "label": "Inference Measurements"
+      },
+      "jupyterExecuteCode": {
+        "description": "Retrieve data via Python code",
+        "label": "Execute Jupyter Code"
+      },
+      "jupyterExecuteNotebook": {
+        "description": "Retrieve data via existing Jupyter Notebook",
+        "label": "Execute Jupyter Notebook"
+      },
+      "modelInferenceMeasurements": {
+        "description": "Returns inference measurements for model",
+        "label": "Model Inference Measurements"
+      },
+      "none": {
+        "description": "Used for internal API calls",
+        "label": "None"
+      },
+      "postProcessHistogram": {
+        "description": "Returns inference post process histogram",
+        "label": "Inference Post Process Histogram"
+      },
+      "preProcessHistogram": {
+        "description": "Returns inference pre process histogram",
+        "label": "Inference Pre Process Histogram"
+      },
+      "resources": {
+        "description": "Returns cluster resources",
+        "label": "Cluster Resources"
+      }
+    },
+    "scaleBarOptions": {
+      "bottom": "Bottom",
+      "custom": "Custom"
+    },
+    "tilingParameters": {
+      "autoSliceResolution": {
+        "label": "Auto Slice Resolution"
+      },
+      "enabled": {
+        "label": "Enabled"
+      },
+      "mergeClasses": {
+        "label": "Merge Classes",
+        "noOptionsMessage": "Please add class IDs"
+      },
+      "overlapHeightRatio": {
+        "label": "Overlap Height Ratio"
+      },
+      "overlapWidthRatio": {
+        "label": "Overlap Width Ratio"
+      },
+      "performStandardPred": {
+        "label": "Perform Standard Predictions"
+      },
+      "postprocessClassAgnostic": {
+        "label": "Post Process Class Agnostic"
+      },
+      "postprocessMatchMetric": {
+        "label": "Post Process Match Metric",
+        "options": {
+          "ios": "Intersection Over Small Area",
+          "iou": "Intersection Over Union"
+        }
+      },
+      "postprocessMatchThreshold": {
+        "label": "Post Process Match Threshold"
+      },
+      "postprocessType": {
+        "label": "Post Process Type",
+        "options": {
+          "greedyNmm": "GREEDYNMM",
+          "lsnms": "LSNMS",
+          "nmm": "NMM",
+          "nms": "NMS"
+        }
+      },
+      "sliceHeight": {
+        "label": "Slice Height"
+      },
+      "sliceWidth": {
+        "label": "Slice Width"
+      },
+      "tileHeight": {
+        "label": "Tile Height"
+      },
+      "tileWidth": {
+        "label": "Tile Width"
+      },
+      "variant": {
+        "label": "Variant"
+      }
+    },
+    "trackingParameters": {
+      "advanced": {
+        "appearanceThreshold": {
+          "label": "Appearance Threshold"
+        },
+        "gmcMethod": {
+          "label": "GMC Method"
+        },
+        "label": "Tracking Advanced Parameters",
+        "proximityThreshold": {
+          "label": "Proximity Threshold"
+        },
+        "withReid": {
+          "label": "Reid"
+        }
+      },
+      "basic": {
+        "bufferSize": {
+          "label": "Buffer Size"
+        },
+        "fuseScore": {
+          "label": "Fuse Score"
+        },
+        "highThreshold": {
+          "label": "High Threshold"
+        },
+        "label": "Tracking Parameters",
+        "lowThreshold": {
+          "label": "Low Threshold"
+        },
+        "matchThreshold": {
+          "label": "Match Threshold"
+        },
+        "newThreshold": {
+          "label": "New Threshold"
+        }
+      },
+      "tracker": {
+        "label": "Tracker"
+      }
+    }
+  },
+  "app": {
+    "appOptions": {
+      "config": {
+        "label": "Config"
+      }
+    },
+    "config": {
+      "description": "The Theia Application, is a plugin for Grafana that enables scientists, engineers, and researchers to easily\n        deploy deep learning models for feature detection in microscopy images.",
+      "updateButton": "Update Settings"
+    },
+    "home": {
+      "loadedMessage": "Loaded and ready to go!"
+    }
+  },
+  "balenaDatasource": {
+    "configEditor": {
+      "apiKeyLabel": "Api Key",
+      "urlLabel": "API URL"
+    },
+    "logFormatOptions": {
+      "cat": {
+        "description": "Generates a very terse output, only showing the actual message of each journal entry with no metadata, not even a timestamp",
+        "label": "Cat"
+      },
+      "json": {
+        "description": "Formats entries as JSON objects",
+        "label": "JSON"
+      },
+      "short": {
+        "description": "Generates an output that is mostly identical to the formatting of classic syslog files",
+        "label": "Short"
+      },
+      "unit": {
+        "description": "Prefixes the unit and user unit names instead of the traditional syslog identifier",
+        "label": "With Units"
+      }
+    },
+    "logUnitOptions": {
+      "any": {
+        "description": "Display logs for all services",
+        "label": "Any"
+      },
+      "balena": {
+        "description": "Display logs for Balena services",
+        "label": "Balena"
+      },
+      "openVpn": {
+        "description": "Display logs for OpenVPN",
+        "label": "OpenVPN"
+      },
+      "supervisor": {
+        "description": "Display logs for Supervisor",
+        "label": "Supervisor"
+      }
+    },
+    "queryEditor": {
+      "countLabel": "Count",
+      "excludeLabel": "Exclude Pattern",
+      "excludeTooltip": "Regex format",
+      "formatLabel": "Format",
+      "formatTooltip": "Allows to specify custom value",
+      "requestLabel": "Request",
+      "unitLabel": "Unit",
+      "unitTooltip": "Allows to specify custom value"
+    },
+    "requestTypeOptions": {
+      "device": {
+        "description": "Returns device information",
+        "label": "Device"
+      },
+      "logs": {
+        "description": "Returns logs. Requires Supervisor 10.2",
+        "label": "Logs"
+      },
+      "none": {
+        "description": "For internal API calls",
+        "label": "None"
+      },
+      "stateStatus": {
+        "description": "Returns a list of images, containers, the overall download progress and the status of the state engine. Requires Supervisor 9.7",
+        "label": "State Status"
+      }
+    }
+  },
+  "balenaServicePanel": {
+    "panel": {
+      "createdDate": "Created At: {{- date, datetime}}",
+      "deviceLabel": "Device",
+      "downloadProgress": "Download Progress: {{progress}}",
+      "id": "Id: {{id}}",
+      "ipAddress": "IP Address: {{address}}",
+      "noContainersMessage": "Please add containers.",
+      "noContainersTitle": "Getting Started",
+      "noDevicesMessage": "Device is not found.",
+      "noDevicesTitle": "Getting Started",
+      "noImagesMessage": "Please add images.",
+      "noImagesTitle": "Getting Started",
+      "rebootButton": "Reboot",
+      "rebootModal": {
+        "body": "Please confirm to reboot the device.",
+        "bootPartition": {
+          "label": "Boot Partition",
+          "placeholder": "Default will be used"
+        },
+        "confirmButton": "Confirm",
+        "title": "Reboot Device"
+      },
+      "releaseLabel": "Release",
+      "restartButton": "Restart services",
+      "restartContainerButton": "Restart",
+      "restartModal": {
+        "body": "Please confirm to restart all Application Services.",
+        "confirmButton": "Confirm",
+        "title": "Restart Application Services"
+      },
+      "shutdownButton": "Shutdown",
+      "shutdownModal": {
+        "body": "This action cannot be reversed. Device will need to be physically powered on.",
+        "confirmButton": "Confirm",
+        "title": "Shutdown Device"
+      },
+      "startContainerButton": "Start",
+      "stopContainerButton": "Stop",
+      "supervisorVersion": "Supervisor: {{version}}",
+      "targetStateButton": "Target State"
+    },
+    "panelOptions": {
+      "refresh": {
+        "description": "Interval to refresh, ms",
+        "label": "Refresh"
+      }
+    },
+    "stateDrawer": {
+      "closeButton": "Close",
+      "subtitle": "Please verify state configuration and update if required.",
+      "title": "Target State"
+    }
+  },
+  "basic": {
+    "advancedParameters": "Advanced Parameters",
+    "analyze": "Analyze",
+    "analyzing": "Analyzing...",
+    "auto": "Auto",
+    "close": "Close",
+    "configuration": "Configuration",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "disabled": "Disabled",
+    "done": "Done",
+    "enabled": "Enabled",
+    "export": "Export",
+    "height": "Height",
+    "off": "OFF",
+    "on": "ON",
+    "parameters": "Parameters",
+    "processing": "Processing",
+    "start": "Start",
+    "startNew": "Start New",
+    "stop": "Stop",
+    "timeRange": "Time Range",
+    "timeRangeFrom": "From",
+    "timeRangeTo": "To",
+    "update": "Update",
+    "uploadProgress": "File is uploading: {{percent}}% of {{size}}.",
+    "uploadStarting": "File is uploading: Starting.",
+    "wait": "Please wait",
+    "width": "Width"
+  },
+  "classColorsEditor": {
+    "addButton": "Add Class",
+    "deleteButton": "Delete Class",
+    "nameLabel": "Class Name"
+  },
+  "colorPicker": {
+    "colorButton": "Select Color",
+    "randomButton": "Random Color"
+  },
+  "deviceDatasource": {
+    "configEditor": {
+      "urlLabel": "API URL"
+    },
+    "queryEditor": {
+      "displayState": {
+        "label": "Display State",
+        "options": {
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "ledMode": {
+        "label": "LEDs Mode",
+        "options": {
+          "cylon": "Cylon",
+          "kiosk": "Kiosk",
+          "knightrider": "Knightrider",
+          "larson": "Larson",
+          "off": "OFF",
+          "on": "ON"
+        }
+      },
+      "requestType": {
+        "label": "Request",
+        "options": {
+          "getDisplay": "Get Display",
+          "getLeds": "Get LEDs",
+          "none": "None",
+          "updateDisplayState": "Update Display State",
+          "updateLedsMode": "Update LEDs Mode"
+        }
+      }
+    }
+  },
+  "filesList": {
+    "addFileButton": "Add File",
+    "addFolderButton": "Add Folder",
+    "category": {
+      "addFileButton": "Add File",
+      "addFolderButton": "Add Folder",
+      "cancelButton": "Cancel",
+      "deleteButton": "Delete",
+      "namePlaceholder": "Specify Folder Name",
+      "renameButton": "Rename",
+      "saveButton": "Save"
+    },
+    "collapseButton": "Collapse All",
+    "errorItemsList": "Error while accomplishing operation for: {{-list}}",
+    "expandButton": "Expand",
+    "file": {
+      "cancelButton": "Cancel",
+      "deleteButton": "Delete",
+      "downloadButton": "Download",
+      "namePlaceholder": "Specify File Name",
+      "playButton": "Action",
+      "renameButton": "Rename",
+      "saveButton": "Save"
+    },
+    "moveButton": "Move",
+    "moveModal": {
+      "cancelButton": "Cancel",
+      "pathToLabel": "Category to move",
+      "saveButton": "Move",
+      "title": "Move Selected Items"
+    },
+    "newItem": {
+      "cancelButton": "Cancel",
+      "folderNamePlaceholder": "Specify Folder Name",
+      "saveButton": "Add"
+    },
+    "noItemsMessage": "No Files",
+    "refreshButton": "Refresh",
+    "removeButton": "Remove",
+    "removeItemModal": {
+      "body": "Please confirm to delete {{name}}.",
+      "confirmButton": "Remove",
+      "confirmButtonLoading": "Removing...",
+      "title": "Remove"
+    },
+    "removeModal": {
+      "body": "Please confirm to delete selected items.",
+      "confirmButton": "Remove",
+      "confirmButtonLoading": "Removing...",
+      "title": "Remove Selected Items"
+    },
+    "searchLabel": "Filter",
+    "searchPlaceholder": "File name contains",
+    "sortLabel": "Sort By",
+    "sortOptions": {
+      "lastModifiedAsc": "Modified: oldest",
+      "lastModifiedDesc": "Modified: newest",
+      "nameAsc": "Name: A to Z",
+      "nameDesc": "Name: Z to A",
+      "sizeAsc": "Size: smallest",
+      "sizeDesc": "Size: biggest"
+    },
+    "toggleAnalyzeLabel": "Analyze on Upload: {{state}}"
+  },
+  "job": {
+    "abortButton": "Abort",
+    "beginDate": "Begin: {{- date, datetime}}",
+    "completedDate": "Completed at {{- date, datetime}}",
+    "createdDate": "Created at {{- date, datetime}}",
+    "deleteButton": "Delete job",
+    "deleteIncludeOptions": {
+      "annotations": "Annotations",
+      "field_of_views": "Field of Views",
+      "images": "Images",
+      "inferences": "Inferences",
+      "models": "Models"
+    },
+    "downloadButton": "Download this file",
+    "endDate": "End: {{- date, datetime}}",
+    "imagesCount": "{{count}} images",
+    "lastUpdatedDate": "Last Updated at {{- date, datetime}}",
+    "size": "Size {{value}}",
+    "startedDate": "Started at {{- date, datetime}}",
+    "statuses": {
+      "completed": "completed"
+    },
+    "titleWithProgress": "Progress {{progress}}%",
+    "titleWithResultFile": "{{result}}",
+    "titleWithTotalDeleted": "{{name}} - Total Deleted: {{deletedCount}}",
+    "titleWithTotalDeletedAndProgress": "{{name}} - Total Deleted: {{deletedCount}} - Progress {{progress}}%"
+  },
+  "jobPanel": {
+    "analyzeDrawer": {
+      "cancelButton": "Close",
+      "frameIndex": {
+        "label": "Frame"
+      },
+      "noModelPlaceholder": "Leave empty to use all running models",
+      "submitButton": "Analyze",
+      "subtitle": "Please select actor and click Analyze button",
+      "title": "Analyze Job"
+    },
+    "controlModeOptions": {
+      "analyze": "Analyze",
+      "delete": "Cleanup",
+      "export": "Export",
+      "library": "Media",
+      "train": "Train"
+    },
+    "deleteDrawer": {
+      "confirmDeleteModal": {
+        "confirmButton": "Delete",
+        "fieldConfirm": {
+          "placeholder": "Type \"Delete\" to confirm"
+        },
+        "title": "Delete Confirmation"
+      },
+      "errorMessage": "Unable to submit.",
+      "errorTitle": "Delete Job",
+      "includeLabel": "Include",
+      "submittedMessage": "Submitted successfully.",
+      "submittedTitle": "Delete Job",
+      "subtitle": "Please modify default parameters and click Delete button.",
+      "title": "Delete Job Configuration"
+    },
+    "exportDrawer": {
+      "models": {
+        "label": "Actor",
+        "placeholder": "Leave empty to use all actors withing the time range"
+      },
+      "subtitle": "Please modify default parameters and click Export button.",
+      "title": "Export Job Configuration"
+    },
+    "panel": {
+      "analyzeButton": "Analyze Media",
+      "analyzeButtonDisabled": "No actors are available for analysis",
+      "analyzeInProgressMessage": "Processing selected media.",
+      "analyzeInProgressTitle": "Analyze Media",
+      "dashboardLinkTooltip": "Click to navigate to Examine dashboard",
+      "deleteButton": "Delete",
+      "deleteModal": {
+        "body": "Are you sure you want to delete job {{id}}?",
+        "confirmButton": "Confirm",
+        "title": "Delete Job"
+      },
+      "exportButton": "Bulk Export",
+      "fallbackDashboardLink": "Examine",
+      "fallbackMultiExamineLink": "Multi Model",
+      "filterFormat": {
+        "emptyMessage": "All",
+        "label": "Format",
+        "options": {
+          "archive": "Archive",
+          "gif": "GIF",
+          "video": "Video"
+        }
+      },
+      "filterModelFamily": {
+        "emptyMessage": "Any",
+        "label": "Model Family"
+      },
+      "filterModelVariant": {
+        "emptyMessage": "Any",
+        "label": "Model Variant"
+      },
+      "noAnalyzeItemsMessage": "Please upload media file for processing.",
+      "noAnalyzeItemsTitle": "Getting Started",
+      "noDeleteItemsMessage": "No delete jobs submitted yet.",
+      "noDeleteItemsTitle": "Getting Started",
+      "noExportItemsMessage": "Please Export Images for offline processing.",
+      "noExportItemsTitle": "Getting Started",
+      "noTrainItemsMessage": "No training jobs submitted yet.",
+      "noTrainItemsTitle": "Getting Started",
+      "processingMessage": "File is uploading...",
+      "sort": {
+        "label": "Sort",
+        "options": {
+          "completedAsc": "Completed A to Z",
+          "completedDesc": "Completed Z to A",
+          "sizeAsc": "Size A to Z",
+          "sizeDesc": "Size Z to A",
+          "startedAsc": "Started A to Z",
+          "startedDesc": "Started Z to A"
+        }
+      }
+    },
+    "panelOptions": {
+      "variables": {
+        "deleteFrom": {
+          "description": "From timestamp for cleanup",
+          "label": "Cleanup From"
+        },
+        "deleteTo": {
+          "description": "To timestamp for cleanup",
+          "label": "Cleanup To"
+        },
+        "exportFrom": {
+          "description": "From timestamp for bulk export",
+          "label": "Export From"
+        },
+        "exportTo": {
+          "description": "To timestamp for bulk export",
+          "label": "Export To"
+        },
+        "filterModelId": {
+          "description": "For filtering jobs",
+          "label": "Filter Model Id"
+        },
+        "label": "Variables"
+      }
+    }
+  },
+  "messages": {
+    "CPU": "CPU",
+    "CPUOnly": "CPU Only",
+    "CUDA": "CUDA",
+    "GPU": "GPU",
+    "api": {
+      "failed": "{{name}}: API Request failed",
+      "names": {
+        "addActor": "Add Actor",
+        "addTrainJob": "Add Training Job",
+        "analyzeJob": "Analyze Job",
+        "analyzeJobs": "Analyze Jobs",
+        "createWebDavCategory": "Create WebDav Category",
+        "deleteActor": "Delete Actor",
+        "deleteAllActors": "Delete All Actors",
+        "deleteJob": "Delete Job",
+        "deleteJobs": "Delete Jobs",
+        "exportImage": "Export Image",
+        "exportJob": "Export Job",
+        "exportJobs": "Export Jobs",
+        "generateImagePreview": "Generate Image Preview",
+        "getAnalyzeJobs": "Get Analyze Jobs",
+        "getDeleteJobs": "Get Delete Jobs",
+        "getDeviceInfo": "Get Device Info",
+        "getImageProcessing": "Get Image Processing",
+        "getJobsConfiguration": "Get Jobs Configuration",
+        "getModels": "Get Models",
+        "getNavigation": "Get Navigation",
+        "getServices": "Get Services",
+        "getStarredDashboards": "Get Starred Dashboards",
+        "getTrainJobs": "Get Train Jobs",
+        "getUploadProgress": "Get Upload Progress",
+        "getWebDavFiles": "Get WebDav Files",
+        "moveWebDavItem": "Moving WebDav Item",
+        "ping": "Ping",
+        "removeWebDavItem": "Removing WebDav Item",
+        "renameWebDavFile": "Rename WebDav File",
+        "startImageProcessing": "Start Image Processing",
+        "startMediaProcessing": "Start Media Processing",
+        "stream": "Stream",
+        "trainJob": "Train Job",
+        "updateActor": "Update Actor",
+        "updateActorParameters": "Update Actor Parameters",
+        "updateImageProcessing": "Update Image Processing",
+        "updateToggleAnalyze": "Update Analyze Toggle",
+        "updateScaleBar": "Update Scale Bar",
+        "uploadFile": "Upload File",
+        "uploadImage": "Image Upload",
+        "uploadMedia": "Media Upload",
+        "uploadWebDavFile": "Upload WebDav File"
+      },
+      "notFound": "{{name}} is not found",
+      "notFoundPlural": "{{name}} are not found",
+      "submitted": "{{name}}: API Request Submitted"
+    },
+    "dataSourceNotDefined": "Data Source is not defined",
+    "entityNames": {
+      "actor": "Actor",
+      "actors": "Actors",
+      "canvas": "Canvas",
+      "exportJobs": "Export Jobs",
+      "file": "File",
+      "image": "Image",
+      "models": "Models",
+      "services": "Services",
+      "weightsFile": "Weights File"
+    },
+    "error": "Error",
+    "gpuUnavailable": "GPU resources are unavailable. Actor will use CPU only.",
+    "inputIsRequired": "This input is required",
+    "invalidDate": "Invalid Date",
+    "loading": "Loading...",
+    "notProvided": "{{name}} is not provided",
+    "resources": "Resources",
+    "starting": "Starting...",
+    "success": "Success"
+  },
+  "model": {
+    "automaticMixedPrecision": "Auto Mixed Prec.",
+    "baseline": "Baseline",
+    "boxNMSThreshold": "Box NMS Threshold",
+    "brightness": "Brightness",
+    "clahe": "CLAHE",
+    "claheClipLimit": "CLAHE Clip Limit",
+    "claheTileGridSize": "CLAHE Tile Grid Size",
+    "classAgnostic": "Class Agnostic",
+    "classNames": "Class Names",
+    "confidenceThreshold": "Conf. Threshold",
+    "contrast": "Contrast",
+    "createdDate": "Created at {{- date, datetime}}",
+    "cropNLayers": "Crop N Layers",
+    "cropNMSThreshold": "Crop NMS Threshold",
+    "cropNPoints": "Crop N Points",
+    "description": "Description",
+    "distributed": "Distributed",
+    "downloadButton": "Download",
+    "gamma": "Gamma",
+    "gray": "Grayscale",
+    "imageProcessing": "Image Processing",
+    "imageSize": "Image Size",
+    "invert": "Invert",
+    "iouThreshold": "IoU Threshold",
+    "maxConcurrency": "Max Concurrency",
+    "maximumDetections": "Maximum Detections",
+    "multipleLabels": "Multiple Labels",
+    "normal": "Normal",
+    "normalize": "Normalize",
+    "normalizeMode": "Normalize Mode",
+    "normalizeModeOptions": {
+      "infinity": "Infinity",
+      "l1": "L1",
+      "l2": "L2",
+      "minMax": "Min-Max"
+    },
+    "normalizeValue": "Normalize Alpha/Beta",
+    "notEnoughResources": "Not enough resources",
+    "pointsPerBatch": "Points per Batch",
+    "pointsPerSide": "Points per Side",
+    "predIoUThreshold": "Pred IoU Threshold",
+    "saveButton": "Save to Favorites",
+    "savedMessage": "Model has been saved.",
+    "stabilityScoreOffset": "Stab. Score Offset",
+    "stabilityScoreThreshold": "Stab. Score Threshold",
+    "startAndSave": "Start and save",
+    "startButton": "Start Actor",
+    "stretch": "Contrast Stretching",
+    "stretchValue": "Contrast Stretching Min/Max",
+    "stride": "Stride",
+    "tiling": "Tiling",
+    "title": "Title",
+    "tracking": "Tracking",
+    "updateAndSave": "Update and save"
+  },
+  "modelCustomParametersEditor": {
+    "addButton": "Add Field",
+    "deleteButton": "Delete",
+    "namePlaceholder": "Field Name",
+    "valuePlaceholder": "Field Value"
+  },
+  "modelPanel": {
+    "configurationDrawer": {
+      "title": "Actor Configuration"
+    },
+    "favoriteModelsList": {
+      "groupFilter": {
+        "label": "Group",
+        "placeholder": "All"
+      },
+      "manageGroupsButton": "Manage Groups",
+      "manageGroupsModalTitle": "Manage Groups",
+      "model": {
+        "removeSavedButton": "Remove from Favorites"
+      },
+      "startButton": "Start"
+    },
+    "favoriteModelsManageGroups": {
+      "addItemLabel": "Add Actor",
+      "cancelButton": "Cancel",
+      "newGroup": {
+        "addButton": "Add Group",
+        "name": "Name"
+      },
+      "removeGroupButton": "Remove Group",
+      "removeItemButton": "Remove from Group",
+      "saveButton": "Save"
+    },
+    "panel": {
+      "acquisitionDashboardTitle": "Click to navigate to Acquisition dashboard",
+      "acquisitionTemplate": "Acquisition",
+      "actorsListLabel": "Running",
+      "clearIntervalButton": "Sync with dashboard",
+      "confirmDeleteActorModal": {
+        "body": "Are you sure you want to stop the \"{{name}}\" actor?",
+        "title": "Stop {{name}}"
+      },
+      "confirmDeleteAllActorsModal": {
+        "body": "Are you sure you want to stop all actors?",
+        "title": "Stop All Actors"
+      },
+      "datasetsTitle": "Datasets Library",
+      "deleteAllButton": "Stop All",
+      "deleteButton": "Stop actor",
+      "importButton": "Import",
+      "multiModelDashboardTitle": "Click to navigate to Multi Actor Acquisition dashboard",
+      "multiModelTemplate": "Multi Actor",
+      "noActorsMessage": "Please upload weights file and start a new or restart an existing actor.",
+      "noActorsTitle": "Getting Started",
+      "reuseModelSearch": {
+        "label": "Search",
+        "placeholder": "Search term"
+      },
+      "reuseModelSort": {
+        "label": "Sort By",
+        "options": {
+          "created-asc": "Created: A to Z",
+          "created-desc": "Created: Z to A",
+          "family-asc": "Family: A to Z",
+          "family-desc": "Family: Z to A"
+        }
+      },
+      "savedModelsLabel": "Favorites",
+      "startButton": "Start",
+      "startManyModelsSuccessMessage": "Selected Actors have been started successfully.",
+      "startingManyModelsMessage": "Selected Actors are starting...",
+      "tabs": {
+        "datasets": "Datasets",
+        "models": "Actors",
+        "reuse": "Reuse",
+        "weights": "Weights"
+      },
+      "weightsLibraryTitle": "Weights Library"
+    },
+    "panelOptions": {
+      "distributed": {
+        "description": "Allows use of one or more CPU or GPU per Actor.",
+        "label": "Distributed"
+      },
+      "refresh": {
+        "description": "Interval to refresh, ms",
+        "label": "Refresh"
+      }
+    },
+    "startDrawer": {
+      "languageFormatError": "Please select a language using the two character code.",
+      "noDetectorWeightsFile": "Please add a Detector Weights File.",
+      "noNamesError": "Please add names",
+      "noPromptError": "Please add a prompt.",
+      "noPromptsError": "Please add prompts",
+      "changeFileButton": "Change",
+      "classTooLongError": "Please limit the class to 20 characters.",
+      "classNamesOptions": "Please add class names",
+      "labels": {
+        "family": "Family",
+        "variant": "{{family}} Variant"
+      },
+      "noBaselineError": "Please select baseline",
+      "noFamilyError": "Please select model family",
+      "noWeightsFileError": "Please select weights file",
+      "noWeightsFileMessage": "Not found",
+      "promptTooLongError": "Please limit the prompt to 50 characters.",
+      "resourceLabel": "Resources",
+      "resourceOptions": {
+        "cpu": "CPU",
+        "gpu": "GPU"
+      },
+      "subTitle": "Please select the weights file, update configuration, and start the Actor.",
+      "title": "Start Actor",
+      "weightsLibraryTitle": "Weights Library"
+    },
+    "startTrainJobDrawer": {
+      "buttonCancel": "Close",
+      "buttonSave": "Start",
+      "description": "Please select the weights file, update configuration and start the Train job",
+      "title": "Start Train Job",
+      "trainParameters": {
+        "batchSize": {
+          "label": "Batch Size"
+        },
+        "epochs": {
+          "label": "Epochs"
+        },
+        "imageSize": {
+          "label": "Image Size"
+        },
+        "numCpus": {
+          "label": "CPU"
+        },
+        "numGpus": {
+          "label": "GPU"
+        }
+      }
+    }
+  },
+  "navPanel": {
+    "panel": {
+      "back5Button": "Move backward by 5 seconds.",
+      "backButton": "Move backward by 1 second.",
+      "deleteButton": "Delete data",
+      "disableBookmarksButton": "Hide Bookmarks",
+      "disableLiveButton": "Disable Live mode",
+      "disableLoopingButton": "Click to disable looping",
+      "disableSyncButton": "Disable Synchronization",
+      "downloadButton": "Download",
+      "enableBookmarksButton": "Enable Bookmarks",
+      "enableLiveButton": "Enable Live mode",
+      "enableLoopingButton": "Click to enable looping",
+      "enableSyncButton": "Enable Synchronization",
+      "exportButton": "Export All ({{count}})",
+      "exportProgress": "{{value}}% ...",
+      "exportResultFormatOptions": {
+        "archive": "Archive",
+        "gif": "GIF",
+        "video": "Video"
+      },
+      "forward5Button": "Move forward by 5 seconds.",
+      "forwardButton": "Move forward by 1 second.",
+      "mark": "{{value}} sec",
+      "noModelsMessage": "Can't find any Acquisitions in the selected Time Range.",
+      "noModelsTitle": "Getting Started",
+      "pauseButton": "Pause",
+      "playButton": "Play",
+      "selectModelLabel": "Model",
+      "selectModelPlaceholder": "Please choose the Model",
+      "setMaxButton": ">|",
+      "setMinButton": "|<",
+      "unselectButton": "Unselect"
+    },
+    "panelOptions": {
+      "inferenceField": {
+        "description": "The field containing the Inference Id",
+        "label": "Inference"
+      },
+      "showDelete": {
+        "label": "Allow to delete data"
+      },
+      "showLive": {
+        "description": "Allow to enable/disable live mode to show the latest results by dashboard autorefresh. If disabled, live mode is disabled.",
+        "label": "Show Live"
+      },
+      "showSync": {
+        "description": "Allow to enable/disable synchronization between other panels. If disabled, synchronization is active.",
+        "label": "Show Synchronization"
+      },
+      "timeField": {
+        "description": "The field containing the time interval",
+        "label": "Time"
+      },
+      "variables": {
+        "filters": {
+          "description": "Predefine exportable classes",
+          "label": "Variable to Apply Filters"
+        },
+        "inference": {
+          "description": "Specify variable for inference",
+          "label": "Inference"
+        },
+        "label": "Variables",
+        "model": {
+          "description": "Specify variable for model",
+          "label": "Model"
+        },
+        "offset": {
+          "description": "Specify variable for offset",
+          "label": "Offset"
+        }
+      }
+    }
+  },
+  "networkPanel": {
+    "disableButton": "Disable Wi-Fi",
+    "enableButton": "Enable Wi-Fi",
+    "enablingMessage": "Wi-Fi is enabling...",
+    "hotspotsList": {
+      "addButton": "Create Hotspot",
+      "addModal": {
+        "cancelButton": "Cancel",
+        "psk": {
+          "label": "Password"
+        },
+        "saveButton": "Save",
+        "ssid": {
+          "label": "SSID"
+        },
+        "title": "Create Hotspot"
+      },
+      "deleteModal": {
+        "body": "Please confirm to delete {{hotspot}}",
+        "saveButton": "Delete",
+        "title": "Delete Hotspot"
+      },
+      "item": {
+        "deleteButton": "Delete",
+        "disableButton": "Disable",
+        "enableButton": "Enable",
+        "password": "Password: {{value}}"
+      }
+    },
+    "networksList": {
+      "addModal": {
+        "cancelButton": "Cancel",
+        "device": {
+          "label": "Device"
+        },
+        "password": {
+          "label": "Password"
+        },
+        "saveButton": "Connect",
+        "title": "Connect to {{network}}"
+      },
+      "item": {
+        "connectKnownButton": "Connect To Network",
+        "disconnectButton": "Disconnect"
+      },
+      "refreshButton": "Refresh",
+      "title": "Networks"
+    },
+    "noDeviceMessage": "Wi-Fi is not supported",
+    "options": {
+      "minStrength": {
+        "label": "Minimum Network Strength"
+      }
+    },
+    "refreshButton": "Refresh",
+    "tabs": {
+      "hotspots": "Hotspots",
+      "wifi": "Wi-Fi"
+    }
+  },
+  "selectModel": {
+    "fieldPlaceholder": "Please choose the Model"
+  },
+  "stringArrayEditor": {
+    "addButton": "Add",
+    "deleteButton": "Delete"
+  },
+  "systemDatasource": {
+    "configEditor": {
+      "urlLabel": "API URL"
+    },
+    "queryEditor": {
+      "connection": {
+        "device": {
+          "label": "Device"
+        },
+        "enabled": {
+          "description": "String boolean value",
+          "label": "Enabled"
+        },
+        "name": {
+          "label": "Name"
+        },
+        "passkey": {
+          "label": "Password"
+        },
+        "ssid": {
+          "label": "Ssid"
+        }
+      },
+      "grub": {
+        "id": {
+          "label": "ID"
+        },
+        "name": {
+          "label": "Device Name"
+        }
+      },
+      "hotspot": {
+        "enabled": {
+          "description": "String boolean value",
+          "label": "Enabled"
+        },
+        "name": {
+          "label": "Name"
+        },
+        "psk": {
+          "label": "Password"
+        },
+        "ssid": {
+          "label": "Ssid"
+        }
+      },
+      "requestType": {
+        "label": "Request"
+      },
+      "services": {
+        "resolve": {
+          "label": "Resolve",
+          "options": {
+            "disabled": "Don't resolve services",
+            "enabled": "Resolve services"
+          }
+        },
+        "timeout": {
+          "label": "Timeout"
+        }
+      },
+      "wifiDevice": {
+        "enabled": {
+          "description": "String boolean value",
+          "label": "Enabled"
+        },
+        "name": {
+          "label": "Name"
+        }
+      }
+    },
+    "requestTypeOptions": {
+      "connectionCreate": "Connection Create",
+      "connectionDelete": "Connection Delete",
+      "connectionUpdate": "Connection Update",
+      "connections": "Connections",
+      "grubDeviceEntriesList": "GRUB Device Entries",
+      "grubDeviceGet": "GRUB Device Menu Entries and ID",
+      "grubDeviceNextGet": "GRUB Device Next Boot Menu",
+      "grubDeviceNextUpdate": "GRUB Update Device Next Boot Menu",
+      "grubEntriesList": "GRUB Entries",
+      "grubList": "GRUB Menu Entries and ID",
+      "grubNextGet": "GRUB Next Boot Menu",
+      "grubNextUpdate": "GRUB Update Next Boot Menu",
+      "hotspotCreate": "Hotspot Create",
+      "hotspotDelete": "Hotspot Delete",
+      "hotspotUpdate": "Hotspot Update",
+      "hotspots": "Hotspots",
+      "info": "Get Info",
+      "none": "None",
+      "servicesList": "Services List",
+      "wifiDeviceUpdate": "Wi-Fi Device Update",
+      "wifiDevices": "Wi-Fi Devices",
+      "wifiNetworks": "Wi-Fi Networks"
+    }
+  },
+  "timePanel": {
+    "panel": {
+      "detailsButton": "Details",
+      "notSyncedMessage": "Time is not synchronized, difference is {{ms}}ms.",
+      "syncedMessage": "Time synchronized, difference is {{ms}}ms.",
+      "unknownMessage": "Time is not known."
+    },
+    "panelOptions": {
+      "skew": {
+        "description": "Allowed difference between database's time and browser, ms",
+        "label": "Skew"
+      }
+    },
+    "timeDrawer": {
+      "api": "API",
+      "manualTimeSetButton": "Set",
+      "manualTimeSetLabel": "Select",
+      "manualTimeSetTitle": "Manual Time Set",
+      "notAvailable": "Not available.",
+      "notSupportedDbusCommunicationMessage": "Not supported.",
+      "notSupportedDbusCommunicationTitle": "D-Bus Communication",
+      "ntp": "NTP",
+      "ntpNotSynced": "Not Synchronized",
+      "ntpService": "NTP Service",
+      "ntpSynced": "Synchronized",
+      "postgres": "Postgres",
+      "restartNtpServiceButton": "Restart Service",
+      "restartNtpServiceTooltip": "Restarting the service forces an NTP synchronization.",
+      "settings": "Settings",
+      "subTitle": "Please verify time synchronization and adjust if required.",
+      "system": "System",
+      "systemNotAvailableMessage": "Not available.",
+      "systemNotAvailableTitle": "System",
+      "systemUpdateButton": "Update to Browser Clock",
+      "title": "Time Management",
+      "unknown": "Unknown"
+    }
+  },
+  "visionPanel": {
+    "contextMenu": {
+      "ruler": {
+        "label": "Ruler",
+        "options": {
+          "delete": "Delete",
+          "reset": "Reset",
+          "setColor": "Change Color"
+        }
+      },
+      "rulers": {
+        "label": "Rulers",
+        "options": {
+          "delete": "Delete All",
+          "reset": "Reset All"
+        }
+      },
+      "scaleBar": {
+        "label": "Scale Bar",
+        "options": {
+          "toBottom": "Reset"
+        }
+      },
+      "tracks": {
+        "label": "Tracks",
+        "options": {
+          "reset": "Clear"
+        }
+      }
+    },
+    "panel": {
+      "addBookmarkButton": "Add Bookmark",
+      "allFileControlsDisabledError": "All export file name controls cannot be disabled.",
+      "annotationHighlightButton": "Highlight",
+      "annotationHighlightButtonTooltip": "Annotation Highlight",
+      "appearanceButton": "Appearance sidebar",
+      "bboxesButton": "Bounding Boxes",
+      "binaryMaskButton": "Binary Mask",
+      "cropButton": "Cropped",
+      "distancesButton": "Distances",
+      "fovButton": "Field of View",
+      "labelsButton": "Labels",
+      "noImageMessage": "Please start real-time video capture, upload image, or select another interval to review.",
+      "noImageTitle": "Getting Started",
+      "originButton": "Origin",
+      "pointsButton": "Points",
+      "reference": {
+        "bookmarks": {
+          "date": "{{- date, datetime}}",
+          "label": "Bookmarks",
+          "noItemsMessage": {
+            "body": "Please add a bookmark to use as a reference image",
+            "title": "No Bookmarks"
+          }
+        },
+        "label": "Reference Image"
+      },
+      "removeBookmarkButton": "Remove Bookmark",
+      "resetZoomButton": "Set zoom to default",
+      "rulerButton": "Add Ruler",
+      "scaleBarButton": "Scale Bar",
+      "segmentationButton": "Segmentation",
+      "selectModelLabel": "Model",
+      "selectModelPlaceholder": "Please choose the Model",
+      "toolbarButton": "Add Toolbar",
+      "tracksButton": "Tracks"
+    },
+    "panelOptions": {
+      "bboxes": {
+        "filters": {
+          "label": "Variable to Apply Filters"
+        },
+        "label": "Bounding Boxes"
+      },
+      "preselectModel": {
+        "label": "Preselect Model",
+        "options": {
+          "disabled": "Disabled",
+          "enabled": "Enabled"
+        }
+      },
+      "reference": {
+        "description": "Allow to upload a reference image",
+        "label": "Reference Image",
+        "options": {
+          "disabled": "Disabled",
+          "enabled": "Enabled"
+        }
+      },
+      "scaleBar": {
+        "label": "Scale Bar",
+        "timeout": {
+          "description": "Timeout to prevent multiple updates",
+          "label": "Timeout"
+        }
+      },
+      "toolbar": {
+        "label": "Display Toolbar",
+        "options": {
+          "disabled": "Hide",
+          "enabled": "Show"
+        }
+      },
+      "variables": {
+        "inference": {
+          "description": "Specify variable for inference",
+          "label": "Inference"
+        },
+        "label": "Variables",
+        "model": {
+          "description": "Specify variable for model",
+          "label": "Model"
+        }
+      }
+    }
+  },
+  "calendarPanel": {
+    "eventDetailsDrawer": {
+      "location": "Location: {{location}}",
+      "title": "Event Details"
+    },
+    "localizerMessages": {
+      "agenda": "Agenda",
+      "allDay": "All Day",
+      "date": "Date",
+      "day": "Day",
+      "event": "Event",
+      "month": "Month",
+      "next": "Next",
+      "noEventsInRange": "There are no events in this range.",
+      "previous": "Back",
+      "showMore": "+{{total}} more",
+      "time": "Time",
+      "today": "Today",
+      "tomorrow": "Tomorrow",
+      "week": "Week",
+      "workWeek": "Work Week",
+      "year": "Year",
+      "yesterday": "Yesterday"
+    },
+    "panel": {
+      "noViewsMessage": "Please enable at least one view.",
+      "noViewsTitle": "No Views"
+    },
+    "panelOptions": {
+      "annotations": {
+        "annotations": {
+          "description": "Display annotations.",
+          "label": "Annotations",
+          "options": {
+            "disabled": "Disabled",
+            "enabled": "Enabled"
+          }
+        },
+        "annotationsLimit": {
+          "label": "Max limit"
+        },
+        "annotationsType": {
+          "label": "Type",
+          "options": {
+            "alert": "Alerts",
+            "all": "Any",
+            "annotation": "Annotations"
+          }
+        },
+        "label": "Annotations"
+      },
+      "data": {
+        "colorField": {
+          "description": "Field to use as event color.",
+          "label": "Color"
+        },
+        "descriptionField": {
+          "description": "Field to use for the event description.",
+          "label": "Description",
+          "noFieldsMessage": "No string fields found"
+        },
+        "endTimeField": {
+          "description": "Field to use for the event end time. If not set, event is instant.",
+          "label": "End time"
+        },
+        "label": "Data",
+        "labelFields": {
+          "description": "Fields to use as event labels.",
+          "label": "Labels"
+        },
+        "locationField": {
+          "description": "Field to use for the event location.",
+          "label": "Location",
+          "noFieldsMessage": "No string fields found"
+        },
+        "textField": {
+          "description": "Field to use for the event text. Defaults to the first textual field.",
+          "label": "Text",
+          "noFieldsMessage": "No string fields found"
+        },
+        "timeField": {
+          "description": "Field to use for the event start time. Defaults to the first time field.",
+          "label": "Start time"
+        }
+      },
+      "endTimeRange": {
+        "description": "Set 'to' time",
+        "label": "End time range"
+      },
+      "endTimeVariable": {
+        "description": "Select 'to' variable",
+        "label": "End time range"
+      },
+      "eventField": {
+        "options": {
+          "description": "Description",
+          "labels": "Labels",
+          "links": "Links",
+          "location": "Location",
+          "text": "Text",
+          "time": "Time"
+        }
+      },
+      "events": {
+        "displayFields": {
+          "description": "Fields to show in the event details.",
+          "label": "Details info"
+        },
+        "label": "Events",
+        "locationLabel": {
+          "description": "Specify a custom label for location field.",
+          "label": "Location label",
+          "placeholder": "Location:"
+        },
+        "preformattedDescription": {
+          "description": "Allows to display preformatted text in description.",
+          "label": "Description format"
+        },
+        "preformattedOptions": {
+          "options": {
+            "default": "Inline",
+            "preformatted": "Preformatted"
+          }
+        },
+        "quickLinks": {
+          "description": "Open data link or display drawer when clicking an event.",
+          "label": "On click",
+          "options": {
+            "disabled": "Show Details",
+            "enabled": "Open Link"
+          }
+        },
+        "showEventTooltip": {
+          "label": "Tooltip",
+          "description": "Show event details on hover.",
+          "options": {
+            "disabled": "Disabled",
+            "enabled": "Enabled"
+          }
+        }
+      },
+      "layout": {
+        "colors": {
+          "description": "Display colors based on Frame or Event id if Color field is not specified.",
+          "label": "Colors",
+          "options": {
+            "event": "Event",
+            "frame": "Frame",
+            "thresholds": "Thresholds"
+          }
+        },
+        "dateFormat": {
+          "label": "Date and time format",
+          "options": {
+            "de": "German",
+            "en": "English",
+            "en24": "English 24H",
+            "es": "Spanish",
+            "fr": "French",
+            "inherit": "User selection",
+            "iso": "ISO 8601",
+            "pt": "Portuguese",
+            "zh": "Chinese"
+          }
+        },
+        "defaultView": {
+          "label": "Default View"
+        },
+        "label": "Layout",
+        "views": {
+          "label": "Views",
+          "options": {
+            "agenda": "Agenda",
+            "day": "Day",
+            "month": "Month",
+            "week": "Week",
+            "workWeek": "Work Week",
+            "year": "Year"
+          }
+        },
+        "textSize": {
+          "label": "Text Size",
+          "description": "Set text size in px."
+        },
+        "showTime": {
+          "options": {
+            "disabled": "Disabled",
+            "enabled": "Enabled"
+          },
+          "month": {
+            "label": "Month time",
+            "description": "Display event time in the month view."
+          }
+        }
+      },
+      "scrollToTime": {
+        "description": "Set the initial scroll to the selected time.",
+        "label": "Scroll To Time"
+      },
+      "startTimeRange": {
+        "description": "Set 'from' time",
+        "label": "Start time range"
+      },
+      "startTimeVariable": {
+        "description": "Select 'from' variable",
+        "label": "Start time range"
+      },
+      "timeRangeType": {
+        "description": "Time Range source used for Calendar",
+        "label": "Time Range",
+        "options": {
+          "default": "Dashboard",
+          "manual": "Manual",
+          "variable": "Variable"
+        }
+      }
+    }
+  }
+}

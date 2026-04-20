@@ -4,9 +4,19 @@ import './.config/jest-setup';
 import { TextDecoder, TextEncoder } from 'util';
 
 /**
+ * Setup i18n
+ */
+import './src/i18n';
+
+/**
  * Logger
  */
 jest.mock('@theia/utils/logger');
+
+/**
+ * Assign Text Decoder and Encoder which are required in @grafana/ui
+ */
+Object.assign(global, { TextDecoder, TextEncoder });
 
 /**
  * Combobox uses the canvas API to measure text width for sizing, which jsdom does not implement
