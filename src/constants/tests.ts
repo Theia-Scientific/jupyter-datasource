@@ -46,7 +46,7 @@ export const TEST_IDS = {
     fieldNewCategoryName: 'data-testid files-list field-new-category-name',
     fieldNewFile: 'data-testid files-list field-new-file',
     fieldSearch: 'data-testid files-list field-search',
-    fieldSort: 'files-list field-sort',
+    fieldSort: 'data-testid files-list field-sort',
     file: (path: unknown) => `data-testid files-list file-${path}`,
     fileName: (path: unknown) => `files-list file-name-${path}`,
     itemCheckbox: (path: unknown) => `data-testid files-list item-checkbox-${path}`,

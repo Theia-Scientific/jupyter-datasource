@@ -500,7 +500,7 @@ export const FilesList: React.FC<Props> = ({
             }}
             options={SORT_OPTIONS}
             value={sort}
-            aria-label={TEST_IDS.filesList.fieldSort}
+            data-testid={TEST_IDS.filesList.fieldSort}
           />
         </InlineField>
         {showAnalyzeToggle && onToggleAnalyze && (
