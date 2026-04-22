@@ -205,7 +205,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         <InlineField label="Notebook File" labelWidth={16} tooltip="Pick Notebook File">
           <FilesList
             datasource={datasource}
-            onSelectFile={(_) => {}}
+            onSelectFile={(f) => { console.log("wow!!!!", f); }}
             rootPath=""
           />
         </InlineField>
