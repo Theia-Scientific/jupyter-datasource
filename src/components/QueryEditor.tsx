@@ -7,6 +7,7 @@ import { DataSource } from '../datasource';
 import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable, PathEntry } from '../types';
 import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
 import { v4 as uuidv4 } from 'uuid';
+import { FilesList } from './FilesList';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
@@ -199,6 +200,15 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           </InlineField>
           <Button aria-label="Refresh Notebooks" icon="sync"onClick={refreshNotebooks} />
         </InlineFieldRow>
+      }
+      { connectionType === ConnectionType.Auto &&
+        <InlineField label="Notebook File" labelWidth={16} tooltip="Pick Notebook File">
+          <FilesList
+            datasource={datasource}
+            onSelectFile={(_) => {}}
+            rootPath=""
+          />
+        </InlineField>
       }
       { (connectionType === ConnectionType.Info || query.notebook === "" || query.notebook === undefined) &&
         <InlineField label="Code" labelWidth={16} tooltip="Code to run">

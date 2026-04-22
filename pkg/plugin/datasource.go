@@ -95,7 +95,8 @@ func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 				return nil, errors.New("missing 'path' argument on request")
 			}
 
-			entries, err := p.httpClient.GetListing(pathArgs[len(pathArgs)-1])
+			path := strings.TrimLeft(pathArgs[len(pathArgs)-1], "/")
+			entries, err := p.httpClient.GetListing(path)
 			if err != nil {
 				return nil, err
 			}
