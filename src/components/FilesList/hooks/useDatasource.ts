@@ -14,7 +14,7 @@ export const useDatasource = (datasource: DataSource) => {
   const webDavItemOfPathEntry = (entry: PathEntry): WebDavItem => {
     const base = {
       name: entry.name,
-      mtime: "",
+      mtime: entry.last_modified,
       path: entry.path,
       relativePath: "",
       url: "",
@@ -29,7 +29,7 @@ export const useDatasource = (datasource: DataSource) => {
       return {
         ...base,
         type: WebDavItemType.FILE,
-        size: 123,
+        size: entry.size,
       };
     }
   };

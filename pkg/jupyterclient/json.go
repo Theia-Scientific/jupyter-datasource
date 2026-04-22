@@ -57,6 +57,9 @@ type Notebook struct {
 type PathEntry struct {
 	Name string `json:"name"`
 	Path string `json:"path"`
+	LastModified string `json:"last_modified"`
+	Created string `json:"created"`
+	Size uint64 `json:"size"`
 	Type string `json:"type"`
 	Content *[]PathEntry `json:"content"`
 }

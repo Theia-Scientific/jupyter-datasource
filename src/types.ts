@@ -120,6 +120,9 @@ export interface KernelSpecResponse {
 export interface PathEntry {
   name: string;
   path: string;
+  last_modified: string;
+  created: string;
+  size: number;
   type: 'notebook' | 'directory';
   content?: PathEntry[];
 }
