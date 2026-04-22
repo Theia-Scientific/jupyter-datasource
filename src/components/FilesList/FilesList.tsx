@@ -9,11 +9,17 @@ import { getStyles } from './FilesList.styles';
 import { useFilesList, useTreeExpand } from './hooks';
 import { AddMode, Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from './types';
 import { getPlainCategories } from './utils';
+import type { DataSource } from '@theia/datasource';
 
 /**
  * Properties
  */
 interface Props {
+  /**
+   * Datasource
+   */
+  datasource: DataSource;
+
   /**
    * On Select File
    */
@@ -98,6 +104,7 @@ enum ModalName {
  * Files List
  */
 export const FilesList: React.FC<Props> = ({
+  datasource,
   onSelectFile,
   rootPath,
   uploadFile,
@@ -185,6 +192,7 @@ export const FilesList: React.FC<Props> = ({
   } = useFilesList({
     rootItem,
     uploadFile,
+    datasource,
   });
 
   /**

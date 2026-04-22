@@ -4,7 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { WebDavDirectory, WebDavItem, WebDavItemType } from '../types';
 import { getUpdatedTree, getValidFolderName } from '../utils';
-import { useWebDavApi } from './useWebDavApi';
+import { useDatasource } from './useDatasource';
+import type { DataSource } from '@theia/datasource';
 
 /**
  * Use Files List
@@ -12,9 +13,11 @@ import { useWebDavApi } from './useWebDavApi';
 export const useFilesList = ({
   rootItem,
   uploadFile,
+  datasource,
 }: {
   rootItem: WebDavDirectory;
   uploadFile?: (category: WebDavDirectory, file: File) => Promise<void>;
+  datasource: DataSource;
 }) => {
   /**
    * States
@@ -26,7 +29,7 @@ export const useFilesList = ({
   /**
    * WebDav Api
    */
-  const api = useWebDavApi();
+  const api = useDatasource(datasource);
 
   /**
    * Load Tree
