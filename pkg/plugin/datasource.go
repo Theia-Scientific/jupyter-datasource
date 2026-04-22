@@ -3,8 +3,10 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 
@@ -33,7 +35,7 @@ type InstanceSettings struct {
 	AuthType         string  `json:"authType"`
 	FetchRoute       *string `json:"fetchRoute"`
 	FetchMethod      *string `json:"fetchMethod"`
-	FetchToken         *string `json:"fetchToken"`
+	FetchToken       *string `json:"fetchToken"`
 	RawToken         *string `json:"rawToken"`
 	JupyterUrl       *string `json:"jupyterUrl"`
 	ImportStatements *string `json:"importStatements"`
@@ -76,6 +78,43 @@ func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 	logger := log.New()
 	logger.Debug(fmt.Sprintf("got a resource request for %+v", req.Path))
 	switch req.Path {
+  case "list": {
+		jsonData, err := (func() ([]byte, error) {
+			u, err := url.Parse(req.URL)
+			if err != nil {
+				return nil, err
+			}
+
+			m, err := url.ParseQuery(u.RawQuery)
+			if err != nil {
+				return nil, err
+			}
+
+			pathArgs := m["path"]
+			if len(pathArgs) == 0 {
+				return nil, errors.New("missing 'path' argument on request")
+			}
+
+			entries, err := p.httpClient.GetListing(pathArgs[len(pathArgs)-1])
+			if err != nil {
+				return nil, err
+			}
+
+			return json.Marshal(entries)
+		})()
+
+		if err != nil {
+			return sender.Send(&backend.CallResourceResponse{
+				Status: http.StatusInternalServerError,
+				Body: []byte(err.Error()),
+			})
+		}
+
+		return sender.Send(&backend.CallResourceResponse{
+			Status: http.StatusOK,
+			Body:   jsonData,
+		})
+	}
 	case "notebooks": {
 		notebooks, err := p.httpClient.GetNotebooks()
 		var jsonData []byte
