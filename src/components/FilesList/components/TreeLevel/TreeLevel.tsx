@@ -1,5 +1,5 @@
 import { cx } from '@emotion/css';
-import { Alert, Checkbox, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
+import { Alert, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
 import { TEST_IDS } from '@theia/constants';
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -286,17 +286,6 @@ export const TreeLevel: React.FC<Props> = ({
                   [styles.directory]: item.type === WebDavItemType.DIRECTORY,
                 })}
               >
-                <Checkbox
-                  className={cx(styles.checkbox, {
-                    [styles.categoryCheckbox]: item.type === WebDavItemType.DIRECTORY,
-                  })}
-                  onClick={(event) => {
-                    onSetItemSelection(item, event.currentTarget.checked);
-                  }}
-                  checked={isParentSelected || isSelected(item)}
-                  disabled={isParentSelected || !edit}
-                  data-testid={TEST_IDS.filesList.itemCheckbox(item.path)}
-                />
                 {item.type === WebDavItemType.DIRECTORY ? (
                   <CategoryItem
                     item={item}
@@ -339,12 +328,6 @@ export const TreeLevel: React.FC<Props> = ({
                   <FileItem
                     item={item}
                     onClickItem={onSelectFile}
-                    onChangeName={onChangeItemName}
-                    download={download}
-                    onRemove={onRemove}
-                    edit={edit}
-                    select={select}
-                    actionButton={actionButton}
                   />
                 )}
               </div>

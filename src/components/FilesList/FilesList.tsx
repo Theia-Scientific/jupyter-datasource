@@ -226,20 +226,6 @@ export const FilesList: React.FC<Props> = ({
   );
 
   /**
-   * On Start Moving
-   */
-  const onStartMoving = useCallback(() => {
-    setModal(ModalName.MOVE);
-  }, []);
-
-  /**
-   * On Start Removing
-   */
-  const onStartRemoving = useCallback(() => {
-    setModal(ModalName.REMOVE);
-  }, []);
-
-  /**
    * Categories List
    */
   const categoriesList = useMemo(() => {
