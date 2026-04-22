@@ -458,49 +458,6 @@ export const FilesList: React.FC<Props> = ({
           />
         </ButtonGroup>
 
-        <ButtonGroup>
-          {allSelectedItems.length > 0 && (
-            <Button
-              onClick={onStartMoving}
-              variant="secondary"
-              size="md"
-              icon="exchange-alt"
-              data-testid={TEST_IDS.filesList.buttonStartMoving}
-            >
-              {t('filesList.moveButton')}
-            </Button>
-          )}
-          {allSelectedItems.length > 0 && (
-            <Button
-              onClick={onStartRemoving}
-              variant="secondary"
-              size="md"
-              icon="trash-alt"
-              data-testid={TEST_IDS.filesList.buttonStartRemoving}
-            >
-              {t('filesList.removeButton')}
-            </Button>
-          )}
-          <Button
-            variant="secondary"
-            icon="folder-plus"
-            onClick={() => setAddMode(AddMode.FOLDER)}
-            size="md"
-            data-testid={TEST_IDS.filesList.buttonAddRootCategory}
-          >
-            {t('filesList.addFolderButton')}
-          </Button>
-          <Button
-            variant="secondary"
-            icon="upload"
-            onClick={() => setAddMode(AddMode.FILE)}
-            size="md"
-            data-testid={TEST_IDS.filesList.buttonAddRootFile}
-          >
-            {t('filesList.addFileButton')}
-          </Button>
-        </ButtonGroup>
-
         <InlineField label={t('filesList.sortLabel')}>
           <Combobox
             onChange={(opt) => {
