@@ -89,7 +89,6 @@ export const CategoryItem: React.FC<Props> = ({
   children,
   onChangeName,
   loadTree,
-  accept,
   onCreateCategory,
   onUploadFiles,
   isExpanded,

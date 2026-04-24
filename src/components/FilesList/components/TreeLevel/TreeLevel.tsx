@@ -73,13 +73,6 @@ interface Props {
   isSelected: (item: WebDavItem) => boolean;
 
   /**
-   * Accept
-   *
-   * @type {string}
-   */
-  accept?: string;
-
-  /**
    * On Create Category
    */
   onCreateCategory: (category: WebDavDirectory, name: string) => Promise<void>;
@@ -155,7 +148,6 @@ export const TreeLevel: React.FC<Props> = ({
   onSetItemSelection,
   isParentSelected = false,
   isSelected,
-  accept,
   onCreateCategory,
   onUploadFiles,
   sort,
@@ -254,7 +246,6 @@ export const TreeLevel: React.FC<Props> = ({
                   <CategoryItem
                     item={item}
                     loadTree={loadTree}
-                    accept={accept}
                     onChangeName={onChangeItemName}
                     onCreateCategory={onCreateCategory}
                     onUploadFiles={onUploadFiles}
@@ -268,7 +259,6 @@ export const TreeLevel: React.FC<Props> = ({
                       loadingPath={loadingPath}
                       loadTree={loadTree}
                       onSelectFile={onSelectFile}
-                      accept={accept}
                       depth={depth + 1}
                       onChangeName={onChangeName}
                       onCreateCategory={onCreateCategory}

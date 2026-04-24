@@ -42,13 +42,6 @@ interface Props {
   uploadFile?: (category: WebDavDirectory, file: File) => Promise<void>;
 
   /**
-   * Accept
-   *
-   * @type {string}
-   */
-  accept?: string;
-
-  /**
    * Download
    */
   download?: boolean;
@@ -102,7 +95,6 @@ export const FilesList: React.FC<Props> = ({
   onSelectFile,
   rootPath,
   uploadFile,
-  accept,
   download = false,
   edit = true,
   select = true,
@@ -354,7 +346,6 @@ export const FilesList: React.FC<Props> = ({
           onChangeName={onChangeName}
           onSetItemSelection={onSetItemSelection}
           isSelected={isSelected}
-          accept={accept}
           onUploadFiles={onUploadFiles}
           onCreateCategory={onAddDirectory}
           sort={sort}
