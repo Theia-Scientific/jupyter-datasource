@@ -157,7 +157,7 @@ func (jc *JupyterHttpClient) GetNotebooks() ([]PathEntry, error) {
 
 func (jc *JupyterHttpClient) GetNotebook(path string) (string, error) {
   var notebook Notebook
-	req, err := jc.Get(fmt.Sprintf("jupyter/api/contents/%s", path))
+	req, err := jc.Get(fmt.Sprintf("jupyter/api/contents/%s", strings.TrimLeft(path, "/")))
 	if err != nil {
 		return "", err
 	}
