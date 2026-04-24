@@ -2,9 +2,8 @@ import { Icon, IconButton, Input, useStyles2 } from '@grafana/ui';
 import { TEST_IDS } from '@theia/constants';
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { AddMode, WebDavDirectory } from '../../types';
+import { WebDavDirectory } from '../../types';
 import { CategoryCollapse } from '../CategoryCollapse';
-import { NewItem } from '../NewItem';
 import { getStyles } from './CategoryItem.styles';
 
 /**
@@ -115,7 +114,6 @@ export const CategoryItem: React.FC<Props> = ({
   const [updating, setUpdating] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [name, setName] = useState(item.name);
-  const [addMode, setAddMode] = useState(AddMode.NONE);
 
   /**
    * On Save Name
@@ -128,26 +126,6 @@ export const CategoryItem: React.FC<Props> = ({
     setUpdating(false);
     setIsEdit(false);
   }, [item, name, onChangeName]);
-
-  /**
-   * Add Category
-   */
-  const addCategory = useCallback(
-    (name: string) => {
-      return onCreateCategory(item, name);
-    },
-    [item, onCreateCategory]
-  );
-
-  /**
-   * Add Files
-   */
-  const addFiles = useCallback(
-    (files: File[]) => {
-      return onUploadFiles(item, files);
-    },
-    [item, onUploadFiles]
-  );
 
   /**
    * Load Children
@@ -225,13 +203,6 @@ export const CategoryItem: React.FC<Props> = ({
       contentTestId={TEST_IDS.filesList.categoryContent(item.path)}
     >
       <>
-        <NewItem
-          onCreateDirectory={addCategory}
-          onUploadFiles={addFiles}
-          accept={accept}
-          mode={addMode}
-          setMode={setAddMode}
-        />
         {children}
       </>
     </CategoryCollapse>

@@ -6,7 +6,7 @@ import { TreeLevel } from './components/TreeLevel';
 import { SORT_OPTIONS } from './constants';
 import { getStyles } from './FilesList.styles';
 import { useFilesList, useTreeExpand } from './hooks';
-import { AddMode, Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from './types';
+import { Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from './types';
 import { getPlainCategories } from './utils';
 import type { DataSource } from '@theia/datasource';
 
@@ -133,7 +133,6 @@ export const FilesList: React.FC<Props> = ({
   const [selectedCategories, setSelectedCategories] = useState<WebDavDirectory[]>([]);
   const [errorItems, setErrorItems] = useState<WebDavItem[]>([]);
   const [modal, setModal] = useState(ModalName.NONE);
-  const [addMode, setAddMode] = useState(AddMode.NONE);
   const [isSearchEnabled, setIsSearchEnabled] = useState(false);
 
   /**
@@ -499,8 +498,6 @@ export const FilesList: React.FC<Props> = ({
           accept={accept}
           onUploadFiles={onUploadFiles}
           onCreateCategory={onAddDirectory}
-          addMode={addMode}
-          setAddMode={setAddMode}
           sort={sort}
           searchQuery={search}
           isItemExpanded={isItemExpanded}

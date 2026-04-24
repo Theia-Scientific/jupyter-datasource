@@ -3,11 +3,10 @@ import { Alert, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
 import { TEST_IDS } from '@theia/constants';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
-import { AddMode, Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from '../../types';
+import { Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from '../../types';
 import { getSortedItems } from '../../utils';
 import { CategoryItem } from '../CategoryItem';
 import { FileItem } from '../FileItem';
-import { NewItem } from '../NewItem';
 import { getStyles } from './TreeLevel.styles';
 
 /**
@@ -79,18 +78,6 @@ interface Props {
    * @type {string}
    */
   accept?: string;
-
-  /**
-   * Add Mode
-   *
-   * @type {AddMode}
-   */
-  addMode?: AddMode;
-
-  /**
-   * Set Add Mode
-   */
-  setAddMode?: (mode: AddMode) => void;
 
   /**
    * On Create Category
@@ -174,8 +161,6 @@ export const TreeLevel: React.FC<Props> = ({
   isParentSelected = false,
   isSelected,
   accept,
-  addMode,
-  setAddMode,
   onCreateCategory,
   onUploadFiles,
   sort,
@@ -263,15 +248,6 @@ export const TreeLevel: React.FC<Props> = ({
         <Spinner className={styles.spinner} />
       ) : (
         <>
-          {depth === 0 && addMode && setAddMode && (
-            <NewItem
-              onCreateDirectory={(name: string) => onCreateCategory(tree, name)}
-              onUploadFiles={(files: File[]) => onUploadFiles(tree, files)}
-              accept={accept}
-              mode={addMode}
-              setMode={setAddMode}
-            />
-          )}
           {items.length > 0 ? (
             items.map((item) => (
               <div

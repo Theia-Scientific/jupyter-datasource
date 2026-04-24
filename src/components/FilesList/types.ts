@@ -90,15 +90,6 @@ export type WebDavDirectory = BaseWebDavItem & {
 export type WebDavItem = WebDavDirectory | WebDavFile;
 
 /**
- * Add Mode
- */
-export enum AddMode {
-  NONE = '',
-  FOLDER = 'folder',
-  FILE = 'file',
-}
-
-/**
  * Sort
  * Keep -asc|desc in the end for parsing
  */
