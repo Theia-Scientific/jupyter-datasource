@@ -107,13 +107,6 @@ interface Props {
   onSetItemExpanded: (item: WebDavDirectory, isExpanded: boolean) => void;
 
   /**
-   * Download
-   *
-   * @type {boolean}
-   */
-  download: boolean;
-
-  /**
    * Edit
    *
    * @type {boolean}
@@ -154,7 +147,6 @@ export const TreeLevel: React.FC<Props> = ({
   searchQuery,
   isItemExpanded,
   onSetItemExpanded,
-  download,
   edit,
   select,
   actionButton,
@@ -270,7 +262,6 @@ export const TreeLevel: React.FC<Props> = ({
                       searchQuery={searchQuery}
                       isItemExpanded={isItemExpanded}
                       onSetItemExpanded={onSetItemExpanded}
-                      download={download}
                       edit={edit}
                       select={select}
                       actionButton={actionButton}

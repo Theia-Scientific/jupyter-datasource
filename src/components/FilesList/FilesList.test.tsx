@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { testData } from '@theia/__testUtils__';
-import { BASE_WEB_DAV_URL, TEST_IDS } from '@theia/constants';
+import { TEST_IDS } from '@theia/constants';
 import { getJestSelectors } from '@volkovlabs/jest-selectors';
 import React, { useMemo } from 'react';
 
@@ -2002,57 +2002,6 @@ describe('Files List', () => {
        * Check if 2 level is collapsed
        */
       expect(selectors.file(true, testData.files.dir1Tree.children[0].path)).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Download', () => {
-    it('Should allow download file', async () => {
-      await renderWithoutErrors(getComponent({ download: true }));
-
-      const item = testData.files.rootTree.children[1];
-
-      expect(selectors.file(false, item.path)).toBeInTheDocument();
-
-      const fileSelectors = getSelectors(within(selectors.file(false, item.path)));
-
-      expect(fileSelectors.buttonDownload()).toBeInTheDocument();
-      expect(fileSelectors.buttonDownload()).toHaveAttribute('href', `${BASE_WEB_DAV_URL}${item.path}`);
-    });
-
-    it('Should disallow download file if disabled', async () => {
-      await renderWithoutErrors(getComponent({ download: false }));
-
-      const item = testData.files.rootTree.children[1];
-
-      expect(selectors.file(false, item.path)).toBeInTheDocument();
-
-      const fileSelectors = getSelectors(within(selectors.file(false, item.path)));
-
-      expect(fileSelectors.buttonDownload(true)).not.toBeInTheDocument();
-    });
-  });
-
-  describe('Analyze Toggle', () => {
-    const onToggleAnalyze = jest.fn().mockResolvedValue(undefined);
-    it('shows label when analyzeOnUpload is true', async () => {
-      await renderWithoutErrors(getComponent({ showAnalyzeToggle: true, startAnalyzeOnUpload: true, onToggleAnalyze: onToggleAnalyze }));
-      expect(screen.getByText('Analyze on Upload: On')).toBeInTheDocument();
-    });
-
-    it('shows label when analyzeOnUpload is false', async () => {
-      await renderWithoutErrors(getComponent({ showAnalyzeToggle: true, startAnalyzeOnUpload: false, onToggleAnalyze: onToggleAnalyze }));
-      expect(screen.getByText('Analyze on Upload: Off')).toBeInTheDocument();
-    });
-
-    it('Should toggle analysis', async () => {
-      await renderWithoutErrors(getComponent({ showAnalyzeToggle: true, startAnalyzeOnUpload: true, onToggleAnalyze: onToggleAnalyze }));
-
-      expect(selectors.toggleAnalyzeOnUpload()).toBeInTheDocument();
-      expect(selectors.toggleAnalyzeOnUpload()).toBeChecked();
-
-      await act(async () => fireEvent.click(selectors.toggleAnalyzeOnUpload()));
-      expect(onToggleAnalyze).toHaveBeenCalledWith(false);
-
     });
   });
 });

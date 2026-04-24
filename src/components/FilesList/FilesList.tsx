@@ -42,11 +42,6 @@ interface Props {
   uploadFile?: (category: WebDavDirectory, file: File) => Promise<void>;
 
   /**
-   * Download
-   */
-  download?: boolean;
-
-  /**
    * Edit
    *
    * @type {boolean}
@@ -95,7 +90,6 @@ export const FilesList: React.FC<Props> = ({
   onSelectFile,
   rootPath,
   uploadFile,
-  download = false,
   edit = true,
   select = true,
   actionButton,
@@ -352,7 +346,6 @@ export const FilesList: React.FC<Props> = ({
           searchQuery={search}
           isItemExpanded={isItemExpanded}
           onSetItemExpanded={onSetItemExpanded}
-          download={download}
           edit={edit}
           select={select}
           actionButton={actionButton}
