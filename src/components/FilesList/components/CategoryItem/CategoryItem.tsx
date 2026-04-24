@@ -222,47 +222,7 @@ export const CategoryItem: React.FC<Props> = ({
           </div>
         </div>
       }
-      actions={
-        <>
-          {!isEdit && (
-            <IconButton
-              name="edit"
-              tooltip={t('filesList.category.renameButton')}
-              onClick={() => {
-                setIsEdit(true);
-                setName(item.name);
-              }}
-              data-testid={TEST_IDS.filesList.buttonCategoryStartEdit}
-              disabled={!edit}
-            />
-          )}
-          {isExpanded && (
-            <IconButton
-              name="folder-plus"
-              tooltip={t('filesList.category.addFolderButton')}
-              onClick={() => {
-                setAddMode(AddMode.FOLDER);
-              }}
-              data-testid={TEST_IDS.filesList.buttonAddCategory}
-            />
-          )}
-          {isExpanded && (
-            <IconButton
-              name="upload"
-              tooltip={t('filesList.category.addFileButton')}
-              onClick={() => setAddMode(AddMode.FILE)}
-              data-testid={TEST_IDS.filesList.buttonAddFile}
-            />
-          )}
-          <IconButton
-            name="trash-alt"
-            tooltip={t('filesList.category.deleteButton')}
-            onClick={() => onRemove(item)}
-            data-testid={TEST_IDS.filesList.buttonDeleteCategory}
-            disabled={!edit}
-          />
-        </>
-      }
+    actions={<></>}
       isOpen={isExpanded}
       className={styles.wrapper}
       contentClassName={styles.content}

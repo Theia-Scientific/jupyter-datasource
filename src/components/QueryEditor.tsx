@@ -4,12 +4,20 @@ import { useLatest } from 'react-use';
 import { Button, InlineField, InlineFieldRow, TextArea, Input, Combobox, ComboboxOption, CodeEditor } from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
-import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable, PathEntry } from '../types';
+import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable } from '../types';
 import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
 import { v4 as uuidv4 } from 'uuid';
 import { FilesList } from './FilesList';
+import { WebDavFile } from './FilesList/types';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
+
+function emptyNotebook(query: MyQuery) {
+  return query.notebook === undefined || query.notebook === '';
+}
+
+const ENTER_CODE = "<enter code>";
+const CHOOSE_NOTEBOOK = "<choose notebook>";
 
 export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) {
   const { connectionType } = datasource.options;
@@ -42,10 +50,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({ ...query, connectionInfo: event.target.value });
   };
 
-  const onNotebookChange = (selectableValue: ComboboxOption<string>) => {
-    onChange({ ...query, notebook: selectableValue.value });
-  };
-
   const onCodeChange = (value: string) => {
     onChange({ ...latestQuery.current, code: value });
   };
@@ -53,35 +57,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   const onVariablesChange = (variables: QueryFieldVariable[]) => {
     onChange({ ...query, vars: variables });
   };
-
-  let [notebooks, setNotebooks] = useState<Array<ComboboxOption<string>>>([]);
-  if (notebooks.length > 0 && query.notebook === undefined) {
-    onChange({...query, notebook: ''});
-  }
-
-  const refreshNotebooks = () => {
-    datasource.getNotebooks().then((response: PathEntry[]) => {
-      const paths: string[] = [];
-      const visitor = (ps: PathEntry[]) => {
-        for (const p of ps) {
-          if (p.type === 'directory' && p.content !== undefined) {
-            visitor(p.content);
-          } else {
-            paths.push(p.path);
-          }
-        }
-      };
-      visitor(response);
-      let notebooks: Array<ComboboxOption<string>> = paths.map((s) => ({
-        label: s,
-        value: s,
-      }));
-      const defaultOption = {label: "Literal code", description: "Enter code below", value: ''};
-      notebooks.unshift(defaultOption);
-      setNotebooks(notebooks);
-    });
-  };
-  useEffect(refreshNotebooks, [datasource]);
 
   let [kernels, setKernels] = useState<Array<ComboboxOption<string>>>([]);
   if (kernels.length > 0 && query.kernelId === undefined) {
@@ -128,6 +103,17 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
 
   // css style to allow the Monaco editor to be handle-resized
   const containerStyle = css`overflow: hidden; resize: both; width: 80em; height: 25em`;
+
+  const sources = [
+    { label: "Enter code below...", value: ENTER_CODE },
+    { label: "Choose notebook below...", value: CHOOSE_NOTEBOOK },
+  ];
+  const [source, setSource] = useState(emptyNotebook(query) ? ENTER_CODE : query.notebook);
+
+  const onSelectFile = (f: WebDavFile) => {
+    setSource(f.path);
+    onChange({ ...query, notebook: f.path });
+  };
 
   return (
       <>
@@ -188,29 +174,24 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         />
       </InlineField>
       { connectionType === ConnectionType.Auto &&
-        <InlineFieldRow>
-          <InlineField label="Notebook" labelWidth={16} tooltip="Notebook to run">
-            <Combobox
-              id="query-editor-notebook"
-              options={notebooks}
-              onChange={onNotebookChange}
-              value={query.notebook}
-              width={40}
-            />
-          </InlineField>
-          <Button aria-label="Refresh Notebooks" icon="sync"onClick={refreshNotebooks} />
-        </InlineFieldRow>
-      }
-      { connectionType === ConnectionType.Auto &&
-        <InlineField label="Notebook File" labelWidth={16} tooltip="Pick Notebook File">
-          <FilesList
-            datasource={datasource}
-            onSelectFile={(f) => { console.log("wow!!!!", f); }}
-            rootPath=""
+        <InlineField label="Source" labelWidth={16} tooltip="Pick notebook or literal code">
+          <Combobox
+            id="query-editor-source"
+            options={sources}
+            onChange={(opt) => setSource(opt.value)}
+            value={source}
+            width={40}
           />
         </InlineField>
       }
-      { (connectionType === ConnectionType.Info || query.notebook === "" || query.notebook === undefined) &&
+      { connectionType === ConnectionType.Auto && (source === CHOOSE_NOTEBOOK) &&
+        <FilesList
+          datasource={datasource}
+          onSelectFile={onSelectFile}
+          rootPath=""
+        />
+      }
+      { (connectionType === ConnectionType.Info || source === ENTER_CODE) &&
         <InlineField label="Code" labelWidth={16} tooltip="Code to run">
           <CodeEditor
             value={query.code}
