@@ -2,7 +2,6 @@ import { cx } from '@emotion/css';
 import { Alert, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
 import { TEST_IDS } from '@theia/constants';
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { AddMode, Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from '../../types';
 import { getSortedItems } from '../../utils';
@@ -196,11 +195,6 @@ export const TreeLevel: React.FC<Props> = ({
   const theme = useTheme2();
 
   /**
-   * Translation
-   */
-  const { t } = useTranslation();
-
-  /**
    * Deselect children on parent selection
    */
   useEffect(() => {
@@ -334,7 +328,7 @@ export const TreeLevel: React.FC<Props> = ({
             ))
           ) : (
             <Alert severity="info" title="" data-testid={TEST_IDS.filesList.noFilesMessage}>
-              {t('filesList.noItemsMessage')}
+              {"No Files"}
             </Alert>
           )}
         </>

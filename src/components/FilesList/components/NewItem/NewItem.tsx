@@ -1,7 +1,6 @@
 import { Button, FileDropzone, IconButton, InlineField, InlineFieldRow, Input, useStyles2 } from '@grafana/ui';
 import { TEST_IDS } from '@theia/constants';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { AddMode } from '../../types';
 import { getStyles } from './NewItem.styles';
@@ -44,11 +43,6 @@ export const NewItem: React.FC<Props> = ({ onCreateDirectory, onUploadFiles, acc
    * Styles
    */
   const styles = useStyles2(getStyles);
-
-  /**
-   * Translation
-   */
-  const { t } = useTranslation();
 
   /**
    * States
@@ -121,7 +115,7 @@ export const NewItem: React.FC<Props> = ({ onCreateDirectory, onUploadFiles, acc
             onClick={onCancel}
             data-testid={TEST_IDS.filesList.buttonCancelAddFile}
           >
-            {t('filesList.newItem.cancelButton')}
+            {"Cancel"}
           </Button>
         </div>
       )}
@@ -132,7 +126,7 @@ export const NewItem: React.FC<Props> = ({ onCreateDirectory, onUploadFiles, acc
             <InlineField grow={true}>
               <Input
                 autoFocus={true}
-                placeholder={t('filesList.newItem.folderNamePlaceholder')}
+                placeholder={"Specify Folder Name"}
                 value={newFolder}
                 onChange={(event) => setNewFolder(event.currentTarget.value)}
                 onKeyDown={(e) => {
@@ -153,7 +147,7 @@ export const NewItem: React.FC<Props> = ({ onCreateDirectory, onUploadFiles, acc
                 disabled={loading}
                 onClick={onCancel}
                 data-testid={TEST_IDS.filesList.buttonCancelAddCategory}
-                tooltip={t('filesList.newItem.cancelButton')}
+                tooltip={"Cancel"}
               />
             </div>
             <div className={styles.folderButton}>
@@ -162,7 +156,7 @@ export const NewItem: React.FC<Props> = ({ onCreateDirectory, onUploadFiles, acc
                 disabled={loading || !newFolder}
                 onClick={onAddFolder}
                 data-testid={TEST_IDS.filesList.buttonSaveAddCategory}
-                tooltip={t('filesList.newItem.saveButton')}
+                tooltip={"Add"}
               />
             </div>
           </InlineFieldRow>

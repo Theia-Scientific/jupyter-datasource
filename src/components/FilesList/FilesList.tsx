@@ -1,7 +1,6 @@
 import { Alert, Button, ButtonGroup, Combobox, ConfirmModal, InlineField, InlineSwitch, Input, Modal, useStyles2 } from '@grafana/ui';
 import { BASE_WEB_DAV_URL, TEST_IDS } from '@theia/constants';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { TreeLevel } from './components/TreeLevel';
 import { SORT_OPTIONS } from './constants';
@@ -10,6 +9,11 @@ import { useFilesList, useTreeExpand } from './hooks';
 import { AddMode, Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from './types';
 import { getPlainCategories } from './utils';
 import type { DataSource } from '@theia/datasource';
+
+function formatErrorItems(errorItems: WebDavItem[]): string {
+  const joinedErrorItems = errorItems.map((item) => `/${item.relativePath}`).join(', ');
+  return `Error while accomplishing operation for: ${joinedErrorItems}`;
+}
 
 /**
  * Properties
@@ -153,11 +157,6 @@ export const FilesList: React.FC<Props> = ({
    * Search State
    */
   const [search, setSearch] = useState('');
-
-  /**
-   * Translation
-   */
-  const { t } = useTranslation();
 
   /**
    * Root Item
@@ -410,7 +409,7 @@ export const FilesList: React.FC<Props> = ({
         <ButtonGroup>
           <Button
             onClick={refresh}
-            tooltip={t('filesList.refreshButton')}
+            tooltip={"Refresh"}
             icon="sync"
             disabled={!!loadingPath.length}
             size="md"
@@ -421,21 +420,21 @@ export const FilesList: React.FC<Props> = ({
             icon="angle-double-down"
             variant="secondary"
             onClick={onExpandAll}
-            tooltip={t('filesList.expandButton')}
+            tooltip={"Expand"}
             data-testid={TEST_IDS.filesList.buttonExpand}
           />
           <Button
             icon="angle-double-up"
             variant="secondary"
             onClick={onCollapseAll}
-            tooltip={t('filesList.collapseButton')}
+            tooltip={"Collapse All"}
             data-testid={TEST_IDS.filesList.buttonCollapse}
           />
           <Button
             icon="filter"
             variant="secondary"
             fill={isSearchEnabled ? 'outline' : 'solid'}
-            tooltip={t('filesList.searchLabel')}
+            tooltip={"Filter"}
             data-testid={TEST_IDS.filesList.buttonToggleSearching}
             onClick={() => {
               setIsSearchEnabled((isSearchEnabled) => !isSearchEnabled);
@@ -444,7 +443,7 @@ export const FilesList: React.FC<Props> = ({
           />
         </ButtonGroup>
 
-        <InlineField label={t('filesList.sortLabel')}>
+        <InlineField label={"Sort By"}>
           <Combobox
             onChange={(opt) => {
               setSort(opt.value ?? Sort.NAME_ASC);
@@ -456,7 +455,7 @@ export const FilesList: React.FC<Props> = ({
         </InlineField>
         {showAnalyzeToggle && onToggleAnalyze && (
           <InlineSwitch
-            label={t('filesList.toggleAnalyzeLabel',  { state: startAnalyzeOnUpload ? 'On' : 'Off' })}
+            label={`Analyze on Upload: ${startAnalyzeOnUpload ? 'On' : 'Off'}`}
             showLabel={true}
             value={startAnalyzeOnUpload}
             onChange={(event) => onToggleAnalyze(event.currentTarget.checked)}
@@ -464,13 +463,13 @@ export const FilesList: React.FC<Props> = ({
           />
         )}
         {isSearchEnabled && (
-          <InlineField label={t('filesList.searchLabel')}>
+          <InlineField label={"Filter"}>
             <Input
               autoFocus={true}
               value={search}
               onChange={(event) => setSearch(event.currentTarget.value)}
               data-testid={TEST_IDS.filesList.fieldSearch}
-              placeholder={t('filesList.searchPlaceholder')}
+              placeholder={"File name contains"}
             />
           </InlineField>
         )}
@@ -486,8 +485,7 @@ export const FilesList: React.FC<Props> = ({
               clearError();
             }}
           >
-            {errorItems.length > 0 &&
-              t('filesList.errorItemsList', { list: errorItems.map((item) => `/${item.relativePath}`).join(', ') })}
+            {errorItems.length > 0 && formatErrorItems(errorItems)}
           </Alert>
         )}
         <TreeLevel
@@ -518,12 +516,12 @@ export const FilesList: React.FC<Props> = ({
         <>
           {modal === ModalName.MOVE && (
             <Modal
-              title={t('filesList.moveModal.title')}
+              title={"Move Selected Items"}
               isOpen={true}
               onDismiss={onCloseModal}
               data-testid={TEST_IDS.filesList.modalMoving}
             >
-              <InlineField label={t('filesList.moveModal.pathToLabel')}>
+              <InlineField label={"Category to move"}>
                 <Combobox
                   onChange={(opt) => {
                     setToPath(opt.value || '');
@@ -536,7 +534,7 @@ export const FilesList: React.FC<Props> = ({
               </InlineField>
               <Modal.ButtonRow>
                 <Button variant="secondary" onClick={onCloseModal} data-testid={TEST_IDS.filesList.buttonCancelMoving}>
-                  {t('filesList.moveModal.cancelButton')}
+                  {"Cancel"}
                 </Button>
                 <Button
                   variant="primary"
@@ -551,7 +549,7 @@ export const FilesList: React.FC<Props> = ({
                   icon={moving ? 'fa fa-spinner' : undefined}
                   data-testid={TEST_IDS.filesList.buttonSaveMoving}
                 >
-                  {t('filesList.moveModal.saveButton')}
+                  {"Move"}
                 </Button>
               </Modal.ButtonRow>
             </Modal>
@@ -559,10 +557,10 @@ export const FilesList: React.FC<Props> = ({
           {modal === ModalName.REMOVE && (
             <ConfirmModal
               isOpen={true}
-              title={t('filesList.removeModal.title')}
-              body={t('filesList.removeModal.body')}
+              title={"Remove Selected Items"}
+              body={"Please confirm to delete selected items."}
               confirmText={
-                removing ? t('filesList.removeModal.confirmButtonLoading') : t('filesList.removeModal.confirmButton')
+                removing ? "Removing..." : "Remove"
               }
               onConfirm={async () => {
                 setRemoving(true);
@@ -579,12 +577,12 @@ export const FilesList: React.FC<Props> = ({
       {modal === ModalName.SINGLE_REMOVE && removingItem && (
         <ConfirmModal
           isOpen={true}
-          title={t('filesList.removeItemModal.title')}
-          body={t('filesList.removeItemModal.body', { name: removingItem.name })}
+          title={"Remove"}
+          body={`Please confirm to delete ${removingItem.name}.`}
           confirmText={
             removing
-              ? t('filesList.removeItemModal.confirmButtonLoading')
-              : t('filesList.removeItemModal.confirmButton')
+              ? "Removing..."
+              : "Remove"
           }
           onConfirm={async () => {
             setRemoving(true);

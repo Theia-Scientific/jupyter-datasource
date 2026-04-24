@@ -6,7 +6,6 @@ import React, { useMemo } from 'react';
 
 import { FilesList } from './FilesList';
 import { useWebDavApi } from './hooks/useWebDavApi';
-import { t } from 'i18next';
 
 /**
  * Props
@@ -221,14 +220,14 @@ describe('Files List', () => {
     const onSelectFile = jest.fn();
     await renderWithoutErrors(getComponent({ onSelectFile }));
 
-    expect(selectors.fieldSort()).toHaveValue(t('filesList.sortOptions.nameAsc'));
+    expect(selectors.fieldSort()).toHaveValue("Name: A to Z");
 
     /**
      * Change sorting
      */
-    await act(async () => fireEvent.change(selectors.fieldSort(), { target: { value: t('filesList.sortOptions.nameDesc') } }));
+    await act(async () => fireEvent.change(selectors.fieldSort(), { target: { value: "Name: Z to A" } }));
 
-    expect(selectors.fieldSort()).toHaveValue(t('filesList.sortOptions.nameDesc'));
+    expect(selectors.fieldSort()).toHaveValue("Name: Z to A");
   });
 
   describe('Renaming', () => {

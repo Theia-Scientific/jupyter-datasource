@@ -4,11 +4,6 @@ import './.config/jest-setup';
 import { TextDecoder, TextEncoder } from 'util';
 
 /**
- * Setup i18n
- */
-import './src/i18n';
-
-/**
  * Logger
  */
 jest.mock('@theia/utils/logger');

@@ -1,7 +1,6 @@
 import { Icon, IconButton, Input, useStyles2 } from '@grafana/ui';
 import { TEST_IDS } from '@theia/constants';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import { AddMode, WebDavDirectory } from '../../types';
 import { CategoryCollapse } from '../CategoryCollapse';
@@ -111,11 +110,6 @@ export const CategoryItem: React.FC<Props> = ({
   const styles = useStyles2(getStyles);
 
   /**
-   * Translation
-   */
-  const { t } = useTranslation();
-
-  /**
    * States
    */
   const [updating, setUpdating] = useState(false);
@@ -191,7 +185,7 @@ export const CategoryItem: React.FC<Props> = ({
                       setIsEdit(false);
                     }
                   }}
-                  placeholder={t('filesList.category.namePlaceholder')}
+                  placeholder={"Specify Folder Name"}
                 />
                 <IconButton
                   onClick={() => {
@@ -202,7 +196,7 @@ export const CategoryItem: React.FC<Props> = ({
                   size="lg"
                   disabled={updating}
                   data-testid={TEST_IDS.filesList.buttonCategoryCancelEdit}
-                  tooltip={t('filesList.category.cancelButton')}
+                  tooltip={"Cancel"}
                 />
                 <IconButton
                   disabled={updating}
@@ -211,7 +205,7 @@ export const CategoryItem: React.FC<Props> = ({
                   className={styles.editAction}
                   size="lg"
                   data-testid={TEST_IDS.filesList.buttonCategorySaveEdit}
-                  tooltip={t('filesList.category.saveButton')}
+                  tooltip={"Save"}
                 />
               </>
             ) : (

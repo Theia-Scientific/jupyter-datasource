@@ -1,5 +1,3 @@
-import { t } from 'i18next';
-
 import { Sort } from './types';
 
 /**
@@ -7,27 +5,27 @@ import { Sort } from './types';
  */
 export const SORT_OPTIONS = [
   {
-    label: t('filesList.sortOptions.nameAsc'),
+    label: "Name: A to Z",
     value: Sort.NAME_ASC,
   },
   {
-    label: t('filesList.sortOptions.nameDesc'),
+    label: "Name: Z to A",
     value: Sort.NAME_DESC,
   },
   {
-    label: t('filesList.sortOptions.lastModifiedAsc'),
+    label: "Modified: oldest",
     value: Sort.LAST_MODIFIED_ASC,
   },
   {
-    label: t('filesList.sortOptions.lastModifiedDesc'),
+    label: "Modified: newest",
     value: Sort.LAST_MODIFIED_DESC,
   },
   {
-    label: t('filesList.sortOptions.sizeAsc'),
+    label: "Size: smallest",
     value: Sort.SIZE_ASC,
   },
   {
-    label: t('filesList.sortOptions.sizeDesc'),
+    label: "Size: biggest",
     value: Sort.SIZE_DESC,
   },
 ];
