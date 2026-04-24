@@ -74,11 +74,6 @@ interface Props {
   onExpand: (item: WebDavDirectory, isExpanded: boolean) => void;
 
   /**
-   * On Remove
-   */
-  onRemove: (item: WebDavDirectory) => void;
-
-  /**
    * Edit
    *
    * @type {boolean}
@@ -100,7 +95,6 @@ export const CategoryItem: React.FC<Props> = ({
   isExpanded,
   isLoading,
   onExpand,
-  onRemove,
   edit,
 }) => {
   /**

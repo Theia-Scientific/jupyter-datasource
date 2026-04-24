@@ -135,11 +135,6 @@ interface Props {
   select: boolean;
 
   /**
-   * On Remove
-   */
-  onRemove: (item: WebDavItem) => void;
-
-  /**
    * Action Button
    *
    * @type {string}
@@ -168,7 +163,6 @@ export const TreeLevel: React.FC<Props> = ({
   isItemExpanded,
   onSetItemExpanded,
   download,
-  onRemove,
   edit,
   select,
   actionButton,
@@ -267,7 +261,6 @@ export const TreeLevel: React.FC<Props> = ({
                     isExpanded={isItemExpanded(item)}
                     isLoading={loadingPath.includes(item.path)}
                     onExpand={onSetItemExpanded}
-                    onRemove={onRemove}
                     edit={edit}
                   >
                     <TreeLevel
@@ -288,7 +281,6 @@ export const TreeLevel: React.FC<Props> = ({
                       isItemExpanded={isItemExpanded}
                       onSetItemExpanded={onSetItemExpanded}
                       download={download}
-                      onRemove={onRemove}
                       edit={edit}
                       select={select}
                       actionButton={actionButton}
