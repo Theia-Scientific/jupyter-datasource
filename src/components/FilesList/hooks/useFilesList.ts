@@ -12,11 +12,9 @@ import type { DataSource } from '@theia/datasource';
  */
 export const useFilesList = ({
   rootItem,
-  uploadFile,
   datasource,
 }: {
   rootItem: WebDavDirectory;
-  uploadFile?: (category: WebDavDirectory, file: File) => Promise<void>;
   datasource: DataSource;
 }) => {
   /**
@@ -124,28 +122,6 @@ export const useFilesList = ({
   );
 
   /**
-   * On Upload File
-   */
-  const onUploadFile = useCallback(
-    async (item: WebDavDirectory, file: File) => {
-      try {
-        if (uploadFile) {
-          await uploadFile(item, file);
-        } else {
-          await api.upload(`${BASE_WEB_DAV_URL}${item.path}/${file.name}`, file);
-        }
-        return true;
-      } catch (e: unknown) {
-        if (isApiError(e)) {
-          setError(e.message || getApiMessage(ApiName.UPLOAD_FILE));
-        }
-        return false;
-      }
-    },
-    [api, uploadFile]
-  );
-
-  /**
    * On Move
    */
   const onMove = useCallback(
@@ -222,7 +198,6 @@ export const useFilesList = ({
     error,
     onChangeName,
     onCreateDirectory,
-    onUploadFile,
     onMove,
     clearError,
     refresh,

@@ -1,4 +1,4 @@
-import { Alert, Button, ButtonGroup, Combobox, InlineField, InlineSwitch, Input, useStyles2 } from '@grafana/ui';
+import { Alert, Button, ButtonGroup, Combobox, InlineField, Input, useStyles2 } from '@grafana/ui';
 import { BASE_WEB_DAV_URL, TEST_IDS } from '@theia/constants';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -37,11 +37,6 @@ interface Props {
   rootPath: string;
 
   /**
-   * Upload File
-   */
-  uploadFile?: (category: WebDavDirectory, file: File) => Promise<void>;
-
-  /**
    * Edit
    *
    * @type {boolean}
@@ -61,25 +56,6 @@ interface Props {
    * @type {string}
    */
   actionButton?: string;
-
-  /**
-   * Analyze Toggle
-   *
-   * @type {boolean}
-   */
-  showAnalyzeToggle?: boolean;
-
-  /**
-   * Start Analyze on Upload
-   *
-   * @type {boolean}
-   */
-  startAnalyzeOnUpload?: boolean;
-
-  /**
-   * On Toggle Analyze
-   */
-  onToggleAnalyze?: (state: boolean) => Promise<void>;
 }
 
 /**
@@ -89,13 +65,9 @@ export const FilesList: React.FC<Props> = ({
   datasource,
   onSelectFile,
   rootPath,
-  uploadFile,
   edit = true,
   select = true,
   actionButton,
-  showAnalyzeToggle = false,
-  startAnalyzeOnUpload = true,
-  onToggleAnalyze,
 }) => {
   /**
    * Styles
@@ -145,12 +117,10 @@ export const FilesList: React.FC<Props> = ({
     error,
     onChangeName,
     onCreateDirectory,
-    onUploadFile,
     clearError,
     refresh,
   } = useFilesList({
     rootItem,
-    uploadFile,
     datasource,
   });
 
@@ -218,22 +188,6 @@ export const FilesList: React.FC<Props> = ({
   );
 
   /**
-   * On Upload Files
-   */
-  const onUploadFiles = useCallback(
-    async (category: WebDavDirectory, files: File[]) => {
-      const uploaded = await Promise.all(files.map((file) => onUploadFile(category, file))).then((results) =>
-        results.some((result) => result)
-      );
-
-      if (uploaded) {
-        loadTree(category);
-      }
-    },
-    [loadTree, onUploadFile]
-  );
-
-  /**
    * Tree Expand
    */
   const { onExpandAll, onCollapseAll, isItemExpanded, onSetItemExpanded } = useTreeExpand(categoriesList);
@@ -297,15 +251,6 @@ export const FilesList: React.FC<Props> = ({
             data-testid={TEST_IDS.filesList.fieldSort}
           />
         </InlineField>
-        {showAnalyzeToggle && onToggleAnalyze && (
-          <InlineSwitch
-            label={`Analyze on Upload: ${startAnalyzeOnUpload ? 'On' : 'Off'}`}
-            showLabel={true}
-            value={startAnalyzeOnUpload}
-            onChange={(event) => onToggleAnalyze(event.currentTarget.checked)}
-            data-testid={TEST_IDS.filesList.toggleAnalyzeOnUpload}
-          />
-        )}
         {isSearchEnabled && (
           <InlineField label={"Filter"}>
             <Input
@@ -340,7 +285,6 @@ export const FilesList: React.FC<Props> = ({
           onChangeName={onChangeName}
           onSetItemSelection={onSetItemSelection}
           isSelected={isSelected}
-          onUploadFiles={onUploadFiles}
           onCreateCategory={onAddDirectory}
           sort={sort}
           searchQuery={search}

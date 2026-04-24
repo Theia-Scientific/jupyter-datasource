@@ -78,11 +78,6 @@ interface Props {
   onCreateCategory: (category: WebDavDirectory, name: string) => Promise<void>;
 
   /**
-   * On Upload Files
-   */
-  onUploadFiles: (category: WebDavDirectory, files: File[]) => Promise<void>;
-
-  /**
    * Sort
    *
    * @type {Sort}
@@ -142,7 +137,6 @@ export const TreeLevel: React.FC<Props> = ({
   isParentSelected = false,
   isSelected,
   onCreateCategory,
-  onUploadFiles,
   sort,
   searchQuery,
   isItemExpanded,
@@ -240,7 +234,6 @@ export const TreeLevel: React.FC<Props> = ({
                     loadTree={loadTree}
                     onChangeName={onChangeItemName}
                     onCreateCategory={onCreateCategory}
-                    onUploadFiles={onUploadFiles}
                     isExpanded={isItemExpanded(item)}
                     isLoading={loadingPath.includes(item.path)}
                     onExpand={onSetItemExpanded}
@@ -254,7 +247,6 @@ export const TreeLevel: React.FC<Props> = ({
                       depth={depth + 1}
                       onChangeName={onChangeName}
                       onCreateCategory={onCreateCategory}
-                      onUploadFiles={onUploadFiles}
                       onSetItemSelection={onSetItemSelection}
                       isParentSelected={isParentSelected || isSelected(item)}
                       isSelected={isSelected}

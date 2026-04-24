@@ -50,11 +50,6 @@ interface Props {
   onCreateCategory: (category: WebDavDirectory, name: string) => Promise<void>;
 
   /**
-   * On Upload Files
-   */
-  onUploadFiles: (category: WebDavDirectory, files: File[]) => Promise<void>;
-
-  /**
    * Is Expanded
    *
    * @type {boolean}
@@ -90,7 +85,6 @@ export const CategoryItem: React.FC<Props> = ({
   onChangeName,
   loadTree,
   onCreateCategory,
-  onUploadFiles,
   isExpanded,
   isLoading,
   onExpand,
