@@ -174,7 +174,7 @@ export const TreeLevel: React.FC<Props> = ({
             ))
           ) : (
             <Alert severity="info" title="" data-testid={TEST_IDS.filesList.noFilesMessage}>
-              {t('noFiles', 'No Files')}
+              {t('treeLevel.noFiles', 'No Files')}
             </Alert>
           )}
         </>

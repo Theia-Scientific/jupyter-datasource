@@ -51,7 +51,7 @@ export const QueryFieldVariablesEditor = ({
         }
         icon="plus"
       >
-        {t('addVariable', 'Add Variable')}
+        {t('variableEditor.add.label', 'Add Variable')}
       </Button>
     </div>
   );

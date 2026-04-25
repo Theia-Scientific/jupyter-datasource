@@ -6,6 +6,7 @@ import { WebDavDirectory } from '../types';
 import { getUpdatedTree } from '../utils';
 import { useDatasource } from './useDatasource';
 import type { DataSource } from '@theia/datasource';
+import { t } from '@grafana/i18n';
 
 /**
  * Use Files List

@@ -67,17 +67,22 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   const refreshKernels = () => {
     datasource.getKernels().then((response: KernelSpec[]) => {
       const labelForSpec = (ks: KernelSpec): string => {
-        const base = t('nameVal', '{{name}} ({{val}})', { name: ks.name, val: ks.id.slice(0,8) });
+        const opts = { ...ks, id: ks.id.slice(0,8) };
         if (!!ks.notebook_path) {
-          return t('baseNotebook_path', '{{base}} [{{notebook_path}}]', { base, notebook_path: ks.notebook_path });
+          return t('queryEditor.kernelFormat.notebook', '{{name}} ({{id}}) [{{notebook_path}}]', opts);
+        } else {
+          return t('queryEditor.kernelFormat.base', '{{name}} ({{id}})', opts);
         }
-        return base;
       };
       let kernels: Array<ComboboxOption<string>> = response.map((ks) => ({
         label: labelForSpec(ks),
         value: ks.id,
       }));
-      const defaultOption = {label: t('newKernel', 'New Kernel'), description: t('startANewKernel', 'Start a new kernel'), value: ''};
+      const defaultOption = {
+        label: t('queryEditor.newKernel.label', 'New Kernel'),
+        description: t('queryEditor.newKernel.desc', 'Start a new kernel'),
+        value: ''
+      };
       kernels.unshift(defaultOption);
       setKernels(kernels);
     });
@@ -106,8 +111,8 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   const containerStyle = css`overflow: hidden; resize: both; width: 80em; height: 25em`;
 
   const sources = [
-    { label: t('enterCodeBelow', 'Enter code below...'), value: ENTER_CODE },
-    { label: t('chooseNotebookBelow', 'Choose notebook below...'), value: CHOOSE_NOTEBOOK },
+    { label: t('queryEditor.source.code', 'Enter code below...'), value: ENTER_CODE },
+    { label: t('queryEditor.source.notebook', 'Choose notebook below...'), value: CHOOSE_NOTEBOOK },
   ];
   const [source, setSource] = useState(emptyNotebook(query) ? ENTER_CODE : query.notebook);
 
@@ -120,7 +125,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       <>
       { connectionType === ConnectionType.Auto &&
         <InlineFieldRow>
-          <InlineField label={t('kernelId', 'Kernel ID')} labelWidth={16} tooltip="Kernel ID for executing query">
+        <InlineField label={t('queryEditor.kernelId.label', 'Kernel ID')} labelWidth={16} tooltip={t('queryEditor.kernelId.tooltip', 'Kernel ID for executing query')}>
             <Combobox
               id="query-editor-kernel-id"
               options={kernels}
@@ -129,11 +134,11 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
               width={40}
             />
           </InlineField>
-          <Button aria-label={t('refreshKernels', 'Refresh Kernels')} icon="sync"onClick={refreshKernels} />
+          <Button aria-label={t('queryEditor.refreshKernels.label', 'Refresh Kernels')} icon="sync" onClick={refreshKernels} />
         </InlineFieldRow>
       }
       { connectionType === ConnectionType.Info &&
-        <InlineField label={t('kernelType', 'Kernel Type')} labelWidth={16} tooltip="Kernel type (e.g. python3)">
+        <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
           <Input
             id="query-editor-kernel-type-info"
             onChange={onKernelTypeChangeInfo}
@@ -144,7 +149,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         </InlineField>
       }
       { connectionType === ConnectionType.Auto &&
-        <InlineField label={t('kernelType', 'Kernel Type')} labelWidth={16} tooltip="Kernel type (e.g. python3)">
+        <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
           <Combobox
             id="query-editor-kernel-type-auto"
             options={kernelTypes}
@@ -155,27 +160,27 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         </InlineField>
       }
       { connectionType === ConnectionType.Info &&
-        <InlineField label={t('connectionInfo', 'Connection Info')} labelWidth={16} tooltip="Connection file from Jupyterlab">
+        <InlineField label={t('queryEditor.connectionInfo.label', 'Connection Info')} labelWidth={16} tooltip={t('queryEditor.connectionInfo.tooltip', 'Connection file from Jupyterlab')}>
           <TextArea
             style={{resize: 'both'}}
             id="query-editor-connection-info"
             onChange={onConnectionInfoChange}
             value={query.connectionInfo}
             required
-            placeholder={t('enterConnectionInfo', 'Enter connection info')}
+            placeholder={t('queryEditor.connectionInfo.placeholder', 'Enter connection info')}
             rows={12}
             cols={80}
           />
         </InlineField>
       }
-      <InlineField label="Variables" labelWidth={16} tooltip="Variables to bind">
+      <InlineField label={t('queryEditor.variables.label', 'Variables')} labelWidth={16} tooltip={t('queryEditor.variables.tooltip', 'Variables to bind')}>
         <QueryFieldVariablesEditor
           value={query.vars ?? []}
           onChange={onVariablesChange}
         />
       </InlineField>
       { connectionType === ConnectionType.Auto &&
-        <InlineField label="Source" labelWidth={16} tooltip="Pick notebook or literal code">
+        <InlineField label={t('queryEditor.source.label', 'Source')} labelWidth={16} tooltip={t('queryEditor.source.tooltip', 'Pick notebook or literal code')}>
           <Combobox
             id="query-editor-source"
             options={sources}
@@ -193,7 +198,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         />
       }
       { (connectionType === ConnectionType.Info || source === ENTER_CODE) &&
-        <InlineField label="Code" labelWidth={16} tooltip="Code to run">
+        <InlineField label={t('queryEditor.code.label', 'Code')} labelWidth={16} tooltip={t('queryEditor.code.tooltip', 'Code to run')}>
           <CodeEditor
             value={query.code}
             language="python"

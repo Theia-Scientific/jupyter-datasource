@@ -109,7 +109,7 @@ export function ConfigEditor(props: Props) {
 
   return (
     <>
-      <InlineField label={t('connectionType', 'Connection Type')} labelWidth={20} interactive tooltip={t('typeOfConnection', 'Type of connection')}>
+      <InlineField label={t('configEditor.connectionType.label', 'Connection Type')} labelWidth={20} interactive tooltip={t('configEditor.connectionType.tooltip', 'Type of connection')}>
         <Combobox
           id="config-editor-conn-type"
           options={CONN_OPTIONS}
@@ -119,7 +119,7 @@ export function ConfigEditor(props: Props) {
         />
       </InlineField>
       { jsonData.connectionType === ConnectionType.Auto &&
-        <InlineField label={t('authType', 'Auth Type')} labelWidth={20} interactive tooltip={t('typeOfAuthentication', 'Type of authentication')}>
+        <InlineField label={t('configEditor.authType.label', 'Auth Type')} labelWidth={20} interactive tooltip={t('configEditor.authType.tooltip', 'Type of authentication')}>
           <Combobox
             id="config-editor-auth-type"
             options={AUTH_OPTIONS}
@@ -130,29 +130,29 @@ export function ConfigEditor(props: Props) {
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto && jsonData.authType === AuthType.RawToken &&
-        <InlineField label="Token" labelWidth={20} interactive tooltip={t('tokenForJupyterlabAuth', 'Token for Jupyterlab auth')}>
+        <InlineField label={t('configEditor.rawToken.label', 'Token')} labelWidth={20} interactive tooltip={t('configEditor.rawToken.tooltip', 'Token for Jupyterlab auth')}>
           <Input
             id="config-editor-raw-token"
             onChange={onRawTokenChange}
             value={jsonData.rawToken}
-            placeholder={t('enterTheToken', 'Enter the token')}
+            placeholder={t('configEditor.rawToken.placeholder', 'Enter the token')}
             width={40}
           />
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto && jsonData.authType === AuthType.Fetch &&
-        <InlineField label={t('tokenUrl', 'Token URL')} labelWidth={20} interactive tooltip={t('urlToFetchTheJupyterlabTokenFrom', 'URL to fetch the Jupyterlab token from')}>
+        <InlineField label={t('configEditor.tokenUrl.label', 'Token URL')} labelWidth={20} interactive tooltip={t('configEditor.tokenUrl.tooltip', 'URL to fetch the Jupyterlab token from')}>
           <Input
             id="config-editor-route"
             onChange={onRouteChange}
             value={jsonData.fetchRoute}
-            placeholder={t('enterTheTokenUrlEgHttplocalhosttokensjupyter', 'Enter the token URL, e.g. http://localhost/tokens/jupyter')}
+            placeholder={t('configEditor.tokenUrl.placeholder', 'Enter the token URL, e.g. http://localhost/tokens/jupyter')}
             width={40}
           />
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto && jsonData.authType === AuthType.Fetch &&
-        <InlineField label="Method" labelWidth={20} interactive tooltip={t('httpMethodForFetchingTheJupyterlabToken', 'HTTP method for fetching the Jupyterlab token')}>
+        <InlineField label={t('configEditor.tokenMethod.label', 'Method')} labelWidth={20} interactive tooltip={t('configEditor.tokenMethod.tooltip', 'HTTP method for fetching the Jupyterlab token')}>
           <Combobox
             id="config-editor-method"
             options={METHOD_OPTIONS}
@@ -163,34 +163,34 @@ export function ConfigEditor(props: Props) {
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto && jsonData.authType === AuthType.Fetch &&
-        <InlineField label={t('fetchToken', 'Fetch Token')} labelWidth={20} interactive tooltip={t('bearerTokenForFetchingTheJupyterlabToken', 'Bearer token for fetching the Jupyterlab token')}>
+        <InlineField label={t('configEditor.fetchToken.label', 'Fetch Token')} labelWidth={20} interactive tooltip={t('configEditor.fetchToken.tooltip', 'Bearer token for fetching the Jupyterlab token')}>
           <Input
             id="config-editor-fetch-token"
             onChange={onFetchTokenChange}
             value={jsonData.fetchToken}
-            placeholder={t('enterTheBearerTokenForFetchingTheJupyterToken', 'Enter the Bearer token for fetching the Jupyter token')}
+            placeholder={t('configEditor.fetchToken.placeholder', 'Enter the Bearer token for fetching the Jupyter token')}
             width={40}
           />
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto &&
-        <InlineField label={t('jupyterlabUrl', 'Jupyterlab URL')} labelWidth={20} interactive tooltip={t('jupyterlabEndpointUrl', 'Jupyterlab endpoint URL')}>
+        <InlineField label={t('configEditor.jupyterUrl.label', 'Jupyterlab URL')} labelWidth={20} interactive tooltip={t('configEditor.jupyterUrl.tooltip', 'Jupyterlab endpoint URL')}>
           <Input
             id="config-jupyter-url"
             onChange={onJupyterUrlChange}
             value={jsonData.jupyterUrl}
-            placeholder={t('enterTheJupyterlabUrlEgHttplocalhost8888', 'Enter the Jupyterlab URL, e.g. http://localhost:8888/')}
+            placeholder={t('configEditor.jupyterUrl.placeholder', 'Enter the Jupyterlab URL, e.g. http://localhost:8888/')}
             width={40}
           />
         </InlineField>
         }
-      <InlineField label={t('importStatements', 'Import Statements')} labelWidth={20} interactive tooltip={t('importStatementsToRunForEveryKernel', 'Import statements to run for every kernel')}>
+      <InlineField label={t('configEditor.importStatements.label', 'Import Statements')} labelWidth={20} interactive tooltip={t('configEditor.importStatements.tooltip', 'Import statements to run for every kernel')}>
         <TextArea
           style={{resize: 'both'}}
           id="config-import-statements"
           onChange={onImportStatementsChange}
           value={jsonData.importStatements || ""}
-          placeholder={t('enterDefaultImportStatements', 'Enter default import statements')}
+          placeholder={t('configEditor.importStatements.placeholder', 'Enter default import statements')}
           rows={12}
           cols={80}
         />

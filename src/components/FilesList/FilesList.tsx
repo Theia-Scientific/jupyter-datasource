@@ -5,15 +5,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { TreeLevel } from './components/TreeLevel';
 import { getStyles } from './FilesList.styles';
 import { useFilesList, useTreeExpand } from './hooks';
-import { Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from './types';
+import { Sort, WebDavDirectory, WebDavFile, WebDavItemType } from './types';
 import { getPlainCategories } from './utils';
 import type { DataSource } from '@theia/datasource';
 import { t } from '@grafana/i18n'
-
-function formatErrorItems(errorItems: WebDavItem[]): string {
-  const joinedErrorItems = errorItems.map((item) => `/${item.relativePath}`).join(', ');
-  return t('errorWhileAccomplishingOperationForJoinederroritems', 'Error while accomplishing operation for: {{joinedErrorItems}}', { joinedErrorItems });
-}
 
 /**
  * Properties
@@ -52,27 +47,27 @@ export const FilesList: React.FC<Props> = ({
 
   const SORT_OPTIONS = useMemo(() => [
     {
-      label: t('nameAToZ', 'Name: A to Z'),
+      label: t('enums.sortOptions.nameAsc', 'Name: A to Z'),
       value: Sort.NAME_ASC,
     },
     {
-      label: t('nameZToA', 'Name: Z to A'),
+      label: t('enums.sortOptions.nameDesc', 'Name: Z to A'),
       value: Sort.NAME_DESC,
     },
     {
-      label: t('modifiedOldest', 'Modified: oldest'),
+      label: t('enums.sortOptions.lastModifiedAsc', 'Modified: oldest'),
       value: Sort.LAST_MODIFIED_ASC,
     },
     {
-      label: t('modifiedNewest', 'Modified: newest'),
+      label: t('enums.sortOptions.lastModifiedDesc', 'Modified: newest'),
       value: Sort.LAST_MODIFIED_DESC,
     },
     {
-      label: t('sizeSmallest', 'Size: smallest'),
+      label: t('enums.sortOptions.sizeAsc', 'Size: smallest'),
       value: Sort.SIZE_ASC,
     },
     {
-      label: t('sizeBiggest', 'Size: biggest'),
+      label: t('enums.sortOptions.sizeDesc', 'Size: biggest'),
       value: Sort.SIZE_DESC,
     },
   ], []);
@@ -80,7 +75,6 @@ export const FilesList: React.FC<Props> = ({
   /**
    * States
    */
-  const [errorItems, setErrorItems] = useState<WebDavItem[]>([]);
   const [isSearchEnabled, setIsSearchEnabled] = useState(false);
 
   /**
@@ -150,7 +144,7 @@ export const FilesList: React.FC<Props> = ({
         <ButtonGroup>
           <Button
             onClick={refresh}
-            tooltip={"Refresh"}
+            tooltip={t('filesList.refresh.tooltip', 'Refresh')}
             icon="sync"
             disabled={!!loadingPath.length}
             size="md"
@@ -161,21 +155,21 @@ export const FilesList: React.FC<Props> = ({
             icon="angle-double-down"
             variant="secondary"
             onClick={onExpandAll}
-            tooltip={"Expand"}
+            tooltip={t('filesList.expand.tooltip', 'Expand')}
             data-testid={TEST_IDS.filesList.buttonExpand}
           />
           <Button
             icon="angle-double-up"
             variant="secondary"
             onClick={onCollapseAll}
-            tooltip={"Collapse All"}
+            tooltip={t('filesList.collapseAll.tooltip', 'Collapse All')}
             data-testid={TEST_IDS.filesList.buttonCollapse}
           />
           <Button
             icon="filter"
             variant="secondary"
             fill={isSearchEnabled ? 'outline' : 'solid'}
-            tooltip={"Filter"}
+            tooltip={t('filesList.filter.tooltip', 'Filter')}
             data-testid={TEST_IDS.filesList.buttonToggleSearching}
             onClick={() => {
               setIsSearchEnabled((isSearchEnabled) => !isSearchEnabled);
@@ -184,7 +178,7 @@ export const FilesList: React.FC<Props> = ({
           />
         </ButtonGroup>
 
-        <InlineField label={"Sort By"}>
+        <InlineField label={t('filesList.sortBy.label', 'Sort By')}>
           <Combobox
             onChange={(opt) => {
               setSort(opt.value ?? Sort.NAME_ASC);
@@ -195,13 +189,13 @@ export const FilesList: React.FC<Props> = ({
           />
         </InlineField>
         {isSearchEnabled && (
-          <InlineField label={"Filter"}>
+          <InlineField label={t('filesList.search.label', 'Filter')}>
             <Input
               autoFocus={true}
               value={search}
               onChange={(event) => setSearch(event.currentTarget.value)}
               data-testid={TEST_IDS.filesList.fieldSearch}
-              placeholder={t('fileNameContains', 'File name contains')}
+              placeholder={t('filesList.search.placeholder', 'File name contains')}
             />
           </InlineField>
         )}
@@ -212,12 +206,8 @@ export const FilesList: React.FC<Props> = ({
             className={styles.error}
             title={error}
             data-testid={TEST_IDS.filesList.errorMessage}
-            onRemove={() => {
-              setErrorItems([]);
-              clearError();
-            }}
+            onRemove={clearError}
             >
-            {errorItems.length > 0 && formatErrorItems(errorItems)}
           </Alert>
         )}
         <TreeLevel

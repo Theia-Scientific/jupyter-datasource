@@ -1,5 +1,4 @@
 import { FetchError, isFetchError } from '@grafana/runtime';
-import { t } from '@grafana/i18n';
 export * from './logger';
 
 /**

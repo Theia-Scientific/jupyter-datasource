@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import { IconButton, useTheme2 } from '@grafana/ui';
 import React from 'react';
+import { t } from '@grafana/i18n';
 
 import { getStyles } from './CategoryCollapse.styles';
 
@@ -73,7 +74,9 @@ export const CategoryCollapse: React.FC<Props> = ({
       <div className={styles.header} data-testid={headerTestId} onClick={() => onToggle(!isOpen)}>
         <IconButton
           name={isOpen ? 'angle-down' : 'angle-right'}
-          tooltip={isOpen ? 'Collapse' : 'Expand'}
+          tooltip={isOpen
+             ? t('categoryCollapse.icon.collapse.tooltip', 'Collapse')
+             : t('categoryCollapse.icon.expand.tooltip', 'Expand')}
           className={styles.collapseIcon}
           aria-expanded={isOpen}
         />

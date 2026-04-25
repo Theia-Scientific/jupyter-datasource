@@ -2,6 +2,7 @@ import { formattedValueToString, getValueFormat } from '@grafana/data';
 import { Card, TagList, useStyles2 } from '@grafana/ui';
 import { TEST_IDS } from '@theia/constants';
 import React from 'react';
+import { t } from '@grafana/i18n';
 
 import { WebDavFile } from '../../types';
 import { getStyles } from './FileItem.styles';
@@ -42,7 +43,8 @@ export const FileItem: React.FC<Props> = ({
    */
   const meta = [];
   if (item.mtime) {
-    meta.push(`Last modified at ${new Date(item.mtime).toLocaleString()}`);
+    const when = new Date(item.mtime).toLocaleString();
+    meta.push(t('fileItem.modtime', 'Last modified at {{when}}', { when }));
   }
 
   /**
