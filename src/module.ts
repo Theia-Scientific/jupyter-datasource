@@ -1,3 +1,8 @@
+import { initPluginTranslations } from '@grafana/i18n';
+import pluginJson from 'plugin.json';
+
+await initPluginTranslations(pluginJson.id);
+
 import { DataSourcePlugin } from '@grafana/data';
 import { DataSource } from './datasource';
 import { ConfigEditor } from './components/ConfigEditor';

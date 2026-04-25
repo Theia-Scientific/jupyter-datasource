@@ -5,3 +5,5 @@ services:
       service: grafana
     network_mode: host
     env_file: .env
+    environment:
+      GF_FEATURE_TOGGLES_ENABLE: localizationForPlugins

@@ -24,5 +24,6 @@
   "dependencies": {
     "grafanaDependency": ">=11.6.0",
     "plugins": []
-  }
+  },
+  "languages": ["en-US"]
 }
