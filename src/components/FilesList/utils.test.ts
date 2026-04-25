@@ -1,7 +1,7 @@
 import { BASE_WEB_DAV_URL } from '@theia/constants';
 
 import { Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from './types';
-import { getPlainCategories, getSortedItems, getUpdatedTree, getValidFolderName } from './utils';
+import { getPlainCategories, getSortedItems, getUpdatedTree } from './utils';
 
 describe('Files List Utils', () => {
   const mtime = '123';
@@ -214,15 +214,6 @@ describe('Files List Utils', () => {
           name: '2-2',
         }),
       ]);
-    });
-  });
-
-  describe('getValidFolderName', () => {
-    it('Should trim spaces', () => {
-      expect(getValidFolderName(' abc  ')).toEqual('abc');
-    });
-    it('Should remove slashes', () => {
-      expect(getValidFolderName('/abc/123')).toEqual('abc123');
     });
   });
 

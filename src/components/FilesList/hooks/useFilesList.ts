@@ -2,8 +2,8 @@ import { BASE_WEB_DAV_URL } from '@theia/constants';
 import { ApiName, getApiMessage, isApiError } from '@theia/utils';
 import { useCallback, useEffect, useState } from 'react';
 
-import { WebDavDirectory, WebDavItem, WebDavItemType } from '../types';
-import { getUpdatedTree, getValidFolderName } from '../utils';
+import { WebDavDirectory } from '../types';
+import { getUpdatedTree } from '../utils';
 import { useDatasource } from './useDatasource';
 import type { DataSource } from '@theia/datasource';
 
@@ -62,110 +62,6 @@ export const useFilesList = ({
   );
 
   /**
-   * On Change Name
-   */
-  const onChangeName = useCallback(
-    async (item: WebDavItem, newName: string) => {
-      const validName = item.type === WebDavItemType.DIRECTORY ? getValidFolderName(newName) : newName;
-
-      if (!validName) {
-        return false;
-      }
-
-      /**
-       * Base Path
-       */
-      const basePath = item.path.split('/').filter((segment, index, array) => index < array.length - 1);
-
-      try {
-        /**
-         * We have to add a trailing slash for directories
-         */
-        const trailingSlash = item.type === WebDavItemType.DIRECTORY ? '/' : '';
-        await api.move(
-          `${BASE_WEB_DAV_URL}${item.path}${trailingSlash}`,
-          `${[...basePath, validName].join('/')}${trailingSlash}`
-        );
-        return true;
-      } catch (e: unknown) {
-        if (isApiError(e)) {
-          setError(e.message || getApiMessage(ApiName.RENAME_WEBDAV_FILE));
-        }
-        return false;
-      }
-    },
-    [api]
-  );
-
-  /**
-   * On Create Directory
-   */
-  const onCreateDirectory = useCallback(
-    async (item: WebDavDirectory, folderName: string) => {
-      const validFolderName = getValidFolderName(folderName);
-
-      if (!validFolderName) {
-        return false;
-      }
-
-      try {
-        await api.createDirectory(`${BASE_WEB_DAV_URL}${item.path}/${validFolderName}/`);
-        return true;
-      } catch (e: unknown) {
-        if (isApiError(e)) {
-          setError(e.message || getApiMessage(ApiName.CREATE_WEBDAV_CATEGORY));
-        }
-        return false;
-      }
-    },
-    [api]
-  );
-
-  /**
-   * On Move
-   */
-  const onMove = useCallback(
-    async (item: WebDavItem, toPath: string) => {
-      try {
-        /**
-         * We have to add a trailing slash for directories
-         */
-        const trailingSlash = item.type === WebDavItemType.DIRECTORY ? '/' : '';
-        await api.move(`${BASE_WEB_DAV_URL}${item.path}${trailingSlash}`, `${toPath}/${item.name}${trailingSlash}`);
-        return true;
-      } catch (e) {
-        if (isApiError(e)) {
-          setError(e.message || getApiMessage(ApiName.MOVE_WEBDAV_ITEM));
-        }
-        return false;
-      }
-    },
-    [api]
-  );
-
-  /**
-   * On Remove
-   */
-  const onRemove = useCallback(
-    async (item: WebDavItem) => {
-      try {
-        /**
-         * We have to add a trailing slash for directories
-         */
-        const trailingSlash = item.type === WebDavItemType.DIRECTORY ? '/' : '';
-        await api.remove(`${BASE_WEB_DAV_URL}${item.path}${trailingSlash}`);
-        return true;
-      } catch (e: unknown) {
-        if (isApiError(e)) {
-          setError(e.message || getApiMessage(ApiName.REMOVE_WEBDAV_ITEM));
-        }
-        return false;
-      }
-    },
-    [api]
-  );
-
-  /**
    * Clear Error
    */
   const clearError = useCallback(() => {
@@ -196,11 +92,7 @@ export const useFilesList = ({
     loadTree,
     loadingPath,
     error,
-    onChangeName,
-    onCreateDirectory,
-    onMove,
     clearError,
     refresh,
-    onRemove,
   };
 };

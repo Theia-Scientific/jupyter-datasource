@@ -59,16 +59,6 @@ export const getPlainCategories = (tree: WebDavDirectory): WebDavDirectory[] => 
 };
 
 /**
- * Get Valid Folder Name
- * @param folderName
- */
-export const getValidFolderName = (folderName: string) => {
-  const withoutSpaces = folderName.trim();
-
-  return withoutSpaces.replaceAll('/', '');
-};
-
-/**
  * Get Sorted Items
  */
 export const getSortedItems = (items: WebDavItem[] | undefined, sort: Sort) => {
