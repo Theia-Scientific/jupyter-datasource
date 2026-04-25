@@ -44,7 +44,7 @@ export const FileItem: React.FC<Props> = ({
   const meta = [];
   if (item.last_modified) {
     const when = new Date(item.last_modified).toLocaleString();
-    meta.push(t('fileItem.modtime', 'Last modified at {{when}}', { when }));
+    meta.push(t('fileItem.modtime', 'Last modified at {{-when}}', { when }));
   }
 
   /**

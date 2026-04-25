@@ -91,7 +91,7 @@
     }
   },
   "fileItem": {
-    "modtime": "Last modified at {{when}}"
+    "modtime": "Last modified at {{-when}}"
   },
   "filesList": {
     "collapseAll": {
