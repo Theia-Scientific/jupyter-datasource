@@ -1,1 +1,86 @@
-{}
+{
+  "addVariable": "Add Variable",
+  "apinamestringMessagetypestring": "{{apiNameString}}: {{messageTypeString}}",
+  "apiRequestFailed": "API Request failed",
+  "apiRequestSubmitted": "API Request Submitted",
+  "authType": "Auth Type",
+  "baseNotebook_path": "{{base}} [{{notebook_path}}]",
+  "bearerTokenForFetchingTheJupyterlabToken": "Bearer token for fetching the Jupyterlab token",
+  "chooseNotebookBelow": "Choose notebook below...",
+  "connectionInfo": "Connection Info",
+  "connectionType": "Connection Type",
+  "createWebdavCategory": "Create WebDav Category",
+  "deleteVariable": "Delete Variable",
+  "enterCodeBelow": "Enter code below...",
+  "enterConnectionInfo": "Enter connection info",
+  "enterDefaultImportStatements": "Enter default import statements",
+  "enterTheBearerTokenForFetchingTheJupyterToken": "Enter the Bearer token for fetching the Jupyter token",
+  "enterTheJupyterlabUrlEgHttplocalhost8888": "Enter the Jupyterlab URL, e.g. http://localhost:8888/",
+  "enterTheToken": "Enter the token",
+  "enterTheTokenUrlEgHttplocalhosttokensjupyter": "Enter the token URL, e.g. http://localhost/tokens/jupyter",
+  "enums": {
+    "authOptions": {
+      "fetch": {
+        "desc": "Fetch a token from a web service",
+        "name": "Fetch"
+      },
+      "none": {
+        "desc": "No authentication",
+        "name": "None"
+      },
+      "rawToken": {
+        "desc": "Enter a token directly",
+        "name": "Raw Token"
+      }
+    },
+    "connOptions": {
+      "automatic": {
+        "desc": "Start or connect to a kernel via the Jupyterlab API",
+        "name": "Automatic"
+      },
+      "connectionInfo": {
+        "desc": "Paste JSON connection info directly",
+        "name": "Connection Info"
+      }
+    },
+    "methodOptions": {
+      "get": {
+        "name": "Get"
+      },
+      "put": {
+        "name": "Put"
+      }
+    }
+  },
+  "errorWhileAccomplishingOperationForJoinederroritems": "Error while accomplishing operation for: {{joinedErrorItems}}",
+  "fetchToken": "Fetch Token",
+  "fileNameContains": "File name contains",
+  "getWebdavFiles": "Get WebDav Files",
+  "httpMethodForFetchingTheJupyterlabToken": "HTTP method for fetching the Jupyterlab token",
+  "importStatements": "Import Statements",
+  "importStatementsToRunForEveryKernel": "Import statements to run for every kernel",
+  "jupyterlabEndpointUrl": "Jupyterlab endpoint URL",
+  "jupyterlabUrl": "Jupyterlab URL",
+  "kernelId": "Kernel ID",
+  "kernelType": "Kernel Type",
+  "modifiedNewest": "Modified: newest",
+  "modifiedOldest": "Modified: oldest",
+  "movingWebdavItem": "Moving WebDav Item",
+  "nameAToZ": "Name: A to Z",
+  "nameVal": "{{name}} ({{val}})",
+  "nameZToA": "Name: Z to A",
+  "newKernel": "New Kernel",
+  "noFiles": "No Files",
+  "refreshKernels": "Refresh Kernels",
+  "removingWebdavItem": "Removing WebDav Item",
+  "renameWebdavFile": "Rename WebDav File",
+  "sizeBiggest": "Size: biggest",
+  "sizeSmallest": "Size: smallest",
+  "startANewKernel": "Start a new kernel",
+  "tokenForJupyterlabAuth": "Token for Jupyterlab auth",
+  "tokenUrl": "Token URL",
+  "typeOfAuthentication": "Type of authentication",
+  "typeOfConnection": "Type of connection",
+  "uploadFile": "Upload File",
+  "urlToFetchTheJupyterlabTokenFrom": "URL to fetch the Jupyterlab token from"
+}

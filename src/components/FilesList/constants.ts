@@ -1,31 +1,32 @@
 import { Sort } from './types';
+import { t } from '@grafana/i18n';
 
 /**
  * Sort Options
  */
 export const SORT_OPTIONS = [
   {
-    label: "Name: A to Z",
+    label: t('nameAToZ', 'Name: A to Z'),
     value: Sort.NAME_ASC,
   },
   {
-    label: "Name: Z to A",
+    label: t('nameZToA', 'Name: Z to A'),
     value: Sort.NAME_DESC,
   },
   {
-    label: "Modified: oldest",
+    label: t('modifiedOldest', 'Modified: oldest'),
     value: Sort.LAST_MODIFIED_ASC,
   },
   {
-    label: "Modified: newest",
+    label: t('modifiedNewest', 'Modified: newest'),
     value: Sort.LAST_MODIFIED_DESC,
   },
   {
-    label: "Size: smallest",
+    label: t('sizeSmallest', 'Size: smallest'),
     value: Sort.SIZE_ASC,
   },
   {
-    label: "Size: biggest",
+    label: t('sizeBiggest', 'Size: biggest'),
     value: Sort.SIZE_DESC,
   },
 ];

@@ -8,6 +8,7 @@ import { getSortedItems } from '../../utils';
 import { CategoryItem } from '../CategoryItem';
 import { FileItem } from '../FileItem';
 import { getStyles } from './TreeLevel.styles';
+import { t } from '@grafana/i18n';
 
 /**
  * Properties
@@ -173,7 +174,7 @@ export const TreeLevel: React.FC<Props> = ({
             ))
           ) : (
             <Alert severity="info" title="" data-testid={TEST_IDS.filesList.noFilesMessage}>
-              {"No Files"}
+              {t('noFiles', 'No Files')}
             </Alert>
           )}
         </>

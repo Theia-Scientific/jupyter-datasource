@@ -9,10 +9,11 @@ import { useFilesList, useTreeExpand } from './hooks';
 import { Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from './types';
 import { getPlainCategories } from './utils';
 import type { DataSource } from '@theia/datasource';
+import { t } from '@grafana/i18n'
 
 function formatErrorItems(errorItems: WebDavItem[]): string {
   const joinedErrorItems = errorItems.map((item) => `/${item.relativePath}`).join(', ');
-  return `Error while accomplishing operation for: ${joinedErrorItems}`;
+  return t('errorWhileAccomplishingOperationForJoinederroritems', 'Error while accomplishing operation for: {{joinedErrorItems}}', { joinedErrorItems });
 }
 
 /**
@@ -174,7 +175,7 @@ export const FilesList: React.FC<Props> = ({
               value={search}
               onChange={(event) => setSearch(event.currentTarget.value)}
               data-testid={TEST_IDS.filesList.fieldSearch}
-              placeholder={"File name contains"}
+              placeholder={t('fileNameContains', 'File name contains')}
             />
           </InlineField>
         )}
