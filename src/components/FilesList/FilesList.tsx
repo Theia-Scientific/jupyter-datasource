@@ -50,7 +50,7 @@ export const FilesList: React.FC<Props> = ({
    */
   const styles = useStyles2(getStyles);
 
-  const SORT_OPTIONS = [
+  const SORT_OPTIONS = useMemo(() => [
     {
       label: t('nameAToZ', 'Name: A to Z'),
       value: Sort.NAME_ASC,
@@ -75,7 +75,7 @@ export const FilesList: React.FC<Props> = ({
       label: t('sizeBiggest', 'Size: biggest'),
       value: Sort.SIZE_DESC,
     },
-  ];
+  ], []);
 
   /**
    * States
