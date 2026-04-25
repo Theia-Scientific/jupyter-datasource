@@ -1,5 +1,5 @@
 import { Sort } from './types';
-import { PathEntryDirectory, PathEntryFile, PathEntry } from '@theia/types';
+import { PathEntryDirectory, PathEntryNotebook, PathEntry } from '@theia/types';
 import { getPlainCategories, getSortedItems, getUpdatedTree } from './utils';
 
 describe('Files List Utils', () => {
@@ -34,7 +34,7 @@ describe('Files List Utils', () => {
       };
       const result = getUpdatedTree(tree, tree, children as PathEntry[]);
 
-      expect(result.children).toEqual(
+      expect(result.content).toEqual(
         children.map((childItem) => ({
           ...childItem,
           path: `/media/${childItem.name}`,
@@ -48,13 +48,13 @@ describe('Files List Utils', () => {
         path: '/media',
         type: 'directory',
         last_modified: '123',
-        children: [
+        content: [
           {
             type: 'directory',
             name: 'dir1',
             path: '/media/dir1',
             last_modified,
-            children: [
+            content: [
               {
                 type: 'directory',
                 name: 'dir2',
@@ -96,26 +96,26 @@ describe('Files List Utils', () => {
       ];
       const result = getUpdatedTree(
         tree,
-        (tree.children?.[0] as any).children[0],
+        (tree.content?.[0] as any).content[0],
         children as PathEntry[]
       );
 
       expect(result).toEqual({
         ...tree,
-        children: expect.arrayContaining([
+        content: expect.arrayContaining([
           {
-            ...(tree.children as any)[0],
-            children: expect.arrayContaining([
+            ...(tree.content as any)[0],
+            content: expect.arrayContaining([
               {
-                ...(tree.children as any)[0].children[0],
-                children: children.map((childItem) => ({
+                ...(tree.content as any)[0].content[0],
+                content: children.map((childItem) => ({
                   ...childItem,
                   path: `/media/dir1/dir2/${childItem.name}`,
                 })),
               },
             ]),
           },
-          (tree.children as any)[1],
+          (tree.content as any)[1],
         ]),
       });
     });
@@ -127,12 +127,12 @@ describe('Files List Utils', () => {
         name: '0',
         path: '/0',
         type: 'directory',
-        children: [
+        content: [
           {
             name: '1',
             path: '/0/1',
             type: 'directory',
-            children: [
+            content: [
               {
                 name: '1-1',
                 path: '/0/1/1',
@@ -154,7 +154,7 @@ describe('Files List Utils', () => {
             name: '2',
             path: '/0/2',
             type: 'directory',
-            children: [
+            content: [
               {
                 name: '2-1',
                 path: '/0/2/1',
@@ -200,14 +200,14 @@ describe('Files List Utils', () => {
   });
 
   describe('getSortedItems', () => {
-    const fileA: PathEntryFile = {
+    const fileA: PathEntryNotebook = {
       name: 'a',
       size: 1,
       type: 'notebook',
       last_modified: '1/1/2022',
       path: '',
     };
-    const fileZ: PathEntryFile = {
+    const fileZ: PathEntryNotebook = {
       name: 'z',
       size: 999,
       type: 'notebook',

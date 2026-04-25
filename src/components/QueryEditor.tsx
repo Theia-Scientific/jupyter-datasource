@@ -116,7 +116,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   ];
   const [source, setSource] = useState(emptyNotebook(query) ? ENTER_CODE : query.notebook);
 
-  const onSelectFile = (f: PathEntryFile) => {
+  const onSelectFile = (f: PathEntryNotebook) => {
     setSource(f.path);
     onChange({ ...query, notebook: f.path });
   };

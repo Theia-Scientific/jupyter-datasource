@@ -121,8 +121,6 @@ interface PathEntryBase {
   name: string;
   path: string;
   last_modified: string;
-  created: string;
-  size: number;
 }
 
 export type PathEntryNotebook = PathEntryBase & {
@@ -132,7 +130,7 @@ export type PathEntryNotebook = PathEntryBase & {
 
 export type PathEntryDirectory = PathEntryBase & {
   type: 'directory';
-  content: PathEntry[];
+  content?: PathEntry[];
 }
 
 export type PathEntry = PathEntryNotebook | PathEntryDirectory;

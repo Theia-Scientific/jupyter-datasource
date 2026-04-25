@@ -122,29 +122,29 @@ describe('Files List', () => {
     await renderWithoutErrors(getComponent({}));
 
     expect(selectors.tree(false, testData.files.rootTree.path)).toBeInTheDocument();
-    expect(selectors.category(false, testData.files.rootTree.children[0].path)).toBeInTheDocument();
-    expect(selectors.file(false, testData.files.rootTree.children[1].path)).toBeInTheDocument();
+    expect(selectors.category(false, testData.files.rootTree.content[0].path)).toBeInTheDocument();
+    expect(selectors.file(false, testData.files.rootTree.content[1].path)).toBeInTheDocument();
 
     /**
      * Nested trees should not be rendered
      */
-    expect(selectors.category(true, testData.files.dir1Tree.children[0].path)).not.toBeInTheDocument();
+    expect(selectors.category(true, testData.files.dir1Tree.content[0].path)).not.toBeInTheDocument();
   });
 
   it('Should select file', async () => {
     const onSelectFile = jest.fn();
     await renderWithoutErrors(getComponent({ onSelectFile }));
 
-    expect(selectors.file(false, testData.files.rootTree.children[1].path)).toBeInTheDocument();
+    expect(selectors.file(false, testData.files.rootTree.content[1].path)).toBeInTheDocument();
 
     /**
      * Click on file
      */
-    fireEvent.click(selectors.fileName(false, testData.files.rootTree.children[1].path));
+    fireEvent.click(selectors.fileName(false, testData.files.rootTree.content[1].path));
 
     expect(onSelectFile).toHaveBeenCalledWith(
       expect.objectContaining({
-        path: testData.files.rootTree.children[1].path,
+        path: testData.files.rootTree.content[1].path,
       })
     );
   });
@@ -152,9 +152,9 @@ describe('Files List', () => {
   it('Should load nested tree', async () => {
     await renderWithoutErrors(getComponent({}));
 
-    const category = await openCategory(testData.files.rootTree.children[0].path);
+    const category = await openCategory(testData.files.rootTree.content[0].path);
 
-    expect(category.file(false, testData.files.dir1Tree.children[0].path)).toBeInTheDocument();
+    expect(category.file(false, testData.files.dir1Tree.content[0].path)).toBeInTheDocument();
   });
 
   it('Should change sorting', async () => {
@@ -193,12 +193,12 @@ describe('Files List', () => {
       /**
        * Check if category is shown
        */
-      expect(selectors.category(false, testData.files.rootTree.children[0].path)).toBeInTheDocument();
+      expect(selectors.category(false, testData.files.rootTree.content[0].path)).toBeInTheDocument();
 
       /**
        * Check if file is found
        */
-      expect(selectors.file(false, testData.files.rootTree.children[1].path)).toBeInTheDocument();
+      expect(selectors.file(false, testData.files.rootTree.content[1].path)).toBeInTheDocument();
 
       /**
        * Change Search
@@ -208,12 +208,12 @@ describe('Files List', () => {
       /**
        * Check if category is still shown
        */
-      expect(selectors.category(false, testData.files.rootTree.children[0].path)).toBeInTheDocument();
+      expect(selectors.category(false, testData.files.rootTree.content[0].path)).toBeInTheDocument();
 
       /**
        * Check if file is filtered
        */
-      expect(selectors.file(true, testData.files.rootTree.children[1].path)).not.toBeInTheDocument();
+      expect(selectors.file(true, testData.files.rootTree.content[1].path)).not.toBeInTheDocument();
     });
 
     it('Should be case insensitive', async () => {
@@ -237,7 +237,7 @@ describe('Files List', () => {
       /**
        * Check if file is found
        */
-      expect(selectors.file(false, testData.files.rootTree.children[1].path)).toBeInTheDocument();
+      expect(selectors.file(false, testData.files.rootTree.content[1].path)).toBeInTheDocument();
     });
   });
 
@@ -255,7 +255,7 @@ describe('Files List', () => {
       /**
        * Check if 2 level is expanded and loaded
        */
-      expect(selectors.file(false, testData.files.dir1Tree.children[0].path)).toBeInTheDocument();
+      expect(selectors.file(false, testData.files.dir1Tree.content[0].path)).toBeInTheDocument();
 
       /**
        * Collapse All
@@ -265,7 +265,7 @@ describe('Files List', () => {
       /**
        * Check if 2 level is collapsed
        */
-      expect(selectors.file(true, testData.files.dir1Tree.children[0].path)).not.toBeInTheDocument();
+      expect(selectors.file(true, testData.files.dir1Tree.content[0].path)).not.toBeInTheDocument();
     });
 
     it('Should collapse all after refresh', async () => {
@@ -281,7 +281,7 @@ describe('Files List', () => {
       /**
        * Check if 2 level is expanded
        */
-      expect(selectors.file(false, testData.files.dir1Tree.children[0].path)).toBeInTheDocument();
+      expect(selectors.file(false, testData.files.dir1Tree.content[0].path)).toBeInTheDocument();
 
       /**
        * Refresh
@@ -291,7 +291,7 @@ describe('Files List', () => {
       /**
        * Check if 2 level is collapsed
        */
-      expect(selectors.file(true, testData.files.dir1Tree.children[0].path)).not.toBeInTheDocument();
+      expect(selectors.file(true, testData.files.dir1Tree.content[0].path)).not.toBeInTheDocument();
     });
 
     it('Should collapse all after item expanded manually', async () => {
@@ -302,12 +302,12 @@ describe('Files List', () => {
       /**
        * Expand item
        */
-      await openCategory(testData.files.rootTree.children[0].path);
+      await openCategory(testData.files.rootTree.content[0].path);
 
       /**
        * Check if 2 level is expanded
        */
-      expect(selectors.file(false, testData.files.dir1Tree.children[0].path)).toBeInTheDocument();
+      expect(selectors.file(false, testData.files.dir1Tree.content[0].path)).toBeInTheDocument();
 
       /**
        * Collapse All
@@ -317,7 +317,7 @@ describe('Files List', () => {
       /**
        * Check if 2 level is collapsed
        */
-      expect(selectors.file(true, testData.files.dir1Tree.children[0].path)).not.toBeInTheDocument();
+      expect(selectors.file(true, testData.files.dir1Tree.content[0].path)).not.toBeInTheDocument();
     });
   });
 });

@@ -6,10 +6,10 @@ export const useDatasource = jest.fn(() =>
     () => ({
       list: jest.fn((url) => {
         if (/media$/.test(url)) {
-          return testData.files.rootTree.children;
+          return testData.files.rootTree.content;
         }
 
-        return testData.files.dir1Tree.children;
+        return testData.files.dir1Tree.content;
       }),
     }),
     []

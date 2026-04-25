@@ -7,7 +7,7 @@ export const dir1Tree = {
   path: '/media/dir1',
   relativePath: 'dir1',
   type: 'directory',
-  children: [
+  content: [
     {
       type: 'file',
       name: 'file1.png',
@@ -29,10 +29,10 @@ export const rootTree = {
   path: '/media',
   type: 'directory',
   relativePath: '',
-  children: [
+  content: [
     {
       ...dir1Tree,
-      children: undefined,
+      content: undefined,
     },
     {
       name: 'file0.png',
@@ -48,7 +48,7 @@ export const weightsTree = {
   path: '/weights',
   type: 'directory',
   relativePath: '',
-  children: [
+  content: [
     {
       name: 'yolov5.pt',
       type: 'file',

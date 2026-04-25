@@ -5,17 +5,17 @@ import { PathEntry, PathEntryDirectory, PathEntryNotebook } from '@theia/types';
  * Get Updated Tree
  * @param tree
  * @param updatedTree
- * @param children
+ * @param content
  */
 export const getUpdatedTree = <TTree extends PathEntry>(
   tree: TTree,
   updatedTree: PathEntryDirectory,
-  children: PathEntry[]
+  content: PathEntry[]
 ): TTree => {
   if (tree.path === updatedTree.path) {
     return {
       ...tree,
-      children: children?.map((childItem) => ({
+      content: content?.map((childItem) => ({
         ...childItem,
         path: `${tree.path}/${childItem.name}`,
       })),
@@ -25,7 +25,7 @@ export const getUpdatedTree = <TTree extends PathEntry>(
   if (tree.type === 'directory') {
     return {
       ...tree,
-      children: tree.children?.map((childItem) => getUpdatedTree(childItem, updatedTree, children)),
+      content: tree.content?.map((childItem) => getUpdatedTree(childItem, updatedTree, content)),
     };
   }
 
@@ -46,10 +46,10 @@ export const getPlainCategories = (tree: PathEntryDirectory): PathEntryDirectory
       continue;
     }
 
-    const { children, ...category } = item;
+    const { content, ...category } = item;
 
     list.push(category);
-    queue.unshift(...(children || []));
+    queue.unshift(...(content || []));
   }
 
   return list;
@@ -76,7 +76,7 @@ export const getSortedItems = (items: PathEntry[] | undefined, sort: Sort) => {
   /**
    * Value key for sorting
    */
-  let key: keyof PathEntryFile = 'name';
+  let key: keyof PathEntryNotebook = 'name';
 
   if (sort === Sort.LAST_MODIFIED_ASC || sort === Sort.LAST_MODIFIED_DESC) {
     key = 'last_modified';

@@ -41,7 +41,7 @@ interface Props {
    *
    * @type {Function}
    */
-  onSelectFile: (item: PathEntryFile) => void;
+  onSelectFile: (item: PathEntryNotebook) => void;
 
   /**
    * Depth
@@ -99,24 +99,24 @@ export const TreeLevel: React.FC<Props> = ({
    * Filtered Items
    */
   const filteredItems = useMemo(() => {
-    if (!tree.children) {
+    if (!tree.content) {
       return [];
     }
 
     if (!searchQuery) {
-      return tree.children;
+      return tree.content;
     }
 
     const normalizedQuery = searchQuery.toLowerCase().trim();
 
-    return tree.children.filter((item) => {
+    return tree.content.filter((item) => {
       if (item.type === 'directory') {
         return true;
       }
 
       return item.name.toLowerCase().includes(normalizedQuery);
     });
-  }, [searchQuery, tree.children]);
+  }, [searchQuery, tree.content]);
 
   /**
    * Sort Items

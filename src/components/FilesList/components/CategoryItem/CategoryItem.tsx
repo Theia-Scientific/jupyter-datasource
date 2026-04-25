@@ -70,7 +70,7 @@ export const CategoryItem: React.FC<Props> = ({
    * Load Children
    */
   useEffect(() => {
-    if (isExpanded && !item.children && !isLoading) {
+    if (isExpanded && !item.content && !isLoading) {
       loadTree(item);
     }
   }, [isExpanded, isLoading, item, loadTree]);

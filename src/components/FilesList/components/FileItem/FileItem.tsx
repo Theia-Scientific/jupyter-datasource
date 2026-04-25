@@ -4,7 +4,7 @@ import { TEST_IDS } from '@theia/constants';
 import React from 'react';
 import { t } from '@grafana/i18n';
 
-import { PathEntryFile } from '@theia/types';
+import { PathEntryNotebook } from '@theia/types';
 import { getStyles } from './FileItem.styles';
 
 /**
@@ -14,16 +14,16 @@ interface Props {
   /**
    * Item
    *
-   * @type {PathEntryFile}
+   * @type {PathEntryNotebook}
    */
-  item: PathEntryFile;
+  item: PathEntryNotebook;
 
   /**
    * On Click Item
    *
    * @type {Function}
    */
-  onClickItem: (item: PathEntryFile) => void;
+  onClickItem: (item: PathEntryNotebook) => void;
 }
 
 /**
@@ -42,8 +42,8 @@ export const FileItem: React.FC<Props> = ({
    * Meta
    */
   const meta = [];
-  if (item.mtime) {
-    const when = new Date(item.mtime).toLocaleString();
+  if (item.last_modified) {
+    const when = new Date(item.last_modified).toLocaleString();
     meta.push(t('fileItem.modtime', 'Last modified at {{when}}', { when }));
   }
 
