@@ -1,6 +1,6 @@
 import { Alert, Button, ButtonGroup, Combobox, InlineField, Input, useStyles2 } from '@grafana/ui';
 import { BASE_WEB_DAV_URL, TEST_IDS } from '@theia/constants';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { TreeLevel } from './components/TreeLevel';
 import { SORT_OPTIONS } from './constants';
@@ -35,27 +35,6 @@ interface Props {
    * @type {string}
    */
   rootPath: string;
-
-  /**
-   * Edit
-   *
-   * @type {boolean}
-   */
-  edit?: boolean;
-
-  /**
-   * Select
-   *
-   * @type {boolean}
-   */
-  select?: boolean;
-
-  /**
-   * Action Button
-   *
-   * @type {string}
-   */
-  actionButton?: string;
 }
 
 /**
@@ -65,9 +44,6 @@ export const FilesList: React.FC<Props> = ({
   datasource,
   onSelectFile,
   rootPath,
-  edit = true,
-  select = true,
-  actionButton,
 }) => {
   /**
    * Styles
@@ -77,8 +53,6 @@ export const FilesList: React.FC<Props> = ({
   /**
    * States
    */
-  const [selectedFiles, setSelectedFiles] = useState<WebDavFile[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<WebDavDirectory[]>([]);
   const [errorItems, setErrorItems] = useState<WebDavItem[]>([]);
   const [isSearchEnabled, setIsSearchEnabled] = useState(false);
 
@@ -115,8 +89,6 @@ export const FilesList: React.FC<Props> = ({
     loadTree,
     loadingPath,
     error,
-    onChangeName,
-    onCreateDirectory,
     clearError,
     refresh,
   } = useFilesList({
@@ -125,67 +97,11 @@ export const FilesList: React.FC<Props> = ({
   });
 
   /**
-   * Toggle File Selection
-   */
-  const onToggleFileSelection = useCallback((item: WebDavFile, selected: boolean) => {
-    setSelectedFiles((files) => (selected ? files.concat(item) : files.filter((file) => file.path !== item.path)));
-  }, []);
-
-  /**
-   * Toggle Category Selection
-   */
-  const onToggleCategorySelection = useCallback((item: WebDavDirectory, selected: boolean) => {
-    setSelectedCategories((categories) =>
-      selected ? categories.concat(item) : categories.filter((category) => category.path !== item.path)
-    );
-  }, []);
-
-  /**
-   * On Set Item Selection
-   */
-  const onSetItemSelection = useCallback(
-    (item: WebDavItem, selected: boolean) => {
-      if (item.type === WebDavItemType.DIRECTORY) {
-        onToggleCategorySelection(item, selected);
-      } else {
-        onToggleFileSelection(item, selected);
-      }
-    },
-    [onToggleCategorySelection, onToggleFileSelection]
-  );
-
-  /**
    * Categories List
    */
   const categoriesList = useMemo(() => {
     return getPlainCategories(tree);
   }, [tree]);
-
-  /**
-   * Is Selected
-   */
-  const isSelected = useCallback(
-    (item: WebDavItem): boolean => {
-      const selectedItems = item.type === WebDavItemType.FILE ? selectedFiles : selectedCategories;
-
-      return selectedItems.some((selectedItem) => selectedItem.path === item.path);
-    },
-    [selectedCategories, selectedFiles]
-  );
-
-  /**
-   * On Add Directory
-   */
-  const onAddDirectory = useCallback(
-    async (category: WebDavDirectory, name: string) => {
-      const created = await onCreateDirectory(category, name);
-
-      if (created) {
-        loadTree(category);
-      }
-    },
-    [loadTree, onCreateDirectory]
-  );
 
   /**
    * Tree Expand
@@ -282,17 +198,10 @@ export const FilesList: React.FC<Props> = ({
           loadingPath={loadingPath}
           loadTree={loadTree}
           onSelectFile={onSelectFile}
-          onChangeName={onChangeName}
-          onSetItemSelection={onSetItemSelection}
-          isSelected={isSelected}
-          onCreateCategory={onAddDirectory}
           sort={sort}
           searchQuery={search}
           isItemExpanded={isItemExpanded}
           onSetItemExpanded={onSetItemExpanded}
-          edit={edit}
-          select={select}
-          actionButton={actionButton}
         />
       </div>
     </div>

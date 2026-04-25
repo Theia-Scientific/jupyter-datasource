@@ -14,11 +14,6 @@ interface Props {
   title?: React.ReactElement | string;
 
   /**
-   * Actions
-   */
-  actions?: React.ReactElement;
-
-  /**
    * Children
    */
   children?: React.ReactElement | string;
@@ -59,7 +54,6 @@ interface Props {
  */
 export const CategoryCollapse: React.FC<Props> = ({
   title,
-  actions,
   children,
   isOpen = false,
   onToggle = () => null,
@@ -84,11 +78,6 @@ export const CategoryCollapse: React.FC<Props> = ({
           aria-expanded={isOpen}
         />
         <div className={styles.title}>{title}</div>
-        {actions && (
-          <div className={styles.actions} onClick={(event) => event.stopPropagation()}>
-            {actions}
-          </div>
-        )}
       </div>
       {isOpen && (
         <div className={cx(styles.content, contentClassName)} data-testid={contentTestId}>

@@ -1,9 +1,9 @@
 import { cx } from '@emotion/css';
 import { Alert, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
 import { TEST_IDS } from '@theia/constants';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
-import { Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from '../../types';
+import { Sort, WebDavDirectory, WebDavFile, WebDavItemType } from '../../types';
 import { getSortedItems } from '../../utils';
 import { CategoryItem } from '../CategoryItem';
 import { FileItem } from '../FileItem';
@@ -42,40 +42,11 @@ interface Props {
   onSelectFile: (item: WebDavFile) => void;
 
   /**
-   * On Change Name
-   *
-   * @type {Function}
-   */
-  onChangeName: (item: WebDavItem, newName: string) => Promise<boolean>;
-
-  /**
    * Depth
    *
    * @type {number}
    */
   depth?: number;
-
-  /**
-   * On Set Item Selection
-   */
-  onSetItemSelection: (item: WebDavItem, selected: boolean) => void;
-
-  /**
-   * Is Parent Selected
-   *
-   * @type {boolean}
-   */
-  isParentSelected?: boolean;
-
-  /**
-   * Is Selected
-   */
-  isSelected: (item: WebDavItem) => boolean;
-
-  /**
-   * On Create Category
-   */
-  onCreateCategory: (category: WebDavDirectory, name: string) => Promise<void>;
 
   /**
    * Sort
@@ -100,27 +71,6 @@ interface Props {
    * Set Item Expanded
    */
   onSetItemExpanded: (item: WebDavDirectory, isExpanded: boolean) => void;
-
-  /**
-   * Edit
-   *
-   * @type {boolean}
-   */
-  edit: boolean;
-
-  /**
-   * Select
-   *
-   * @type {boolean}
-   */
-  select: boolean;
-
-  /**
-   * Action Button
-   *
-   * @type {string}
-   */
-  actionButton?: string;
 }
 
 /**
@@ -132,51 +82,16 @@ export const TreeLevel: React.FC<Props> = ({
   loadTree,
   onSelectFile,
   depth = 0,
-  onChangeName,
-  onSetItemSelection,
-  isParentSelected = false,
-  isSelected,
-  onCreateCategory,
   sort,
   searchQuery,
   isItemExpanded,
   onSetItemExpanded,
-  edit,
-  select,
-  actionButton,
 }) => {
   /**
    * Styles and Theme
    */
   const styles = useStyles2(getStyles);
   const theme = useTheme2();
-
-  /**
-   * Deselect children on parent selection
-   */
-  useEffect(() => {
-    if (isParentSelected && tree.children?.length) {
-      tree.children.forEach((item) => {
-        if (isSelected(item)) {
-          onSetItemSelection(item, false);
-        }
-      });
-    }
-  }, [isParentSelected, isSelected, onSetItemSelection, tree.children, tree.children?.length]);
-
-  /**
-   * On Change Item Name
-   */
-  const onChangeItemName = useCallback(
-    async (item: WebDavItem, name: string) => {
-      const isUpdated = await onChangeName(item, name);
-
-      if (isUpdated && tree) {
-        loadTree(tree);
-      }
-    },
-    [loadTree, onChangeName, tree]
-  );
 
   /**
    * Filtered Items
@@ -232,12 +147,9 @@ export const TreeLevel: React.FC<Props> = ({
                   <CategoryItem
                     item={item}
                     loadTree={loadTree}
-                    onChangeName={onChangeItemName}
-                    onCreateCategory={onCreateCategory}
                     isExpanded={isItemExpanded(item)}
                     isLoading={loadingPath.includes(item.path)}
                     onExpand={onSetItemExpanded}
-                    edit={edit}
                   >
                     <TreeLevel
                       tree={item}
@@ -245,18 +157,10 @@ export const TreeLevel: React.FC<Props> = ({
                       loadTree={loadTree}
                       onSelectFile={onSelectFile}
                       depth={depth + 1}
-                      onChangeName={onChangeName}
-                      onCreateCategory={onCreateCategory}
-                      onSetItemSelection={onSetItemSelection}
-                      isParentSelected={isParentSelected || isSelected(item)}
-                      isSelected={isSelected}
                       sort={sort}
                       searchQuery={searchQuery}
                       isItemExpanded={isItemExpanded}
                       onSetItemExpanded={onSetItemExpanded}
-                      edit={edit}
-                      select={select}
-                      actionButton={actionButton}
                     />
                   </CategoryItem>
                 ) : (

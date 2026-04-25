@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 
 import { CategoryCollapse } from './CategoryCollapse';
@@ -30,15 +30,5 @@ describe('Category Collapse', () => {
     rerender(getComponent({ isOpen: true }));
 
     expect(screen.getByTestId(InTestIds.content)).toBeInTheDocument();
-  });
-
-  it('Actions should not affect collapse state', () => {
-    const onToggle = jest.fn();
-
-    render(getComponent({ onToggle, actions: <button data-testid={InTestIds.buttonRemove}>remove</button> }));
-
-    fireEvent.click(screen.getByTestId(InTestIds.buttonRemove));
-
-    expect(onToggle).not.toHaveBeenCalled();
   });
 });

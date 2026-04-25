@@ -33,12 +33,6 @@ export const getStyles = (theme: GrafanaTheme2) => {
       margin-left: ${theme.spacing(0.5)};
       color: ${theme.colors.text.disabled};
     `,
-    actions: css`
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: ${theme.spacing(0.5)};
-    `,
     content: css`
       padding: ${theme.spacing(1)};
     `,
