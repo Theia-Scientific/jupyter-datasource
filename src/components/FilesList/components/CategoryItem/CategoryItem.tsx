@@ -82,6 +82,11 @@ export const CategoryItem: React.FC<Props> = ({
           <div className={styles.icon}>
             <Icon name={isExpanded ? 'folder-open' : 'folder'} />
           </div>
+          <div className={styles.name} onClick={(event) => event.stopPropagation()}>
+            <div className={styles.text}>
+              <span>{item.name}</span>
+            </div>
+          </div>
         </div>
       }
       isOpen={isExpanded}

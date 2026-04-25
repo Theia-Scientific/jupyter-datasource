@@ -26,6 +26,7 @@ export const getStyles = (theme: GrafanaTheme2) => {
     title: css`
       font-weight: ${theme.typography.fontWeightBold};
       margin-left: ${theme.spacing(0.5)};
+      margin-right: auto;
       overflow: hidden;
       text-overflow: ellipsis;
     `,
