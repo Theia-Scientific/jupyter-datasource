@@ -1,5 +1,5 @@
 import { BASE_WEB_DAV_URL } from '@theia/constants';
-import { ApiName, getApiMessage, isApiError } from '@theia/utils';
+import { isApiError } from '@theia/utils';
 import { useCallback, useEffect, useState } from 'react';
 
 import { WebDavDirectory } from '../types';
@@ -49,7 +49,7 @@ export const useFilesList = ({
         setTree((tree) => getUpdatedTree(tree, item, children, BASE_WEB_DAV_URL) as WebDavDirectory);
       } catch (e) {
         if (isApiError(e)) {
-          setError(e.message || getApiMessage(ApiName.GET_WEBDAV_FILES));
+          setError(e.message || t('useFilesList.loadTree.error', 'List notebooks: API request failed'));
         }
       }
 
