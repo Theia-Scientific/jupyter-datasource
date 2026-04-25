@@ -6,25 +6,25 @@ import { t } from '@grafana/i18n';
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData> {}
 
-const CONN_OPTIONS = [
-  {label: t('enums.connOptions.automatic.name', 'Automatic'), value: ConnectionType.Auto, description: t('enums.connOptions.automatic.desc', 'Start or connect to a kernel via the Jupyterlab API')},
-  {label: t('enums.connOptions.connectionInfo.name', 'Connection Info'), value: ConnectionType.Info, description: t('enums.connOptions.connectionInfo.desc', 'Paste JSON connection info directly')},
-];
-
-const AUTH_OPTIONS = [
-  {label: t('enums.authOptions.none.name', 'None'), value: AuthType.None, description: t('enums.authOptions.none.desc', 'No authentication')},
-  {label: t('enums.authOptions.rawToken.name', 'Raw Token'), value: AuthType.RawToken, description: t('enums.authOptions.rawToken.desc', 'Enter a token directly')},
-  {label: t('enums.authOptions.fetch.name', 'Fetch'), value: AuthType.Fetch, description: t('enums.authOptions.fetch.desc', 'Fetch a token from a web service')},
-];
-
-const METHOD_OPTIONS = [
-  {label: t('enums.methodOptions.get.name', 'Get'), value: Method.Get},
-  {label: t('enums.methodOptions.put.name', 'Put'), value: Method.Put},
-];
-
 export function ConfigEditor(props: Props) {
   const { onOptionsChange, options } = props;
   const { jsonData } = options;
+
+  const CONN_OPTIONS = [
+    {label: t('enums.connOptions.automatic.name', 'Automatic'), value: ConnectionType.Auto, description: t('enums.connOptions.automatic.desc', 'Start or connect to a kernel via the Jupyterlab API')},
+    {label: t('enums.connOptions.connectionInfo.name', 'Connection Info'), value: ConnectionType.Info, description: t('enums.connOptions.connectionInfo.desc', 'Paste JSON connection info directly')},
+  ];
+
+  const AUTH_OPTIONS = [
+    {label: t('enums.authOptions.none.name', 'None'), value: AuthType.None, description: t('enums.authOptions.none.desc', 'No authentication')},
+    {label: t('enums.authOptions.rawToken.name', 'Raw Token'), value: AuthType.RawToken, description: t('enums.authOptions.rawToken.desc', 'Enter a token directly')},
+    {label: t('enums.authOptions.fetch.name', 'Fetch'), value: AuthType.Fetch, description: t('enums.authOptions.fetch.desc', 'Fetch a token from a web service')},
+  ];
+
+  const METHOD_OPTIONS = [
+    {label: t('enums.methodOptions.get.name', 'Get'), value: Method.Get},
+    {label: t('enums.methodOptions.put.name', 'Put'), value: Method.Put},
+  ];
 
   const onConnectionTypeChange = (selectableValue: ComboboxOption<ConnectionType>) => {
     onOptionsChange({

@@ -3,7 +3,6 @@ import { BASE_WEB_DAV_URL, TEST_IDS } from '@theia/constants';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { TreeLevel } from './components/TreeLevel';
-import { SORT_OPTIONS } from './constants';
 import { getStyles } from './FilesList.styles';
 import { useFilesList, useTreeExpand } from './hooks';
 import { Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from './types';
@@ -50,6 +49,33 @@ export const FilesList: React.FC<Props> = ({
    * Styles
    */
   const styles = useStyles2(getStyles);
+
+  const SORT_OPTIONS = [
+    {
+      label: t('nameAToZ', 'Name: A to Z'),
+      value: Sort.NAME_ASC,
+    },
+    {
+      label: t('nameZToA', 'Name: Z to A'),
+      value: Sort.NAME_DESC,
+    },
+    {
+      label: t('modifiedOldest', 'Modified: oldest'),
+      value: Sort.LAST_MODIFIED_ASC,
+    },
+    {
+      label: t('modifiedNewest', 'Modified: newest'),
+      value: Sort.LAST_MODIFIED_DESC,
+    },
+    {
+      label: t('sizeSmallest', 'Size: smallest'),
+      value: Sort.SIZE_ASC,
+    },
+    {
+      label: t('sizeBiggest', 'Size: biggest'),
+      value: Sort.SIZE_DESC,
+    },
+  ];
 
   /**
    * States

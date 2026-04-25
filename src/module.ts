@@ -1,3 +1,6 @@
+import i18nInit from './i18n';
+await i18nInit;
+
 import { initPluginTranslations } from '@grafana/i18n';
 import pluginJson from 'plugin.json';
 
