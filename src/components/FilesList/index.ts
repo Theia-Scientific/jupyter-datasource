@@ -1,2 +1,2 @@
 export * from './FilesList';
-export { useWebDavApi } from './hooks';
+export { useDatasource } from './hooks';

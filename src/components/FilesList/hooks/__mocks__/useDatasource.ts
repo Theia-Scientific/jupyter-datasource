@@ -1,7 +1,7 @@
 import { testData } from '@theia/__testUtils__';
 import { useMemo } from 'react';
 
-export const useWebDavApi = jest.fn(() =>
+export const useDatasource = jest.fn(() =>
   useMemo(
     () => ({
       list: jest.fn((url) => {
@@ -11,11 +11,6 @@ export const useWebDavApi = jest.fn(() =>
 
         return testData.files.dir1Tree.children;
       }),
-      get: jest.fn(() => testData.files.image),
-      rename: jest.fn(() => Promise.resolve()),
-      createDirectory: jest.fn(() => Promise.resolve()),
-      upload: jest.fn(() => Promise.resolve()),
-      remove: jest.fn(() => Promise.resolve()),
     }),
     []
   )

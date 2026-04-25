@@ -189,7 +189,7 @@ export const FilesList: React.FC<Props> = ({
               setErrorItems([]);
               clearError();
             }}
-          >
+            >
             {errorItems.length > 0 && formatErrorItems(errorItems)}
           </Alert>
         )}

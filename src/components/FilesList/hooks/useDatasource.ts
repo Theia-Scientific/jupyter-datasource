@@ -46,21 +46,10 @@ export const useDatasource = (datasource: DataSource) => {
     }
   }, [datasource]);
 
-  const move = useCallback(async (_url: string, _newUrl: string) => {}, []);
-  const createDirectory = useCallback(async (_url: string) => {}, []);
-  const exists = useCallback(async (_url: string) => {}, []);
-  const upload = useCallback(async (_url: string, _file: File) => {}, []);
-  const remove = useCallback(async (_url: string) => {}, []);
-
   return useMemo(
     () => ({
       list,
-      move,
-      createDirectory,
-      upload,
-      remove,
-      exists,
     }),
-    [createDirectory, exists, list, move, remove, upload]
+    [list]
   );
 };
