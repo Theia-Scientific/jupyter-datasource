@@ -8,7 +8,7 @@ import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, My
 import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
 import { v4 as uuidv4 } from 'uuid';
 import { FilesList } from './FilesList';
-import { WebDavFile } from './FilesList/types';
+import { PathEntryNotebook } from '@theia/types';
 import { t } from '@grafana/i18n';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
@@ -116,7 +116,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   ];
   const [source, setSource] = useState(emptyNotebook(query) ? ENTER_CODE : query.notebook);
 
-  const onSelectFile = (f: WebDavFile) => {
+  const onSelectFile = (f: PathEntryFile) => {
     setSource(f.path);
     onChange({ ...query, notebook: f.path });
   };

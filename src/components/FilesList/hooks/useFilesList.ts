@@ -1,8 +1,7 @@
-import { BASE_WEB_DAV_URL } from '@theia/constants';
 import { isApiError } from '@theia/utils';
 import { useCallback, useEffect, useState } from 'react';
 
-import { WebDavDirectory } from '../types';
+import { PathEntryDirectory } from '@theia/types';
 import { getUpdatedTree } from '../utils';
 import { useDatasource } from './useDatasource';
 import type { DataSource } from '@theia/datasource';
@@ -15,18 +14,18 @@ export const useFilesList = ({
   rootItem,
   datasource,
 }: {
-  rootItem: WebDavDirectory;
+  rootItem: PathEntryDirectory;
   datasource: DataSource;
 }) => {
   /**
    * States
    */
-  const [tree, setTree] = useState<WebDavDirectory>(rootItem);
+  const [tree, setTree] = useState<PathEntryDirectory>(rootItem);
   const [loadingPath, setLoadingPath] = useState([rootItem.path]);
   const [error, setError] = useState('');
 
   /**
-   * WebDav Api
+   * Datasource Api
    */
   const api = useDatasource(datasource);
 
@@ -34,7 +33,7 @@ export const useFilesList = ({
    * Load Tree
    */
   const loadTree = useCallback(
-    async (item: WebDavDirectory) => {
+    async (item: PathEntryDirectory) => {
       const path = item.path;
 
       try {
@@ -46,8 +45,8 @@ export const useFilesList = ({
         /**
          * Update Children
          */
-        const children = await api.list(`${BASE_WEB_DAV_URL}${path}`);
-        setTree((tree) => getUpdatedTree(tree, item, children, BASE_WEB_DAV_URL) as WebDavDirectory);
+        const children = await api.list(path);
+        setTree((tree) => getUpdatedTree(tree, item, children) as PathEntryDirectory);
       } catch (e) {
         if (isApiError(e)) {
           setError(e.message || t('useFilesList.loadTree.error', 'List notebooks: API request failed'));

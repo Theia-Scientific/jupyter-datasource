@@ -1,17 +1,16 @@
-import { Sort, WebDavDirectory, WebDavFile, WebDavItem, WebDavItemType } from './types';
+import { Sort } from './types';
+import { PathEntry, PathEntryDirectory, PathEntryNotebook } from '@theia/types';
 
 /**
  * Get Updated Tree
  * @param tree
  * @param updatedTree
  * @param children
- * @param baseUrl
  */
-export const getUpdatedTree = <TTree extends WebDavItem>(
+export const getUpdatedTree = <TTree extends PathEntry>(
   tree: TTree,
-  updatedTree: WebDavDirectory,
-  children: WebDavItem[],
-  baseUrl: string
+  updatedTree: PathEntryDirectory,
+  children: PathEntry[]
 ): TTree => {
   if (tree.path === updatedTree.path) {
     return {
@@ -19,16 +18,14 @@ export const getUpdatedTree = <TTree extends WebDavItem>(
       children: children?.map((childItem) => ({
         ...childItem,
         path: `${tree.path}/${childItem.name}`,
-        relativePath: `${tree.relativePath ? tree.relativePath + '/' : ''}${childItem.name}`,
-        url: `${baseUrl}${tree.path}/${childItem.name}`,
       })),
     };
   }
 
-  if (tree.type === WebDavItemType.DIRECTORY) {
+  if (tree.type === 'directory') {
     return {
       ...tree,
-      children: tree.children?.map((childItem) => getUpdatedTree(childItem, updatedTree, children, baseUrl)),
+      children: tree.children?.map((childItem) => getUpdatedTree(childItem, updatedTree, children)),
     };
   }
 
@@ -39,13 +36,13 @@ export const getUpdatedTree = <TTree extends WebDavItem>(
  * Get Plain Categories
  * @param tree
  */
-export const getPlainCategories = (tree: WebDavDirectory): WebDavDirectory[] => {
+export const getPlainCategories = (tree: PathEntryDirectory): PathEntryDirectory[] => {
   const list = [];
-  const queue: WebDavItem[] = [tree];
+  const queue: PathEntry[] = [tree];
 
   while (queue.length) {
     const item = queue.shift();
-    if (!item || item.type === WebDavItemType.FILE) {
+    if (!item || item.type === 'notebook') {
       continue;
     }
 
@@ -61,7 +58,7 @@ export const getPlainCategories = (tree: WebDavDirectory): WebDavDirectory[] => 
 /**
  * Get Sorted Items
  */
-export const getSortedItems = (items: WebDavItem[] | undefined, sort: Sort) => {
+export const getSortedItems = (items: PathEntry[] | undefined, sort: Sort) => {
   if (!items) {
     return [];
   }
@@ -79,10 +76,10 @@ export const getSortedItems = (items: WebDavItem[] | undefined, sort: Sort) => {
   /**
    * Value key for sorting
    */
-  let key: keyof WebDavFile = 'name';
+  let key: keyof PathEntryFile = 'name';
 
   if (sort === Sort.LAST_MODIFIED_ASC || sort === Sort.LAST_MODIFIED_DESC) {
-    key = 'mtime';
+    key = 'last_modified';
   }
   if (sort === Sort.SIZE_ASC || sort === Sort.SIZE_DESC) {
     key = 'size';
@@ -99,7 +96,7 @@ export const getSortedItems = (items: WebDavItem[] | undefined, sort: Sort) => {
       return 0;
     }
 
-    if (a.type === WebDavItemType.DIRECTORY || b.type === WebDavItemType.DIRECTORY) {
+    if (a.type === 'directory' || b.type === 'directory') {
       /**
        * Sort Directories only by name
        */
@@ -113,7 +110,7 @@ export const getSortedItems = (items: WebDavItem[] | undefined, sort: Sort) => {
     /**
      * Sort by last modified date
      */
-    if (key === 'mtime') {
+    if (key === 'last_modified') {
       const valueA = new Date(a[key]).valueOf();
       const valueB = new Date(b[key]).valueOf();
 

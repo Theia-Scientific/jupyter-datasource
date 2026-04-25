@@ -2,7 +2,7 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { TEST_IDS } from '@theia/constants';
 import React, { useEffect } from 'react';
 
-import { WebDavDirectory } from '../../types';
+import { PathEntryDirectory } from '@theia/types';
 import { CategoryCollapse } from '../CategoryCollapse';
 import { getStyles } from './CategoryItem.styles';
 
@@ -13,9 +13,9 @@ interface Props {
   /**
    * Item
    *
-   * @type {WebDavDirectory}
+   * @type {PathEntryDirectory}
    */
-  item: WebDavDirectory;
+  item: PathEntryDirectory;
 
   /**
    * Children
@@ -28,7 +28,7 @@ interface Props {
    * Load Tree
    * @param item
    */
-  loadTree: (item: WebDavDirectory) => void;
+  loadTree: (item: PathEntryDirectory) => void;
 
   /**
    * Is Expanded
@@ -47,7 +47,7 @@ interface Props {
   /**
    * On Expand
    */
-  onExpand: (item: WebDavDirectory, isExpanded: boolean) => void;
+  onExpand: (item: PathEntryDirectory, isExpanded: boolean) => void;
 }
 
 /**

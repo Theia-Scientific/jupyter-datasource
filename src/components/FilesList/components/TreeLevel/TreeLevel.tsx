@@ -3,7 +3,8 @@ import { Alert, Spinner, useStyles2, useTheme2 } from '@grafana/ui';
 import { TEST_IDS } from '@theia/constants';
 import React, { useMemo } from 'react';
 
-import { Sort, WebDavDirectory, WebDavFile, WebDavItemType } from '../../types';
+import { Sort } from '../../types';
+import { PathEntryNotebook, PathEntryDirectory } from '@theia/types';
 import { getSortedItems } from '../../utils';
 import { CategoryItem } from '../CategoryItem';
 import { FileItem } from '../FileItem';
@@ -17,9 +18,9 @@ interface Props {
   /**
    * Tree
    *
-   * @type {WebDavDirectory}
+   * @type {PathEntryDirectory}
    */
-  tree: WebDavDirectory;
+  tree: PathEntryDirectory;
 
   /**
    * Loading Path
@@ -33,14 +34,14 @@ interface Props {
    *
    * @type {Function}
    */
-  loadTree: (item: WebDavDirectory) => void;
+  loadTree: (item: PathEntryDirectory) => void;
 
   /**
    * On Select File
    *
    * @type {Function}
    */
-  onSelectFile: (item: WebDavFile) => void;
+  onSelectFile: (item: PathEntryFile) => void;
 
   /**
    * Depth
@@ -66,12 +67,12 @@ interface Props {
   /**
    * Is Item Expanded
    */
-  isItemExpanded: (item: WebDavDirectory) => boolean;
+  isItemExpanded: (item: PathEntryDirectory) => boolean;
 
   /**
    * Set Item Expanded
    */
-  onSetItemExpanded: (item: WebDavDirectory, isExpanded: boolean) => void;
+  onSetItemExpanded: (item: PathEntryDirectory, isExpanded: boolean) => void;
 }
 
 /**
@@ -109,7 +110,7 @@ export const TreeLevel: React.FC<Props> = ({
     const normalizedQuery = searchQuery.toLowerCase().trim();
 
     return tree.children.filter((item) => {
-      if (item.type === WebDavItemType.DIRECTORY) {
+      if (item.type === 'directory') {
         return true;
       }
 
@@ -141,10 +142,10 @@ export const TreeLevel: React.FC<Props> = ({
               <div
                 key={item.name}
                 className={cx(styles.item, {
-                  [styles.directory]: item.type === WebDavItemType.DIRECTORY,
+                  [styles.directory]: item.type === 'directory',
                 })}
               >
-                {item.type === WebDavItemType.DIRECTORY ? (
+                {item.type === 'directory' ? (
                   <CategoryItem
                     item={item}
                     loadTree={loadTree}

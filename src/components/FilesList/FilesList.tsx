@@ -1,11 +1,12 @@
 import { Alert, Button, ButtonGroup, Combobox, InlineField, Input, useStyles2 } from '@grafana/ui';
-import { BASE_WEB_DAV_URL, TEST_IDS } from '@theia/constants';
+import { TEST_IDS } from '@theia/constants';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { TreeLevel } from './components/TreeLevel';
 import { getStyles } from './FilesList.styles';
 import { useFilesList, useTreeExpand } from './hooks';
-import { Sort, WebDavDirectory, WebDavFile, WebDavItemType } from './types';
+import { Sort } from './types';
+import { PathEntryNotebook, PathEntryDirectory } from '@theia/types';
 import { getPlainCategories } from './utils';
 import type { DataSource } from '@theia/datasource';
 import { t } from '@grafana/i18n'
@@ -22,7 +23,7 @@ interface Props {
   /**
    * On Select File
    */
-  onSelectFile: (item: WebDavFile) => void;
+  onSelectFile: (item: PathEntryNotebook) => void;
 
   /**
    * Root Path
@@ -90,14 +91,12 @@ export const FilesList: React.FC<Props> = ({
   /**
    * Root Item
    */
-  const rootItem: WebDavDirectory = useMemo(
+  const rootItem: PathEntryDirectory = useMemo(
     () => ({
       name: '',
       path: rootPath,
-      relativePath: '',
-      mtime: '',
-      type: WebDavItemType.DIRECTORY,
-      url: `${BASE_WEB_DAV_URL}${rootPath}`,
+      last_modified: '',
+      type: 'directory',
     }),
     [rootPath]
   );

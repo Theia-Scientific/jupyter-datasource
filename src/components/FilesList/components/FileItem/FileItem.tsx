@@ -4,7 +4,7 @@ import { TEST_IDS } from '@theia/constants';
 import React from 'react';
 import { t } from '@grafana/i18n';
 
-import { WebDavFile } from '../../types';
+import { PathEntryFile } from '@theia/types';
 import { getStyles } from './FileItem.styles';
 
 /**
@@ -14,16 +14,16 @@ interface Props {
   /**
    * Item
    *
-   * @type {WebDavFile}
+   * @type {PathEntryFile}
    */
-  item: WebDavFile;
+  item: PathEntryFile;
 
   /**
    * On Click Item
    *
    * @type {Function}
    */
-  onClickItem: (item: WebDavFile) => void;
+  onClickItem: (item: PathEntryFile) => void;
 }
 
 /**

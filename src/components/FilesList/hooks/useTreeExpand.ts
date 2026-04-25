@@ -1,13 +1,13 @@
 import { useCallback, useState } from 'react';
 
-import { WebDavDirectory } from '../types';
+import { PathEntryDirectory } from '@theia/types';
 
 /**
  * Use Tree Expand
  *
  * @param categories
  */
-export const useTreeExpand = (categories: WebDavDirectory[]) => {
+export const useTreeExpand = (categories: PathEntryDirectory[]) => {
   /**
    * Expanded State
    */
@@ -38,7 +38,7 @@ export const useTreeExpand = (categories: WebDavDirectory[]) => {
   /**
    * Set Item Expanded
    */
-  const onSetItemExpanded = useCallback((item: WebDavDirectory, isExpanded: boolean) => {
+  const onSetItemExpanded = useCallback((item: PathEntryDirectory, isExpanded: boolean) => {
     setExpanded((expanded) => ({
       ...expanded,
       [item.path]: isExpanded,
@@ -48,7 +48,7 @@ export const useTreeExpand = (categories: WebDavDirectory[]) => {
   /**
    * Is Item Expanded
    */
-  const isItemExpanded = useCallback((item: WebDavDirectory) => expanded[item.path] || false, [expanded]);
+  const isItemExpanded = useCallback((item: PathEntryDirectory) => expanded[item.path] || false, [expanded]);
 
   return {
     onExpandAll,
