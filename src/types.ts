@@ -117,6 +117,24 @@ export interface KernelSpecResponse {
   kernelspecs: { [key: string]: KernelSpecification };
 }
 
+interface PathEntryBase {
+  name: string;
+  path: string;
+  last_modified: string;
+}
+
+export type PathEntryNotebook = PathEntryBase & {
+  type: 'notebook';
+  size: number;
+};
+
+export type PathEntryDirectory = PathEntryBase & {
+  type: 'directory';
+  content?: PathEntry[];
+}
+
+export type PathEntry = PathEntryNotebook | PathEntryDirectory;
+
 /**
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */

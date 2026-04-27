@@ -7,8 +7,18 @@ import { DataSource } from '../datasource';
 import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable } from '../types';
 import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
 import { v4 as uuidv4 } from 'uuid';
+import { FilesList } from './FilesList';
+import { PathEntryNotebook } from '@theia/types';
+import { t } from '@grafana/i18n';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
+
+function emptyNotebook(query: MyQuery) {
+  return query.notebook === undefined || query.notebook === '';
+}
+
+const ENTER_CODE = "<enter code>";
+const CHOOSE_NOTEBOOK = "<choose notebook>";
 
 export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) {
   const { connectionType } = datasource.options;
@@ -41,10 +51,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({ ...query, connectionInfo: event.target.value });
   };
 
-  const onNotebookChange = (selectableValue: ComboboxOption<string>) => {
-    onChange({ ...query, notebook: selectableValue.value });
-  };
-
   const onCodeChange = (value: string) => {
     onChange({ ...latestQuery.current, code: value });
   };
@@ -52,24 +58,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   const onVariablesChange = (variables: QueryFieldVariable[]) => {
     onChange({ ...query, vars: variables });
   };
-
-  let [notebooks, setNotebooks] = useState<Array<ComboboxOption<string>>>([]);
-  if (notebooks.length > 0 && query.notebook === undefined) {
-    onChange({...query, notebook: ''});
-  }
-
-  const refreshNotebooks = () => {
-    datasource.getNotebooks().then((response: string[]) => {
-      let notebooks: Array<ComboboxOption<string>> = response.map((s) => ({
-        label: s,
-        value: s,
-      }));
-      const defaultOption = {label: "Literal code", description: "Enter code below", value: ''};
-      notebooks.unshift(defaultOption);
-      setNotebooks(notebooks);
-    });
-  };
-  useEffect(refreshNotebooks, [datasource]);
 
   let [kernels, setKernels] = useState<Array<ComboboxOption<string>>>([]);
   if (kernels.length > 0 && query.kernelId === undefined) {
@@ -79,17 +67,22 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   const refreshKernels = () => {
     datasource.getKernels().then((response: KernelSpec[]) => {
       const labelForSpec = (ks: KernelSpec): string => {
-        const base = `${ks.name} (${ks.id.slice(0,8)})`;
+        const opts = { ...ks, id: ks.id.slice(0,8) };
         if (!!ks.notebook_path) {
-          return `${base} [${ks.notebook_path}]`;
+          return t('queryEditor.kernelFormat.notebook', '{{name}} ({{id}}) [{{notebook_path}}]', opts);
+        } else {
+          return t('queryEditor.kernelFormat.base', '{{name}} ({{id}})', opts);
         }
-        return base;
       };
       let kernels: Array<ComboboxOption<string>> = response.map((ks) => ({
         label: labelForSpec(ks),
         value: ks.id,
       }));
-      const defaultOption = {label: "New Kernel", description: "Start a new kernel", value: ''};
+      const defaultOption = {
+        label: t('queryEditor.newKernel.label', 'New Kernel'),
+        description: t('queryEditor.newKernel.desc', 'Start a new kernel'),
+        value: ''
+      };
       kernels.unshift(defaultOption);
       setKernels(kernels);
     });
@@ -117,11 +110,22 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   // css style to allow the Monaco editor to be handle-resized
   const containerStyle = css`overflow: hidden; resize: both; width: 80em; height: 25em`;
 
+  const sources = [
+    { label: t('queryEditor.source.code', 'Enter code below...'), value: ENTER_CODE },
+    { label: t('queryEditor.source.notebook', 'Choose notebook below...'), value: CHOOSE_NOTEBOOK },
+  ];
+  const [source, setSource] = useState(emptyNotebook(query) ? ENTER_CODE : query.notebook);
+
+  const onSelectFile = (f: PathEntryNotebook) => {
+    setSource(f.path);
+    onChange({ ...query, notebook: f.path });
+  };
+
   return (
       <>
       { connectionType === ConnectionType.Auto &&
         <InlineFieldRow>
-          <InlineField label="Kernel ID" labelWidth={16} tooltip="Kernel ID for executing query">
+        <InlineField label={t('queryEditor.kernelId.label', 'Kernel ID')} labelWidth={16} tooltip={t('queryEditor.kernelId.tooltip', 'Kernel ID for executing query')}>
             <Combobox
               id="query-editor-kernel-id"
               options={kernels}
@@ -130,11 +134,11 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
               width={40}
             />
           </InlineField>
-          <Button aria-label="Refresh Kernels" icon="sync"onClick={refreshKernels} />
+          <Button aria-label={t('queryEditor.refreshKernels.label', 'Refresh Kernels')} icon="sync" onClick={refreshKernels} />
         </InlineFieldRow>
       }
       { connectionType === ConnectionType.Info &&
-        <InlineField label="Kernel Type" labelWidth={16} tooltip="Kernel type (e.g. python3)">
+        <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
           <Input
             id="query-editor-kernel-type-info"
             onChange={onKernelTypeChangeInfo}
@@ -145,7 +149,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         </InlineField>
       }
       { connectionType === ConnectionType.Auto &&
-        <InlineField label="Kernel Type" labelWidth={16} tooltip="Kernel type (e.g. python3)">
+        <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
           <Combobox
             id="query-editor-kernel-type-auto"
             options={kernelTypes}
@@ -156,41 +160,45 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         </InlineField>
       }
       { connectionType === ConnectionType.Info &&
-        <InlineField label="Connection Info" labelWidth={16} tooltip="Connection file from Jupyterlab">
+        <InlineField label={t('queryEditor.connectionInfo.label', 'Connection Info')} labelWidth={16} tooltip={t('queryEditor.connectionInfo.tooltip', 'Connection file from Jupyterlab')}>
           <TextArea
             style={{resize: 'both'}}
             id="query-editor-connection-info"
             onChange={onConnectionInfoChange}
             value={query.connectionInfo}
             required
-            placeholder="Enter connection info"
+            placeholder={t('queryEditor.connectionInfo.placeholder', 'Enter connection info')}
             rows={12}
             cols={80}
           />
         </InlineField>
       }
-      <InlineField label="Variables" labelWidth={16} tooltip="Variables to bind">
+      <InlineField label={t('queryEditor.variables.label', 'Variables')} labelWidth={16} tooltip={t('queryEditor.variables.tooltip', 'Variables to bind')}>
         <QueryFieldVariablesEditor
           value={query.vars ?? []}
           onChange={onVariablesChange}
         />
       </InlineField>
       { connectionType === ConnectionType.Auto &&
-        <InlineFieldRow>
-          <InlineField label="Notebook" labelWidth={16} tooltip="Notebook to run">
-            <Combobox
-              id="query-editor-notebook"
-              options={notebooks}
-              onChange={onNotebookChange}
-              value={query.notebook}
-              width={40}
-            />
-          </InlineField>
-          <Button aria-label="Refresh Notebooks" icon="sync"onClick={refreshNotebooks} />
-        </InlineFieldRow>
+        <InlineField label={t('queryEditor.source.label', 'Source')} labelWidth={16} tooltip={t('queryEditor.source.tooltip', 'Pick notebook or literal code')}>
+          <Combobox
+            id="query-editor-source"
+            options={sources}
+            onChange={(opt) => setSource(opt.value)}
+            value={source}
+            width={40}
+          />
+        </InlineField>
       }
-      { (connectionType === ConnectionType.Info || query.notebook === "" || query.notebook === undefined) &&
-        <InlineField label="Code" labelWidth={16} tooltip="Code to run">
+      { connectionType === ConnectionType.Auto && (source === CHOOSE_NOTEBOOK) &&
+        <FilesList
+          datasource={datasource}
+          onSelectFile={onSelectFile}
+          rootPath=""
+        />
+      }
+      { (connectionType === ConnectionType.Info || source === ENTER_CODE) &&
+        <InlineField label={t('queryEditor.code.label', 'Code')} labelWidth={16} tooltip={t('queryEditor.code.tooltip', 'Code to run')}>
           <CodeEditor
             value={query.code}
             language="python"

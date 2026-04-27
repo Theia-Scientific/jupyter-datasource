@@ -3,6 +3,7 @@ import React from 'react';
 
 import { QueryFieldVariable } from '../types';
 import { QueryFieldVariableEditor } from './QueryFieldVariableEditor';
+import { t } from '@grafana/i18n'
 
 /**
  * Properties
@@ -50,7 +51,7 @@ export const QueryFieldVariablesEditor = ({
         }
         icon="plus"
       >
-        Add Variable
+        {t('variableEditor.add.label', 'Add Variable')}
       </Button>
     </div>
   );

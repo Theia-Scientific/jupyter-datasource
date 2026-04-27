@@ -58,8 +58,6 @@ func main() {
 			result, err := js.Query(expr)
 			if err != nil {
 				fmt.Printf("[ERROR] %s: %s\n", expr, err.Error())
-			} else if result != nil {
-				fmt.Printf("'%s' => '%+v'\n", expr, string(*result))
 			} else {
 				fmt.Printf("'%s' => '%+v'\n", expr, result)
 			}

@@ -1,0 +1,176 @@
+{
+  "categoryCollapse": {
+    "icon": {
+      "collapse": {
+        "tooltip": "Collapse"
+      },
+      "expand": {
+        "tooltip": "Expand"
+      }
+    }
+  },
+  "configEditor": {
+    "authType": {
+      "label": "Auth Type",
+      "tooltip": "Type of authentication"
+    },
+    "connectionType": {
+      "label": "Connection Type",
+      "tooltip": "Type of connection"
+    },
+    "fetchToken": {
+      "label": "Fetch Token",
+      "placeholder": "Enter the Bearer token for fetching the Jupyter token",
+      "tooltip": "Bearer token for fetching the Jupyterlab token"
+    },
+    "importStatements": {
+      "label": "Import Statements",
+      "placeholder": "Enter default import statements",
+      "tooltip": "Import statements to run for every kernel"
+    },
+    "jupyterUrl": {
+      "label": "Jupyterlab URL",
+      "placeholder": "Enter the Jupyterlab URL, e.g. http://localhost:8888/",
+      "tooltip": "Jupyterlab endpoint URL"
+    },
+    "rawToken": {
+      "label": "Token",
+      "placeholder": "Enter the token",
+      "tooltip": "Token for Jupyterlab auth"
+    },
+    "tokenMethod": {
+      "label": "Method",
+      "tooltip": "HTTP method for fetching the Jupyterlab token"
+    },
+    "tokenUrl": {
+      "label": "Token URL",
+      "placeholder": "Enter the token URL, e.g. http://localhost/tokens/jupyter",
+      "tooltip": "URL to fetch the Jupyterlab token from"
+    }
+  },
+  "enums": {
+    "authOptions": {
+      "fetch": {
+        "desc": "Fetch a token from a web service",
+        "name": "Fetch"
+      },
+      "none": {
+        "desc": "No authentication",
+        "name": "None"
+      },
+      "rawToken": {
+        "desc": "Enter a token directly",
+        "name": "Raw Token"
+      }
+    },
+    "connOptions": {
+      "automatic": {
+        "desc": "Start or connect to a kernel via the Jupyterlab API",
+        "name": "Automatic"
+      },
+      "connectionInfo": {
+        "desc": "Paste JSON connection info directly",
+        "name": "Connection Info"
+      }
+    },
+    "methodOptions": {
+      "get": {
+        "name": "Get"
+      },
+      "put": {
+        "name": "Put"
+      }
+    },
+    "sortOptions": {
+      "lastModifiedAsc": "Modified: oldest",
+      "lastModifiedDesc": "Modified: newest",
+      "nameAsc": "Name: A to Z",
+      "nameDesc": "Name: Z to A",
+      "sizeAsc": "Size: smallest",
+      "sizeDesc": "Size: biggest"
+    }
+  },
+  "fileItem": {
+    "modtime": "Last modified at {{-when}}"
+  },
+  "filesList": {
+    "collapseAll": {
+      "tooltip": "Collapse All"
+    },
+    "expand": {
+      "tooltip": "Expand"
+    },
+    "filter": {
+      "tooltip": "Filter"
+    },
+    "refresh": {
+      "tooltip": "Refresh"
+    },
+    "search": {
+      "label": "Filter",
+      "placeholder": "File name contains"
+    },
+    "sortBy": {
+      "label": "Sort By"
+    }
+  },
+  "queryEditor": {
+    "code": {
+      "label": "Code",
+      "tooltip": "Code to run"
+    },
+    "connectionInfo": {
+      "label": "Connection Info",
+      "placeholder": "Enter connection info",
+      "tooltip": "Connection file from Jupyterlab"
+    },
+    "kernelFormat": {
+      "base": "{{name}} ({{id}})",
+      "notebook": "{{name}} ({{id}}) [{{notebook_path}}]"
+    },
+    "kernelId": {
+      "label": "Kernel ID",
+      "tooltip": "Kernel ID for executing query"
+    },
+    "kernelType": {
+      "label": "Kernel Type",
+      "tooltip": "Kernel type (e.g. python3)"
+    },
+    "newKernel": {
+      "desc": "Start a new kernel",
+      "label": "New Kernel"
+    },
+    "refreshKernels": {
+      "label": "Refresh Kernels"
+    },
+    "source": {
+      "code": "Enter code below...",
+      "label": "Source",
+      "notebook": "Choose notebook below...",
+      "tooltip": "Pick notebook or literal code"
+    },
+    "variables": {
+      "label": "Variables",
+      "tooltip": "Variables to bind"
+    }
+  },
+  "treeLevel": {
+    "noFiles": "No Files"
+  },
+  "useFilesList": {
+    "loadTree": {
+      "error": "List notebooks: API request failed"
+    }
+  },
+  "variableEditor": {
+    "add": {
+      "label": "Add Variable"
+    },
+    "delete": {
+      "label": "Delete Variable"
+    },
+    "variable": {
+      "label": "Variable"
+    }
+  }
+}

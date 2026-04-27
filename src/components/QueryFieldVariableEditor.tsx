@@ -1,6 +1,7 @@
 import { Button, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 import { QueryFieldVariable } from '../types';
 import React from 'react';
+import { t } from '@grafana/i18n';
 
 /**
  * Properties
@@ -35,7 +36,7 @@ export const QueryFieldVariableEditor = ({
 
   return (
     <InlineFieldRow>
-      <InlineField label="Variable">
+      <InlineField label={t('variableEditor.variable.label', 'Variable')}>
         <Input
           value={value.name}
           onChange={(event) => {
@@ -58,7 +59,7 @@ export const QueryFieldVariableEditor = ({
           }}
         />
       </InlineField>
-      <Button icon="trash-alt" aria-label="Delete Variable" variant="destructive" onClick={onDelete} />
+      <Button icon="trash-alt" aria-label={t('variableEditor.delete.label', 'Delete Variable')} variant="destructive" onClick={onDelete} />
     </InlineFieldRow>
   );
 };

@@ -134,33 +134,30 @@ func (jc *JupyterHttpClient) GetListing(path string) ([]PathEntry, error) {
 }
 
 
-func (jc *JupyterHttpClient) GetNotebooks() ([]string, error) {
-	rv := []string{}
-	var recur func(string) error
-	recur = func(path string) error {
+func (jc *JupyterHttpClient) GetNotebooks() ([]PathEntry, error) {
+	var recur func(string) ([]PathEntry, error)
+	recur = func(path string) ([]PathEntry, error) {
 		entries, err := jc.GetListing(path)
 		if err != nil {
-			return err
+			return entries, err
 		}
-		for _, entry := range(entries) {
-			if entry.Type == "notebook" {
-				rv = append(rv, entry.Path)
-			} else if entry.Type == "directory" {
-				err = recur(entry.Path)
+		for i := range(entries) {
+			if entries[i].Type == "directory" {
+				subdir, err := recur(entries[i].Path)
+				entries[i].Content = &subdir
 				if err != nil {
-					return err
+					return entries, err
 				}
 			}
 		}
-		return nil
+		return entries, nil
 	}
-	err := recur("")
-	return rv, err
+	return recur("")
 }
 
 func (jc *JupyterHttpClient) GetNotebook(path string) (string, error) {
   var notebook Notebook
-	req, err := jc.Get(fmt.Sprintf("jupyter/api/contents/%s", path))
+	req, err := jc.Get(fmt.Sprintf("jupyter/api/contents/%s", strings.TrimLeft(path, "/")))
 	if err != nil {
 		return "", err
 	}

@@ -5,4 +5,10 @@ process.env.TZ = 'UTC';
 module.exports = {
   // Jest configuration provided by Grafana scaffolding
   ...require('./.config/jest.config'),
+  moduleNameMapper: {
+    ...require('./.config/jest.config').moduleNameMapper,
+    '^@theia(.*)$': '<rootDir>/src$1',
+  },
+  clearMocks: true,
+  coveragePathIgnorePatterns: ['/node_modules/', '<rootDir>/src/__testUtils__/'],
 };
