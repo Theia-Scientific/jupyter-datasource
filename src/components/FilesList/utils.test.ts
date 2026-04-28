@@ -236,6 +236,15 @@ describe('Files List Utils', () => {
       ]);
     });
 
+    it('Should always put folders first', () => {
+      expect(getSortedItems([fileZ, fileA, categoryZ, categoryA], Sort.NAME_ASC)).toEqual([
+        categoryA,
+        categoryZ,
+        fileA,
+        fileZ,
+      ]);
+    });
+
     it('Should sort by name: z to a', () => {
       expect(getSortedItems([categoryA, categoryZ, fileA, fileZ], Sort.NAME_DESC)).toEqual([
         categoryZ,

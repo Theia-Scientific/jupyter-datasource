@@ -120,5 +120,16 @@ export const getSortedItems = (items: PathEntry[] | undefined, sort: Sort) => {
     return a[key] < b[key] ? diff : -diff;
   });
 
+  // finally, sort putting folders first
+  result.sort((a,b) => {
+    if (a.type == b.type) return 0;
+    if (a.type == 'directory' && b.type == 'notebook') {
+      return -1;
+    } else {
+      // only remaining possibility is (notebook, directory)
+      return 1;
+    }
+  });
+
   return result;
 };
