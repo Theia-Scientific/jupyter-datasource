@@ -1,13 +1,12 @@
 package jupyterclient
 
 import (
-	"context"
   "crypto/hmac"
   "crypto/sha256"
   "encoding/hex"
   "encoding/json"
-	"fmt"
 	"time"
+
   zmq "github.com/go-zeromq/zmq4"
 )
 
@@ -20,29 +19,6 @@ type JupyterShellSocket struct {
 }
 
 const DELIM = "<IDS|MSG>"
-
-func makeJupyterControlSocket(ctx context.Context, connectionInfo *ConnectionInfo, zmqId string, sessionId string) (*JupyterShellSocket, error) {
-	return makeJupyterDealerSocket(ctx, connectionInfo, zmqId, sessionId, connectionInfo.ControlPort)
-}
-
-func makeJupyterShellSocket(ctx context.Context, connectionInfo *ConnectionInfo, zmqId string, sessionId string) (*JupyterShellSocket, error) {
-	return makeJupyterDealerSocket(ctx, connectionInfo, zmqId, sessionId, connectionInfo.ShellPort)
-}
-
-func makeJupyterDealerSocket(ctx context.Context, connectionInfo *ConnectionInfo, zmqId string, sessionId string, port int) (*JupyterShellSocket, error) {
-  dealer := zmq.NewDealer(ctx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
-  var shellAddr = fmt.Sprintf("tcp://%s:%d", connectionInfo.IP, port)
-  err := dealer.Dial(shellAddr)
-  if err != nil { return nil, err }
-	
-	return &JupyterShellSocket{
-		zmqId: zmqId,
-		sessionId: sessionId,
-		username: "theiascope",
-		dealer: dealer,
-		connectionInfo: connectionInfo,
-	}, nil
-}
 
 func (jss *JupyterShellSocket) Close() {
 	jss.dealer.Close()

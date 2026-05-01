@@ -51,6 +51,7 @@ type JupyterSession struct {
 	group *errgroup.Group
 	groupCtx context.Context
 	logger Logger
+	socketFactory *JupyterSocketFactory
 }
 
 var ShutdownError = errors.New("Session shutdown")
@@ -64,6 +65,7 @@ func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) 
 		connectionInfo: ci,
 		ctx: ctx,
 		logger: logger,
+		socketFactory: &JupyterSocketFactory{},
 	}
 	return rv, rv.Start()
 }
@@ -159,13 +161,13 @@ func (js *JupyterSession) requestor() error {
 	liveRequests := make(map[string]chan resultMsg)
 	zmqId := NewId()
 	sessionId := NewId()
-	shell, err := makeJupyterShellSocket(js.groupCtx, js.connectionInfo, zmqId, sessionId)
+	shell, err := js.socketFactory.makeShell(js.groupCtx, js.connectionInfo, zmqId, sessionId)
   if err != nil {
 		return err
   }
 	defer shell.Close()
 
-	control, err := makeJupyterControlSocket(js.groupCtx, js.connectionInfo, zmqId, sessionId)
+	control, err := js.socketFactory.makeControl(js.groupCtx, js.connectionInfo, zmqId, sessionId)
   if err != nil {
 		return err
   }
@@ -217,17 +219,11 @@ func (js *JupyterSession) requestor() error {
 }
 
 func (js *JupyterSession) listener() error {
-  sub := zmq.NewSub(js.groupCtx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
-  var ioPubAddr = fmt.Sprintf("tcp://%s:%d", js.connectionInfo.IP, js.connectionInfo.IOPubPort)
-  err := sub.Dial(ioPubAddr)
+	sub, err := js.socketFactory.makeIOPub(js.groupCtx, js.connectionInfo)
   if err != nil {
 		return err
   }
 	defer sub.Close()
-	err = sub.SetOption(zmq.OptionSubscribe, "")
-  if err != nil {
-		return err
-  }
 
 	results := make(map[string]resultMsg)
 
@@ -338,9 +334,7 @@ func (js *JupyterSession) listener() error {
 }
 
 func (js *JupyterSession) heartbeat() error {
-  req := zmq.NewReq(js.groupCtx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
-  var ioPubAddr = fmt.Sprintf("tcp://%s:%d", js.connectionInfo.IP, js.connectionInfo.HBPort)
-  err := req.Dial(ioPubAddr)
+  req, err := js.socketFactory.makeHB(js.groupCtx, js.connectionInfo)
   if err != nil {
 		return err
   }
