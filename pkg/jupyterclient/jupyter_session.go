@@ -9,6 +9,7 @@ import (
 	"io"
 	"slices"
 	"strings"
+	"time"
 
   zmq "github.com/go-zeromq/zmq4"
 )
@@ -71,6 +72,7 @@ func (js *JupyterSession) Start() error {
 	js.group, js.groupCtx = errgroup.WithContext(js.ctx)
 	js.group.Go(func() error { return js.requestor() })
 	js.group.Go(func() error { return js.listener() })
+	js.group.Go(func() error { return js.heartbeat() })
 
 	// roundtrip once to detect errors
 	if _, err := js.Execute("None"); err != nil {
@@ -332,5 +334,38 @@ func (js *JupyterSession) listener() error {
 				}
 			}
 		}
+	}
+}
+
+func (js *JupyterSession) heartbeat() error {
+  req := zmq.NewReq(js.groupCtx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
+  var ioPubAddr = fmt.Sprintf("tcp://%s:%d", js.connectionInfo.IP, js.connectionInfo.HBPort)
+  err := req.Dial(ioPubAddr)
+  if err != nil {
+		return err
+  }
+	defer req.Close()
+
+	i := 0
+	for {
+		time.Sleep(time.Second)
+		hbstr := fmt.Sprintf("%d", i)
+		js.logger.Log(fmt.Sprintf("ping: %+v", hbstr))
+		err = req.Send(zmq.NewMsgString(hbstr))
+		if err != nil {
+			return err
+		}
+
+		reply, err := req.Recv()
+		if err != nil {
+			return err
+		}
+
+		js.logger.Log(fmt.Sprintf("pong: %+v", reply))
+		if len(reply.Frames) != 1 || string(reply.Frames[0]) != hbstr {
+			return errors.New(fmt.Sprintf("pinged '%s', got pong '%+v'", hbstr, reply))
+		}
+
+		i++
 	}
 }
