@@ -8,7 +8,7 @@ import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, My
 import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
 import { v4 as uuidv4 } from 'uuid';
 import { FilesList } from './FilesList';
-import { PathEntryNotebook } from '@theia/types';
+import { DEFAULT_QUERY, PathEntryNotebook } from '@theia/types';
 import { t } from '@grafana/i18n';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
@@ -31,9 +31,9 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   // give every query a uuid
   useEffect(() => {
     if (query.uuid === undefined) {
-      onChange({...query, uuid: uuidv4() })
+      onChange({...DEFAULT_QUERY, ...query, uuid: uuidv4() })
     }
-  }, [query, onChange]);
+  }, [query, datasource, onChange]);
 
   const onKernelIdChange = (selectableValue: ComboboxOption<string>) => {
     onChange({ ...query, kernelId: selectableValue.value });
