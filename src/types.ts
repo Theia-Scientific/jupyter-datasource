@@ -91,6 +91,7 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
   rawToken?: string;
   jupyterUrl?: string;
   importStatements?: string;
+  packages: string[];
 }
 
 export interface KernelSpec {
