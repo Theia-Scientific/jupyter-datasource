@@ -10,6 +10,11 @@ import (
   zmq "github.com/go-zeromq/zmq4"
 )
 
+type JupyterShellSocketInterface interface {
+	Close()
+  sendMessage(msgType string, content []byte)	(string, error)
+}
+
 type JupyterShellSocket struct {
 	zmqId string
 	sessionId string

@@ -8,8 +8,8 @@ import (
 )	
 
 type JupyterSocketFactoryInterface interface {
-	makeControl(ctx context.Context, connectionInfo *ConnectionInfo, zmqId string, sessionId string) (*JupyterShellSocket, error)
-	makeShell(ctx context.Context, connectionInfo *ConnectionInfo, zmqId string, sessionId string) (*JupyterShellSocket, error)
+	makeControl(ctx context.Context, connectionInfo *ConnectionInfo, zmqId string, sessionId string) (JupyterShellSocketInterface, error)
+	makeShell(ctx context.Context, connectionInfo *ConnectionInfo, zmqId string, sessionId string) (JupyterShellSocketInterface, error)
 	makeIOPub(ctx context.Context, connectionInfo *ConnectionInfo) (zmq.Socket, error)
 	makeHeartbeat(ctx context.Context, connectionInfo *ConnectionInfo) (zmq.Socket, error)
 }
