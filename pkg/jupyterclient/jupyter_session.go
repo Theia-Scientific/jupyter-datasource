@@ -122,13 +122,21 @@ func (js *JupyterSession) Restart() {
 }
 
 // install all packages, do all system commands &c, and restart
-func (js *JupyterSession) Initialize(code string) error {
+func (js *JupyterSession) Initialize(packages *[]string, code string) error {
+	packageLines := []string{}
+	if packages != nil {
+		for _, pkg := range *packages {
+			packageLines = append(packageLines, fmt.Sprintf("%%pip install %s", pkg))
+		}
+	}
+
 	lines := strings.Split(code, "\n")
 	sysLines := slices.DeleteFunc(lines, func(expr string) bool {
 		return !strings.HasPrefix(expr, "%") && !strings.HasPrefix(expr, "!")
 	})
-	if len(sysLines) > 0 {
-		sys := strings.Join(sysLines, "\n")
+
+	if len(packageLines) > 0 || len(sysLines) > 0 {
+		sys := strings.Join(append(packageLines, sysLines...), "\n")
 		js.logger.Log(fmt.Sprintf("Initialization code: %+v", sys))
 		_, err := js.Execute(sys)
 		if err != nil {
