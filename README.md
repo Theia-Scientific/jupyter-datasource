@@ -183,10 +183,8 @@ Below you can find source code for existing app plugins and other related docume
 
 ### Development
 
-- start everything in ../grafana
-- docker compose down grafana
-- in this directory:
-- npm run dev to watch the .ts
-- npm run server to run the grafana backend
-- shut down server and mage -v if you make golang changes
+- Create a .env file (can be empty, or copy from .env.example)
+- `npm run dev` to watch/compile the .ts
+- `npm run start` to run the nginx/system/jupyter/grafana stack
+- if you make golang changes: `mage -v build:linux && docker compose restart grafana`
 
