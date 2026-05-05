@@ -187,4 +187,6 @@ Below you can find source code for existing app plugins and other related docume
 - `npm run dev` to watch/compile the .ts
 - `npm run start` to run the nginx/system/jupyter/grafana stack
 - if you make golang changes: `mage -v build:linux && docker compose restart grafana`
-
+- If at some point you sign the token (e.g. via the instructions above to sign and
+  install it in theia-grafana), subsequent debug builds will not be recognized. At
+  this point you'll want to nuke the dist/ folder and rebuild/restart.
