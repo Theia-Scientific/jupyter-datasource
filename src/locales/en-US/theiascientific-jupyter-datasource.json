@@ -138,6 +138,10 @@
       "label": "Kernel ID",
       "tooltip": "Kernel ID for executing query"
     },
+    "kernelTag": {
+      "label": "Kernel Tag",
+      "tooltip": "Kernel Tag for sharing kernel among queries"
+    },
     "kernelType": {
       "label": "Kernel Type",
       "tooltip": "Kernel type (e.g. python3)"

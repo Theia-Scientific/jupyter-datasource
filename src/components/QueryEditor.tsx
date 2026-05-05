@@ -42,6 +42,10 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({ ...query, kernelId: selectableValue.value });
   };
 
+  const onKernelTagChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onChange({ ...query, kernelTag: event.target.value });
+  };
+
   const onKernelTypeChangeInfo = (event: ChangeEvent<HTMLInputElement>) => {
     onChange({ ...query, kernelType: event.target.value });
   };
@@ -123,9 +127,15 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     </>
   );
 
+  const isAuto = (connectionType === ConnectionType.Auto);
+  const isInfo = (connectionType === ConnectionType.Info);
+  const kernelIdUnspecified = (query.kernelId === undefined || query.kernelId === '');
+  const notebookSource = (source === CHOOSE_NOTEBOOK);
+  const codeSource = (source === ENTER_CODE);
+
   return (
     <>
-      { connectionType === ConnectionType.Auto &&
+      { isAuto &&
         <InlineFieldRow>
           <InlineField label={t('queryEditor.kernelId.label', 'Kernel ID')} labelWidth={16} tooltip={t('queryEditor.kernelId.tooltip', 'Kernel ID for executing query')}>
               <Combobox
@@ -140,21 +150,31 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           {runQueryButton}
         </InlineFieldRow>
       }
-      { connectionType === ConnectionType.Info &&
+      { isAuto && kernelIdUnspecified &&
         <InlineFieldRow>
-          <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
+          <InlineField label={t('queryEditor.kernelTag.label', 'Kernel Tag')} labelWidth={16} tooltip={t('queryEditor.kernelTag.tooltip', 'Kernel Tag for sharing kernel among queries')}>
             <Input
-              id="query-editor-kernel-type-info"
-              onChange={onKernelTypeChangeInfo}
-              value={query.kernelType}
-              placeholder="python3"
+              id="query-editor-kernel-tag"
+              onChange={onKernelTagChange}
+              value={query.kernelTag}
               width={40}
             />
           </InlineField>
           {runQueryButton}
         </InlineFieldRow>
       }
-      { connectionType === ConnectionType.Auto &&
+      { isInfo &&
+        <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
+          <Input
+            id="query-editor-kernel-type-info"
+            onChange={onKernelTypeChangeInfo}
+            value={query.kernelType}
+            placeholder="python3"
+            width={40}
+          />
+        </InlineField>
+      }
+      { isAuto &&
         <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
           <Combobox
             id="query-editor-kernel-type-auto"
@@ -165,7 +185,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           />
         </InlineField>
       }
-      { connectionType === ConnectionType.Info &&
+      { isInfo &&
         <InlineField label={t('queryEditor.connectionInfo.label', 'Connection Info')} labelWidth={16} tooltip={t('queryEditor.connectionInfo.tooltip', 'Connection file from JupyterLab')}>
           <TextArea
             style={{resize: 'both'}}
@@ -185,7 +205,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           onChange={onVariablesChange}
         />
       </InlineField>
-      { connectionType === ConnectionType.Auto &&
+      { isAuto &&
         <InlineField label={t('queryEditor.source.label', 'Source')} labelWidth={16} tooltip={t('queryEditor.source.tooltip', 'Pick notebook or literal code')}>
           <Combobox
             id="query-editor-source"
@@ -196,14 +216,14 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           />
         </InlineField>
       }
-      { connectionType === ConnectionType.Auto && (source === CHOOSE_NOTEBOOK) &&
+      { isAuto && notebookSource &&
         <FilesList
           datasource={datasource}
           onSelectFile={onSelectFile}
           rootPath=""
         />
       }
-      { (connectionType === ConnectionType.Info || source === ENTER_CODE) &&
+      { (isInfo || codeSource) &&
         <InlineField label={t('queryEditor.code.label', 'Code')} labelWidth={16} tooltip={t('queryEditor.code.tooltip', 'Code to run')}>
           <CodeEditor
             value={query.code}
