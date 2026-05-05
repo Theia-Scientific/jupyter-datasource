@@ -189,7 +189,7 @@ export function ConfigEditor(props: Props) {
       { (jsonData.packages||[]).map((pkg, index) => (
         <InlineFieldRow key={index}>
           <Input
-            id={`config-editor-packages-{i}`}
+            id={`config-editor-packages-${index}`}
             onChange={(event: ChangeEvent<HTMLInputElement>) =>
               onOptionsChange({
                 ...options,
