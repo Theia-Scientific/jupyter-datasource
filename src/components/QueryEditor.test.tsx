@@ -117,6 +117,7 @@ describe('Query Editor', () => {
 
       expect(screen.queryByText('Run Query')).toBeInTheDocument();
       expect(screen.queryByLabelText('Kernel ID')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Kernel Tag')).toBeInTheDocument();
       expect(screen.queryByLabelText('Kernel Type')).toBeInTheDocument();
       expect(screen.queryByLabelText('Kernel Type')).toHaveRole('combobox');
       expect(screen.queryByLabelText('Connection Info')).not.toBeInTheDocument();

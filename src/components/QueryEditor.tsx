@@ -151,28 +151,28 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         </InlineFieldRow>
       }
       { isAuto && kernelIdUnspecified &&
+        <InlineField label={t('queryEditor.kernelTag.label', 'Kernel Tag')} labelWidth={16} tooltip={t('queryEditor.kernelTag.tooltip', 'Kernel Tag for sharing kernel among queries')}>
+          <Input
+            id="query-editor-kernel-tag"
+            onChange={onKernelTagChange}
+            value={query.kernelTag}
+            width={40}
+          />
+        </InlineField>
+      }
+      { isInfo &&
         <InlineFieldRow>
-          <InlineField label={t('queryEditor.kernelTag.label', 'Kernel Tag')} labelWidth={16} tooltip={t('queryEditor.kernelTag.tooltip', 'Kernel Tag for sharing kernel among queries')}>
+          <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
             <Input
-              id="query-editor-kernel-tag"
-              onChange={onKernelTagChange}
-              value={query.kernelTag}
+              id="query-editor-kernel-type-info"
+              onChange={onKernelTypeChangeInfo}
+              value={query.kernelType}
+              placeholder="python3"
               width={40}
             />
           </InlineField>
           {runQueryButton}
         </InlineFieldRow>
-      }
-      { isInfo &&
-        <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
-          <Input
-            id="query-editor-kernel-type-info"
-            onChange={onKernelTypeChangeInfo}
-            value={query.kernelType}
-            placeholder="python3"
-            width={40}
-          />
-        </InlineField>
       }
       { isAuto &&
         <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
