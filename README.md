@@ -183,7 +183,6 @@ Below you can find source code for existing app plugins and other related docume
 
 ### Development
 
-- Create a .env file (can be empty, or copy from .env.example)
 - `npm run dev` to watch/compile the .ts
 - `npm run server` to run a grafana server with this plugin in it
 - if you make golang changes: `mage -v build:linux && docker compose restart grafana`
