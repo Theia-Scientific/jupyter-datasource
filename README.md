@@ -185,8 +185,22 @@ Below you can find source code for existing app plugins and other related docume
 
 - Create a .env file (can be empty, or copy from .env.example)
 - `npm run dev` to watch/compile the .ts
-- `npm run start` to run the nginx/system/jupyter/grafana stack
+- `npm run server` to run a grafana server with this plugin in it
 - if you make golang changes: `mage -v build:linux && docker compose restart grafana`
 - If at some point you sign the token (e.g. via the instructions above to sign and
-  install it in theia-grafana), subsequent debug builds will not be recognized. At
+  install it elsewhere), subsequent debug builds will not be recognized. At
   this point you'll want to nuke the dist/ folder and rebuild/restart.
+
+### Testing
+
+- build as above
+- `docker compose up`
+- `docker exec -it grafana-jupyter jupyter server list` will give you the jupyterlab url
+- go start a kernel in jupyterlab
+- `docker exec -it grafana-jupyter find . -name kernel-\*.json` will give you the name of the connection file
+- `docker exec -it grafana-jupyter cat ./.local/share/jupyter/runtime/kernel-48575b90-9ed1-437d-b04e-6f6e91dfc02b.json` (replace with your connection filename from the step above) will give you the contents of the connection file
+- open http://localhost:3000/ to view grafana
+- configure the Jupyter datasource to use Connection Type: Connection Info
+- click Save & test, then click the 'building a dashboard' link, then Add Visualization
+- pick Jupyter for the query source, then paste the contents of the connection file into the "Connection Info" field
+- click "refresh" to test execution of the default query - you should get two sinewaves
