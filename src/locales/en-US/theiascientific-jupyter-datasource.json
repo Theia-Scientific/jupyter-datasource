@@ -132,7 +132,7 @@
     },
     "kernelFormat": {
       "base": "{{name}} ({{id}})",
-      "notebook": "{{name}} ({{id}}) [{{notebook_path}}]"
+      "notebook": "{{name}} ({{id}}) [{{-notebook_path}}]"
     },
     "kernelId": {
       "label": "Kernel ID",

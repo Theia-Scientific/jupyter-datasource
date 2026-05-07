@@ -69,7 +69,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       const labelForSpec = (ks: KernelSpec): string => {
         const opts = { ...ks, id: ks.id.slice(0,8) };
         if (!!ks.notebook_path) {
-          return t('queryEditor.kernelFormat.notebook', '{{name}} ({{id}}) [{{notebook_path}}]', opts);
+          return t('queryEditor.kernelFormat.notebook', '{{name}} ({{id}}) [{{-notebook_path}}]', opts);
         } else {
           return t('queryEditor.kernelFormat.base', '{{name}} ({{id}})', opts);
         }
