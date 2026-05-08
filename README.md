@@ -192,14 +192,16 @@ Below you can find source code for existing app plugins and other related docume
 
 ### Testing
 
-- build as above
-- `docker compose up`
-- `docker exec -it grafana-jupyter jupyter server list` will give you the jupyterlab url
-- go start a kernel in jupyterlab
-- `docker exec -it grafana-jupyter find . -name kernel-\*.json` will give you the name of the connection file
-- `docker exec -it grafana-jupyter cat ./.local/share/jupyter/runtime/kernel-48575b90-9ed1-437d-b04e-6f6e91dfc02b.json` (replace with your connection filename from the step above) will give you the contents of the connection file
-- open http://localhost:3000/ to view grafana
-- configure the Jupyter datasource to use Connection Type: Connection Info
-- click Save & test, then click the 'building a dashboard' link, then Add Visualization
-- pick Jupyter for the query source, then paste the contents of the connection file into the "Connection Info" field
-- click "refresh" to test execution of the default query - you should get two sinewaves
+- Create a .env with ENVELOPE_TOKEN set (for now) and a JUPYTER_TOKEN (whatever you
+  want, just so Grafana and Jupyter can talk to each other)
+- Build as above (`mage -v`, `npm run build` or `npm run dev`)
+- `npm run server` to build and start the Docker stack (both Grafana and Jupyter)
+- Open [http://localhost:8888/?token=<JUPYTER_TOKEN>] (substitute the token from your
+  `.env` file) to view Jupyterlab.
+- Open [http://localhost:3000/] to view Grafana. The Jupyter datasource should already
+  be configured.
+- Click Save & test, then click the 'building a dashboard' link, then Add
+  Visualization
+- Pick Jupyter for the query source - the default query should already be filled in.
+- Click "refresh" to test execution of the default query - you should get two
+  sinewaves.

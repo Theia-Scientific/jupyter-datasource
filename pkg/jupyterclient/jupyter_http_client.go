@@ -86,7 +86,7 @@ func request(req *http.Request) error {
 
 func (jc *JupyterHttpClient) GetSessions() ([]Session, error) {
   var sessions []Session
-	req, err := jc.Get("jupyter/api/sessions")
+	req, err := jc.Get("sessions")
 	if err != nil {
 		return sessions, err
 	}
@@ -95,7 +95,7 @@ func (jc *JupyterHttpClient) GetSessions() ([]Session, error) {
 }
 
 func (jc *JupyterHttpClient) KillKernel(id string) error {
-  req, err := jc.Delete(fmt.Sprintf("jupyter/api/kernels/%s", id))
+  req, err := jc.Delete(fmt.Sprintf("kernels/%s", id))
   if err != nil {
     return err
   }
@@ -104,7 +104,7 @@ func (jc *JupyterHttpClient) KillKernel(id string) error {
 
 func (jc *JupyterHttpClient) GetKernels() ([]KernelSpec, error) {
   var kernels []KernelSpec
-	req, err := jc.Get("jupyter/api/kernels")
+	req, err := jc.Get("kernels")
 	if err != nil {
 		return kernels, err
 	}
@@ -113,7 +113,7 @@ func (jc *JupyterHttpClient) GetKernels() ([]KernelSpec, error) {
 }
 
 func (jc *JupyterHttpClient) GetKernelSpecs() ([]byte, error) {
-	req, err := jc.Get("jupyter/api/kernelspecs")
+	req, err := jc.Get("kernelspecs")
 	if err != nil {
 		return []byte{}, err
 	}
@@ -122,7 +122,7 @@ func (jc *JupyterHttpClient) GetKernelSpecs() ([]byte, error) {
 
 func (jc *JupyterHttpClient) GetListing(path string) ([]PathEntry, error) {
   var entry PathEntry
-	req, err := jc.Get(fmt.Sprintf("jupyter/api/contents/%s", path))
+	req, err := jc.Get(fmt.Sprintf("contents/%s", path))
 	if err != nil {
 		return []PathEntry{}, err
 	}
@@ -157,7 +157,7 @@ func (jc *JupyterHttpClient) GetNotebooks() ([]PathEntry, error) {
 
 func (jc *JupyterHttpClient) GetNotebook(path string) (string, error) {
   var notebook Notebook
-	req, err := jc.Get(fmt.Sprintf("jupyter/api/contents/%s", strings.TrimLeft(path, "/")))
+	req, err := jc.Get(fmt.Sprintf("contents/%s", strings.TrimLeft(path, "/")))
 	if err != nil {
 		return "", err
 	}
@@ -191,7 +191,7 @@ func (jc *JupyterHttpClient) CreateKernel(kernelType string) (KernelSpec, error)
     return kernel, err
   }
 
-  req, err := jc.PostBytes("jupyter/api/kernels", post)
+  req, err := jc.PostBytes("kernels", post)
   if err != nil {
     return kernel, err
   }
@@ -219,7 +219,7 @@ func (jc *JupyterHttpClient) SelectKernel() (KernelSpec, error) {
 
 func (jc *JupyterHttpClient) GetConnectionInfo(id string) (ConnectionInfo, error) {
   var connectionInfo ConnectionInfo
-  req, err := jc.Get(fmt.Sprintf("jupyter/api/kernels/%s/connection", id))
+  req, err := jc.Get(fmt.Sprintf("kernels/%s/connection", id))
   if err != nil {
     return connectionInfo, err
   }
@@ -228,7 +228,7 @@ func (jc *JupyterHttpClient) GetConnectionInfo(id string) (ConnectionInfo, error
 }
 
 func (jc *JupyterHttpClient) Restart(id string) error {
-	req, err := jc.PostEmpty(fmt.Sprintf("jupyter/api/kernels/%s/restart", id))
+	req, err := jc.PostEmpty(fmt.Sprintf("kernels/%s/restart", id))
 	if err != nil {
 		return err
 	}
