@@ -27,18 +27,18 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
   }
 
   getNotebooks(): Promise<PathEntry[]> {
-    return this.getResource('/notebooks');
+    return this.getResource('notebooks');
   }
 
   getListing(path: string): Promise<PathEntry[]> {
-    return this.getResource(`/list?path=${path}`);
+    return this.getResource(`list?path=${path}`);
   }
 
   getKernels(): Promise<KernelSpec[]> {
-    return this.getResource('/kernels');
+    return this.getResource('kernels');
   }
 
   getKernelSpecs(): Promise<KernelSpecResponse> {
-    return this.getResource('/kernelspecs');
+    return this.getResource('kernelspecs');
   }
 }
