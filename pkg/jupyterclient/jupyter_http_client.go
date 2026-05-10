@@ -10,8 +10,22 @@ import (
 	"strings"
 )
 
-func MakeJupyterHttpClient(settings *JupyterServiceSettings) JupyterHttpClient {
-  return JupyterHttpClient{
+type IJupyterHttpClient interface {
+  GetSessions() ([]Session, error);
+  KillKernel(id string) error;
+  GetKernels() ([]KernelSpec, error);
+  GetKernelSpecs() ([]byte, error);
+  GetListing(path string) ([]PathEntry, error);
+  GetNotebooks() ([]PathEntry, error);
+  GetNotebook(path string) (string, error);
+  CreateKernel(kernelType string) (KernelSpec, error);
+  SelectKernel() (KernelSpec, error);
+  GetConnectionInfo(id string) (ConnectionInfo, error);
+  Restart(id string) error;
+}
+
+func MakeJupyterHttpClient(settings *JupyterServiceSettings) IJupyterHttpClient {
+  return &JupyterHttpClient{
     AuthHeader: fmt.Sprintf("Bearer %s", settings.Token),
 		BasePath: strings.TrimRight(settings.BaseUrl, "/"),
 	}

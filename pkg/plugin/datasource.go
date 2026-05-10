@@ -70,7 +70,7 @@ type SessionState struct {
 type Datasource struct {
 	sessions map[string]SessionState
 	createdKernels []string
-	httpClient *jupyterclient.JupyterHttpClient
+	httpClient jupyterclient.IJupyterHttpClient
 	context context.Context
 	cancel context.CancelFunc
 }

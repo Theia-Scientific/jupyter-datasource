@@ -10,14 +10,14 @@ import (
 )
 
 type ConnectionStrategy interface {
-	createHttpClient(settings *InstanceSettings) (*jupyterclient.JupyterHttpClient, error)
+	createHttpClient(settings *InstanceSettings) (jupyterclient.IJupyterHttpClient, error)
 	createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error)
 	fetchCode(d *Datasource, settings *InstanceSettings, qm *queryModel) (string, error)
 }
 
 type ConnectionStrategyInfo struct {}
 
-func (_ ConnectionStrategyInfo) createHttpClient(settings *InstanceSettings) (*jupyterclient.JupyterHttpClient, error) {
+func (_ ConnectionStrategyInfo) createHttpClient(settings *InstanceSettings) (jupyterclient.IJupyterHttpClient, error) {
 	return nil, nil
 }
 
@@ -42,7 +42,7 @@ func (_ ConnectionStrategyInfo) fetchCode(d *Datasource, settings *InstanceSetti
 
 type ConnectionStrategyAuto struct {}
 
-func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (*jupyterclient.JupyterHttpClient, error) {
+func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (jupyterclient.IJupyterHttpClient, error) {
 	if settings.JupyterUrl == nil {
 		return nil, fmt.Errorf("AUTO connection type selected, but no jupyterUrl supplied")
 	}
@@ -57,7 +57,7 @@ func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (*j
 		Token:   jupyterToken,
 	}
 	client := jupyterclient.MakeJupyterHttpClient(jupyterSettings)
-	return &client, nil
+	return client, nil
 }
 
 func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error) {
