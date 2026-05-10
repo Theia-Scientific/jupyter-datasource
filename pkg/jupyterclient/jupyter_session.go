@@ -41,6 +41,15 @@ type resetRequest struct {
 	restart bool
 }
 
+type IJupyterSession interface {
+	Start() error;
+	Execute(code string) (Result, error);
+	Query(code string) (Result, error);
+	Restart();
+	Initialize(packages *[]string, code string) error;
+	Quit();
+}
+
 type JupyterSession struct {
 	requests chan requestMsg
 	resets chan resetRequest
@@ -55,7 +64,7 @@ type JupyterSession struct {
 var ShutdownError = errors.New("Session shutdown")
 
 // pctx should be a context that bounds the entire session (use context.Background() if unsure)
-func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) (*JupyterSession, error) {
+func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) (IJupyterSession, error) {
 	rv := &JupyterSession{
 		requests: make(chan requestMsg),
 		resets: make(chan resetRequest),

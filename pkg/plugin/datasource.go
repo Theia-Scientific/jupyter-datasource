@@ -59,7 +59,7 @@ func unmarshalInstanceSettings(src []byte) (*InstanceSettings, error) {
 }
 
 type SessionState struct {
-	session *jupyterclient.JupyterSession
+	session jupyterclient.IJupyterSession
 	queryKernelId string
 	actualKernelId string
 	code string
