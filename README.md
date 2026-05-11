@@ -290,6 +290,14 @@ Ensure the following system dependencies are installed on the host test machine.
 13. Click "Refresh" to test the execution of the default query. Two sine waves
     should appear.
 
+14. Once done testing the branch, return to the terminal press `CTRL+C` to stop
+    the containers. Alternatively, another terminal can be opened and the
+    following command could be used:
+
+    ```sh
+    docker compose down
+    ```
+
 [docker]: https://www.docker.com/
 [docker compose]: https://docs.docker.com/compose/
 [git]: https://git-scm.com/
