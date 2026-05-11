@@ -9,6 +9,8 @@ import (
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
 )
 
+// uses internal types (queryModel); we can't mock this
+//mockery:generate: false
 type ConnectionStrategy interface {
 	createHttpClient(settings *InstanceSettings) (jupyterclient.IJupyterHttpClient, error)
 	createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error)

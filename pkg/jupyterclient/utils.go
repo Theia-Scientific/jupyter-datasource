@@ -6,6 +6,7 @@ import (
 	"math/rand"
 )
 
+//mockery:generate: true
 type Logger interface {
 	Log(string)
 }

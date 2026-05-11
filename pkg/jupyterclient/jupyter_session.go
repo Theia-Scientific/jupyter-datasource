@@ -41,6 +41,7 @@ type resetRequest struct {
 	restart bool
 }
 
+//mockery:generate: true
 type IJupyterSession interface {
 	Start() error;
 	Execute(code string) (Result, error);

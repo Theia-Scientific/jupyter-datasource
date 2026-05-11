@@ -10,6 +10,7 @@ import (
 	"strings"
 )
 
+//mockery:generate: true
 type IJupyterHttpClient interface {
   GetSessions() ([]Session, error);
   KillKernel(id string) error;
