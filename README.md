@@ -14,11 +14,11 @@ Grafana supports a wide range of data sources, including Prometheus, MySQL, and 
 
 https://go.dev/doc/install
 
-2. Install Mage
+1. Install Mage
 
 https://magefile.org
 
-3. Do a clean build
+1. Do a clean build
 
 n.b. this only builds the linux x64 and linux arm64 binaries for the
 backend, since that's what we ship Theiascope on - in the long run
@@ -32,7 +32,7 @@ mage -v build:linux
 mage -v build:linuxARM64
 ```
 
-4. Sign the plugin
+1. Sign the plugin
 
 pls don't leak this!!  this is my precious token
 
@@ -41,7 +41,7 @@ export GRAFANA_ACCESS_POLICY_TOKEN=glc_eyJvIjoiMTY1NzYyNCIsIm4iOiJwbHVnaW4tc2lnb
 npx @grafana/sign-plugin@latest --rootUrls https://localhost/,http://localhost:3000/
 ```
 
-5. Install the updated plugin into our Grafana
+1. Install the updated plugin into our Grafana
 
 Take note!  If your Grafana checkout isn't in a folder named 'grafana' in a sibling
 directory to this one, update the PATH_TO_THEIA_GRAFANA_CHECKOUT variable below.
@@ -52,7 +52,7 @@ rm -rf ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-datasource
 cp -rp dist ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-datasource
 ```
 
-6. run `npm build` and then `npm start` in the Grafana repo
+1. run `npm build` and then `npm start` in the Grafana repo
 
 ### Backend
 
@@ -192,16 +192,109 @@ Below you can find source code for existing app plugins and other related docume
 
 ### Testing
 
-- Create a .env with ENVELOPE_TOKEN set (for now) and a JUPYTER_TOKEN (whatever you
-  want, just so Grafana and Jupyter can talk to each other)
-- Build as above (`mage -v`, `npm run build` or `npm run dev`)
-- `npm run server` to build and start the Docker stack (both Grafana and Jupyter)
-- Open [http://localhost:8888/?token=<JUPYTER_TOKEN>] (substitute the token from your
-  `.env` file) to view Jupyterlab.
-- Open [http://localhost:3000/] to view Grafana. The Jupyter datasource should already
-  be configured.
-- Click Save & test, then click the 'building a dashboard' link, then Add
-  Visualization
-- Pick Jupyter for the query source - the default query should already be filled in.
-- Click "refresh" to test execution of the default query - you should get two
-  sinewaves.
+Ensure the following system dependencies are installed on the host test machine.
+
+- [Docker]
+- [Docker Compose]
+- [git]
+- [Go Programming Language], aka "golang"
+- [Mage]
+- [NodeJS]
+
+1. Clone this repository and change directory to the root project directory for
+   the data source.
+
+   ```sh
+   git clone https://github.com/Theia-Scientific/jupyter-datasource.git && cd jupyter-datasource
+   ```
+
+2. Install frontend, [NodeJS], dependencies.
+
+   ```sh
+   npm install
+   ```
+
+3. Configure access to the private Python package index hosted at Envelope.dev.
+   This is only needed to locally build Docker images. Obtain an Envelope.dev
+   token from Theia Scientific personnel and use it in the .env file as follows,
+   where `<token>` is replaced with the token value:
+   
+   ```sh
+   echo "ENVELOPE_TOKEN=<token>" > .env
+   ```
+
+4. Add a `JUPYTER_TOKEN` to the `.env` file. The value of the environment
+   variable can be anything, but it must exist so that Grafana can communicate
+   with the Jupyter instance.
+   
+   ```sh
+   echo "JUPYTER_TOKEN=abcdefghijklmnopqrstuvwxyz0123456789" >> .env
+   ```
+
+5. Checkout the appropriate branch for a Pull Request (PR) to test:
+
+   ```sh
+   git checkout <feature-branch-name>
+   ```
+   
+   where `<feature-branch-name>` is replaced with the name of the git branch.
+
+6. Build all components.
+
+   ```sh
+   npm run build-all
+   ```
+   
+   Instead of using the [NPM] [script], the individual commands can be executed
+   from a shell terminal.
+   
+   1. Build the NodeJS frontend.
+   
+      ```sh
+      webpack -c ./webpack.config.ts --env production 
+      ```
+      
+   2. Build the Golang backend.
+  
+      ```sh
+      mage -v
+      ```
+      
+7. Build and start the Grafana and Jupyter containers.
+
+   ```sh
+   npm run server
+   ```
+   
+   or
+   
+   ```sh
+   docker compose up --build
+   ```
+
+8. Open a web browser and navigate to <http://localhost:8888>. Enter the
+   `JUPYTER_TOKEN` in the `.env` file from earlier in the form field.
+   
+9. Open another tab in the web browser and navigate to <http://localhost:3000>
+   to access Grafana.
+   
+10. Test the data source by navigating to the Jupyter data source under the
+   "Connections" menu within the Grafana web browser tab, and click on the "Save
+   & test" button.
+   
+11. Click on the "building a dashboard" link and add a visualization.
+
+12. Select the "Jupyter" data source for the query source in the query editor
+    section of the visualization. The default query should already be filled in.
+    
+13. Click "Refresh" to test the execution of the defaulty query. Two sine waves
+    should appear.
+
+[docker]: https://www.docker.com/
+[docker compose]: https://docs.docker.com/compose/
+[git]: https://git-scm.com/
+[go programming language]: https://go.dev/
+[mage]: https://magefile.org/
+[nodejs]: https://nodejs.org/en
+[npm]: https://www.npmjs.com/
+[script]: https://docs.npmjs.com/cli/v8/using-npm/scripts
