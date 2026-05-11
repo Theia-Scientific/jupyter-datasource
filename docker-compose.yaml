@@ -1,25 +1,24 @@
 services:
   grafana:
-    extends:
-      file: .config/docker-compose-base.yaml
-      service: grafana
     env_file: .env
     environment:
       GF_FEATURE_TOGGLES_ENABLE: localizationForPlugins
-    ports: !override []
+    extends:
+      file: .config/docker-compose-base.yaml
+      service: grafana
     network_mode: host
+    ports: !override []
 
   jupyter:
-    env_file: .env
     build:
       context: ./
       dockerfile: Dockerfile.jupyter
       secrets:
         - envelope_token
     container_name: 'grafana-jupyter'
+    env_file: .env
     network_mode: host
 
 secrets:
   envelope_token:
     environment: ENVELOPE_TOKEN
-
