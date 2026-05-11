@@ -75,81 +75,75 @@ type Datasource struct {
 	cancel context.CancelFunc
 }
 
+var err404 = errors.New("Not found")
+var errMissingPath = errors.New("missing 'path' argument on request")
+
 func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	response, err := p.callResource(req)
+	if err == err404 {
+		return sender.Send(&backend.CallResourceResponse{
+			Status: http.StatusNotFound,
+		})
+	}
+
+	if err != nil {
+		return sender.Send(&backend.CallResourceResponse{
+			Status: http.StatusInternalServerError,
+			Body: []byte(err.Error()),
+		})
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status: http.StatusOK,
+		Body: response,
+	})
+}
+
+func (p *Datasource) callResource(req *backend.CallResourceRequest) ([]byte, error) {
 	logger := log.New()
 	logger.Debug(fmt.Sprintf("got a resource request for %+v", req.Path))
 	switch req.Path {
   case "list": {
-		jsonData, err := (func() ([]byte, error) {
-			u, err := url.Parse(req.URL)
-			if err != nil {
-				return nil, err
-			}
-
-			m, err := url.ParseQuery(u.RawQuery)
-			if err != nil {
-				return nil, err
-			}
-
-			pathArgs := m["path"]
-			if len(pathArgs) == 0 {
-				return nil, errors.New("missing 'path' argument on request")
-			}
-
-			path := strings.TrimLeft(pathArgs[len(pathArgs)-1], "/")
-			entries, err := p.httpClient.GetListing(path)
-			if err != nil {
-				return nil, err
-			}
-
-			return json.Marshal(entries)
-		})()
-
+		u, err := url.Parse(req.URL)
 		if err != nil {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusInternalServerError,
-				Body: []byte(err.Error()),
-			})
+			return nil, err
 		}
 
-		return sender.Send(&backend.CallResourceResponse{
-			Status: http.StatusOK,
-			Body:   jsonData,
-		})
+		m, err := url.ParseQuery(u.RawQuery)
+		if err != nil {
+			return nil, err
+		}
+
+		pathArgs := m["path"]
+		if len(pathArgs) == 0 {
+			return nil, errMissingPath
+		}
+
+		path := strings.TrimLeft(pathArgs[len(pathArgs)-1], "/")
+		entries, err := p.httpClient.GetListing(path)
+		if err != nil {
+			return nil, err
+		}
+
+		return json.Marshal(entries)
 	}
 	case "notebooks": {
 		notebooks, err := p.httpClient.GetNotebooks()
-		var jsonData []byte
-		if err == nil {
-			jsonData, err = json.Marshal(notebooks)
-		}
 		if err != nil {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusInternalServerError,
-				Body: []byte(err.Error()),
-			})
-		} else {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusOK,
-				Body:   jsonData,
-			})
+			return nil, err
 		}
+
+		return json.Marshal(notebooks)
 	}
 	case "kernels": {
 		kernels, err := p.httpClient.GetKernels()
 		if err != nil {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusInternalServerError,
-				Body: []byte(err.Error()),
-			})
+			return nil, err
 		}
 
 		sessions, err := p.httpClient.GetSessions()
 		if err != nil {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusInternalServerError,
-				Body: []byte(err.Error()),
-			})
+			return nil, err
 		}
 
 		for i, k := range kernels {
@@ -161,40 +155,15 @@ func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 			}
 		}
 
-		jsonData, err := json.Marshal(kernels)
-		if err != nil {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusInternalServerError,
-				Body: []byte(err.Error()),
-			})
-		}
-
-		return sender.Send(&backend.CallResourceResponse{
-			Status: http.StatusOK,
-			Body:   jsonData,
-		})
+		return json.Marshal(kernels)
 	}
 	case "kernelspecs": {
-		kernelspecs, err := p.httpClient.GetKernelSpecs()
-		if err != nil {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusInternalServerError,
-				Body: []byte(err.Error()),
-			})
-		} else {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusOK,
-				Body:   kernelspecs,
-			})
-		}
+		return p.httpClient.GetKernelSpecs()
 	}
-	default: {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: http.StatusNotFound,
-		})
+	default: {}
 	}
-	}
-	return nil
+
+	return nil, err404
 }
 
 func getJupyterToken(settings *InstanceSettings) (string, error) {
