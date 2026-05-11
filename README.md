@@ -287,7 +287,7 @@ Ensure the following system dependencies are installed on the host test machine.
 12. Select the "Jupyter" data source for the query source in the query editor
     section of the visualization. The default query should already be filled in.
     
-13. Click "Refresh" to test the execution of the defaulty query. Two sine waves
+13. Click "Refresh" to test the execution of the default query. Two sine waves
     should appear.
 
 [docker]: https://www.docker.com/
