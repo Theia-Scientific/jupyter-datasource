@@ -6,8 +6,6 @@ services:
     extends:
       file: .config/docker-compose-base.yaml
       service: grafana
-    network_mode: host
-    ports: !override []
 
   jupyter:
     build:
@@ -15,9 +13,10 @@ services:
       dockerfile: Dockerfile.jupyter
       secrets:
         - envelope_token
-    container_name: 'grafana-jupyter'
+    container_name: 'jupyter'
     env_file: .env
-    network_mode: host
+    ports:
+      - 8888:8888/tcp
 
 secrets:
   envelope_token:
