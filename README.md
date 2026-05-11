@@ -183,9 +183,9 @@ Below you can find source code for existing app plugins and other related docume
 
 ### Development
 
-- `npm run dev` to watch/compile the .ts
-- `npm run server` to run a grafana server with this plugin in it
-- if you make golang changes: `mage -v build:linux && docker compose restart grafana`
+- Run `npm run dev` in one terminal to watch/compile the .ts.
+- In another terminal, `npm run server` to run a grafana server with this plugin in it.
+- if you make golang changes: `npm run restart` (will compile and restart the server)
 - If at some point you sign the token (e.g. via the instructions above to sign and
   install it elsewhere), subsequent debug builds will not be recognized. At
   this point you'll want to nuke the dist/ folder and rebuild/restart.
