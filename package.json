@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
-    "build-all": "webpack -c ./webpack.config.ts --env production && mage -v build:linux && mage -v build:linuxARM64",
-    "build-clean": "rm -rf dist && webpack -c ./webpack.config.ts --env production && mage -v build:linux && mage -v build:linuxARM64",
+    "build-all": "webpack -c ./webpack.config.ts --env production && mage -v",
+    "build-clean": "rm -rf dist && webpack -c ./webpack.config.ts --env production && mage -v",
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "i18n-extract": "i18next-cli extract --sync-primary",
     "test": "jest --watch --onlyChanged",
