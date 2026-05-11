@@ -24,9 +24,11 @@ jobs:
     env:
       GRAFANA_ACCESS_POLICY_TOKEN: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout source code
+      - uses: actions/checkout@v6
         with:
           persist-credentials: false
+
       - name: Setup Node.js environment
         uses: actions/setup-node@v6
         with:
@@ -121,4 +123,3 @@ jobs:
           name: ${{ steps.metadata.outputs.plugin-id }}-${{ steps.metadata.outputs.plugin-version }}
           path: ${{ steps.metadata.outputs.plugin-id }}
           retention-days: 5
-
