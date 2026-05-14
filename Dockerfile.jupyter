@@ -1,0 +1,11 @@
+FROM quay.io/jupyter/base-notebook
+
+ENV NOTEBOOK_ARGS="--ServerApp.jpserver_extensions=\"{'jupyter_server_connections':True}\""
+ARG ENVELOPE_DOMAIN=app.envelope.dev/simple/
+ARG ENVELOPE_USER=pypi
+
+## Install Jupyter Server Connections extension
+RUN --mount=type=secret,id=envelope_token,env=ENVELOPE_TOKEN \
+    index_url="https://${ENVELOPE_USER}:${ENVELOPE_TOKEN}@${ENVELOPE_DOMAIN}" && \
+    echo index_url is ${index_url} && \
+    pip install --no-cache-dir --index-url="${index_url}" jupyter-server-connections

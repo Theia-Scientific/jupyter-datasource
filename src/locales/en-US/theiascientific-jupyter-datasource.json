@@ -33,6 +33,12 @@
       "placeholder": "Enter the Jupyterlab URL, e.g. http://localhost:8888/",
       "tooltip": "Jupyterlab endpoint URL"
     },
+    "packages": {
+      "add": "Add Package",
+      "label": "Packages",
+      "placeholder": "numpy==2.4.4",
+      "tooltip": "Packages to install for every kernel"
+    },
     "rawToken": {
       "label": "Token",
       "placeholder": "Enter the token",
@@ -126,7 +132,7 @@
     },
     "kernelFormat": {
       "base": "{{name}} ({{id}})",
-      "notebook": "{{name}} ({{id}}) [{{notebook_path}}]"
+      "notebook": "{{name}} ({{id}}) [{{-notebook_path}}]"
     },
     "kernelId": {
       "label": "Kernel ID",

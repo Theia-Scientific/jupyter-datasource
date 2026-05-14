@@ -1,5 +1,5 @@
 import React, { useMemo, ChangeEvent } from 'react';
-import { Combobox, ComboboxOption, InlineField, Input, TextArea } from '@grafana/ui';
+import { Button, Combobox, ComboboxOption, InlineField, InlineFieldRow, Input, TextArea } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { AuthType, ConnectionType, Method, MyDataSourceOptions, MySecureJsonData } from '../types';
 import { t } from '@grafana/i18n';
@@ -184,6 +184,58 @@ export function ConfigEditor(props: Props) {
           />
         </InlineField>
         }
+      <InlineField label={t('configEditor.packages.label', 'Packages')} labelWidth={20} interactive tooltip={t('configEditor.packages.tooltip', 'Packages to install for every kernel')}>
+      <>
+      { (jsonData.packages||[]).map((pkg, index) => (
+        <InlineFieldRow key={index}>
+          <Input
+            id={`config-editor-packages-${index}`}
+            onChange={(event: ChangeEvent<HTMLInputElement>) =>
+              onOptionsChange({
+                ...options,
+                jsonData: {
+                  ...jsonData,
+                  packages: jsonData.packages.map((el,i) => (
+                    index === i ? event.target.value : el
+                  ))
+                },
+              })
+            }
+            value={pkg}
+            placeholder={t('configEditor.packages.placeholder', 'numpy==2.4.4')}
+            width={40}
+          />
+          <Button
+            icon="minus"
+            aria-label={t('configEditor.packages.remove', 'Remove Package')}
+            variant="destructive"
+            onClick={() => onOptionsChange({
+                ...options,
+                jsonData: {
+                  ...jsonData,
+                  packages: jsonData.packages.slice(0,index).concat(jsonData.packages.slice(index+1))
+                },
+              })
+            }
+          />
+        </InlineFieldRow>
+      )) }
+      <Button
+        onClick={() =>
+          onOptionsChange({
+            ...options,
+            jsonData: {
+              ...jsonData,
+              packages: (jsonData.packages||[]).concat([''])
+            },
+          })
+        }
+        icon="plus"
+      >
+        {t('configEditor.packages.add', 'Add Package')}
+      </Button>
+    </>
+      </InlineField>
       <InlineField label={t('configEditor.importStatements.label', 'Import Statements')} labelWidth={20} interactive tooltip={t('configEditor.importStatements.tooltip', 'Import statements to run for every kernel')}>
         <TextArea
           style={{resize: 'both'}}

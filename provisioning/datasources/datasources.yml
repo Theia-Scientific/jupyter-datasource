@@ -10,9 +10,7 @@ datasources:
     editable: true
     jsonData:
       connectionType: AUTO
-      authType: FETCH
-      fetchRoute: http://localhost:7654/tokens/jupyter
-      fetchMethod: PUT
-      fetchToken: '${SYSTEM_SERVICE_TOKEN}'
-      jupyterUrl: http://localhost:8888
+      authType: RAW
+      rawToken: '${JUPYTER_TOKEN}'
+      jupyterUrl: http://localhost:8888/api
       importStatements: 'from IPython.display import JSON'

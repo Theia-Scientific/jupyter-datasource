@@ -50,7 +50,7 @@ func main() {
 		}
 		expr = strings.TrimRight(expr, "\r\n")
 		if strings.HasPrefix(expr, "%") || strings.HasPrefix(expr, "!") {
-			err = js.Initialize(expr)
+			err = js.Initialize(nil, expr)
 			if err != nil {
 				fmt.Printf("[ERROR] %s: %s\n", expr, err.Error())
 			}

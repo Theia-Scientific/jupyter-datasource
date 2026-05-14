@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
+    "build:all": "webpack -c ./webpack.config.ts --env production && mage -v",
+    "build:clean": "rm -rf dist && webpack -c ./webpack.config.ts --env production && mage -v",
     "dev": "webpack -w -c ./webpack.config.ts --env development",
     "i18n-extract": "i18next-cli extract --sync-primary",
     "test": "jest --watch --onlyChanged",
@@ -11,6 +13,7 @@
     "lint": "eslint --cache .",
     "lint:fix": "npm run lint -- --fix && prettier --write --list-different .",
     "e2e": "playwright test",
+    "restart": "mage -v && docker compose restart grafana",
     "server": "docker compose up --build",
     "sign": "npx --yes @grafana/sign-plugin@latest"
   },

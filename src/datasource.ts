@@ -3,8 +3,6 @@ import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
 import { KernelSpec, KernelSpecResponse, MyQuery, MyDataSourceOptions, DEFAULT_QUERY, PathEntry } from './types';
 
-import { v4 as uuidv4 } from 'uuid';
-
 export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptions> {
   options: MyDataSourceOptions;
 
@@ -14,7 +12,7 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
   }
 
   getDefaultQuery(_: CoreApp): Partial<MyQuery> {
-    return { ...DEFAULT_QUERY, uuid: uuidv4() };
+    return DEFAULT_QUERY;
   }
 
   applyTemplateVariables(query: MyQuery, scopedVars: ScopedVars) {
@@ -25,22 +23,22 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
 
   filterQuery(query: MyQuery): boolean {
     // if no query has been provided, prevent the query from being executed
-    return true;
+    return query.uuid !== undefined;
   }
 
   getNotebooks(): Promise<PathEntry[]> {
-    return this.getResource('/notebooks');
+    return this.getResource('notebooks');
   }
 
   getListing(path: string): Promise<PathEntry[]> {
-    return this.getResource(`/list?path=${path}`);
+    return this.getResource(`list?path=${path}`);
   }
 
   getKernels(): Promise<KernelSpec[]> {
-    return this.getResource('/kernels');
+    return this.getResource('kernels');
   }
 
   getKernelSpecs(): Promise<KernelSpecResponse> {
-    return this.getResource('/kernelspecs');
+    return this.getResource('kernelspecs');
   }
 }

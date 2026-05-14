@@ -39,6 +39,7 @@ type InstanceSettings struct {
 	RawToken         *string `json:"rawToken"`
 	JupyterUrl       *string `json:"jupyterUrl"`
 	ImportStatements *string `json:"importStatements"`
+	Packages         *[]string `json:"packages"`
 	connectionStrategy ConnectionStrategy
 }
 
@@ -411,7 +412,7 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 
 	if code != sessionState.code {
 		logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
-		err = sessionState.session.Initialize(code)
+		err = sessionState.session.Initialize(settings.Packages, code)
 		if err != nil {
 			delete(d.sessions, *qm.Uuid)
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))

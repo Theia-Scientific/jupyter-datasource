@@ -15,7 +15,8 @@ jobs:
       contents: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout source code
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
