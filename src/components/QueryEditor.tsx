@@ -174,7 +174,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         </InlineField>
       }
       { connectionType === ConnectionType.Info &&
-        <InlineField label={t('queryEditor.connectionInfo.label', 'Connection Info')} labelWidth={16} tooltip={t('queryEditor.connectionInfo.tooltip', 'Connection file from Jupyterlab')}>
+        <InlineField label={t('queryEditor.connectionInfo.label', 'Connection Info')} labelWidth={16} tooltip={t('queryEditor.connectionInfo.tooltip', 'Connection file from JupyterLab')}>
           <TextArea
             style={{resize: 'both'}}
             id="query-editor-connection-info"

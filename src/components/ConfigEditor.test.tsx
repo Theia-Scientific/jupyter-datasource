@@ -48,7 +48,7 @@ describe('Config Editor', () => {
       expect(screen.queryByLabelText('Token URL')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Method')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Fetch Token')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Jupyterlab URL')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('JupyterLab URL')).not.toBeInTheDocument();
     });
   });
 
@@ -63,7 +63,7 @@ describe('Config Editor', () => {
       expect(screen.queryByLabelText('Auth Type')).toBeInTheDocument();
       expect(screen.queryByText('Packages')).toBeInTheDocument();
       expect(screen.queryByLabelText('Import Statements')).toBeInTheDocument();
-      expect(screen.queryByLabelText('Jupyterlab URL')).toBeInTheDocument();
+      expect(screen.queryByLabelText('JupyterLab URL')).toBeInTheDocument();
 
       // unexpected
       expect(screen.queryByLabelText('Token')).not.toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('Config Editor', () => {
         expect(screen.queryByLabelText('Auth Type')).toBeInTheDocument();
         expect(screen.queryByText('Packages')).toBeInTheDocument();
         expect(screen.queryByLabelText('Import Statements')).toBeInTheDocument();
-        expect(screen.queryByLabelText('Jupyterlab URL')).toBeInTheDocument();
+        expect(screen.queryByLabelText('JupyterLab URL')).toBeInTheDocument();
         expect(screen.queryByLabelText('Token')).toBeInTheDocument();
 
         // unexpected
@@ -104,7 +104,7 @@ describe('Config Editor', () => {
         expect(screen.queryByLabelText('Auth Type')).toBeInTheDocument();
         expect(screen.queryByText('Packages')).toBeInTheDocument();
         expect(screen.queryByLabelText('Import Statements')).toBeInTheDocument();
-        expect(screen.queryByLabelText('Jupyterlab URL')).toBeInTheDocument();
+        expect(screen.queryByLabelText('JupyterLab URL')).toBeInTheDocument();
         expect(screen.queryByLabelText('Token URL')).toBeInTheDocument();
         expect(screen.queryByLabelText('Method')).toBeInTheDocument();
         expect(screen.queryByLabelText('Fetch Token')).toBeInTheDocument();
