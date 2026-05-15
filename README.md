@@ -34,10 +34,10 @@ mage -v build:linuxARM64
 
 1. Sign the plugin
 
-pls don't leak this!!  this is my precious token
+Get the signing token from Ben (or let CI do this part).
 
 ```bash
-export GRAFANA_ACCESS_POLICY_TOKEN=glc_eyJvIjoiMTY1NzYyNCIsIm4iOiJwbHVnaW4tc2lnbmluZy1ob25rIiwiayI6IlZ3OERFZjZQcW81RDgwME1KOE9RbzQ1NCIsIm0iOnsiciI6InVzIn19
+export GRAFANA_ACCESS_POLICY_TOKEN=...
 npx @grafana/sign-plugin@latest --rootUrls https://localhost/,http://localhost:3000/
 ```
 
