@@ -149,6 +149,9 @@
     "refreshKernels": {
       "label": "Refresh Kernels"
     },
+    "runQuery": {
+      "label": "Run Query"
+    },
     "source": {
       "code": "Enter code below...",
       "label": "Source",

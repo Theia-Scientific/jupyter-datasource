@@ -51,8 +51,8 @@ describe('Query Editor', () => {
     })),
   });
 
-  const getComponent = ({query, datasource, onChange}) => {
-    return <QueryEditor datasource={datasource} query={query} onChange={onChange} />;
+  const getComponent = ({query, datasource, onChange = jest.fn(), onRunQuery = jest.fn()}) => {
+    return <QueryEditor datasource={datasource} query={query} onChange={onChange} onRunQuery={onRunQuery}/>;
   };
 
   const renderWithoutErrors = async (component: React.ReactElement) => {
@@ -99,6 +99,7 @@ describe('Query Editor', () => {
     it('should show the right things', async () => {
       await renderWithoutErrors(getComponent({query: baseQuery, datasource, onChange}));
 
+      expect(screen.queryByText('Run Query')).toBeInTheDocument();
       expect(screen.queryByLabelText('Kernel ID')).toBeInTheDocument();
       expect(screen.queryByLabelText('Kernel Type')).toBeInTheDocument();
       expect(screen.queryByLabelText('Kernel Type')).toHaveRole('combobox');
@@ -130,5 +131,15 @@ describe('Query Editor', () => {
     // @TODO figure out how to use fireEvent to pick the 'choose notebook'
     // option from the dropdown, do a rerender, and make sure that the
     // filetree is visible, and goes away again when you pick a notebook
+  });
+
+  describe('Run Query', () => {
+    const datasource = mockDatasource();
+    const onRunQuery = jest.fn();
+    it('should run the query', async () => {
+      await renderWithoutErrors(getComponent({query: {}, datasource, onRunQuery}));
+      fireEvent.click(screen.queryByText('Run Query'));
+      expect(onRunQuery).toHaveBeenCalled();
+    });
   });
 });

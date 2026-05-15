@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 import React, { ChangeEvent, useState, useEffect } from 'react';
 import { useLatest } from 'react-use';
-import { Button, InlineField, InlineFieldRow, TextArea, Input, Combobox, ComboboxOption, CodeEditor } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, TextArea, Input, Combobox, ComboboxOption, CodeEditor} from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable } from '../types';
+import { FlexItem } from '@grafana/plugin-ui';
 import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
 import { v4 as uuidv4 } from 'uuid';
 import { FilesList } from './FilesList';
@@ -121,32 +122,45 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({ ...query, notebook: f.path });
   };
 
+  const runQueryButton = (
+    <>
+      <FlexItem grow={1} />
+      <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()}>
+        {t('queryEditor.runQuery.label', 'Run Query')}
+      </Button>
+    </>
+  );
+
   return (
-      <>
+    <>
       { connectionType === ConnectionType.Auto &&
         <InlineFieldRow>
-        <InlineField label={t('queryEditor.kernelId.label', 'Kernel ID')} labelWidth={16} tooltip={t('queryEditor.kernelId.tooltip', 'Kernel ID for executing query')}>
-            <Combobox
-              id="query-editor-kernel-id"
-              options={kernels}
-              onChange={onKernelIdChange}
-              value={query.kernelId}
-              width={40}
-            />
-          </InlineField>
+          <InlineField label={t('queryEditor.kernelId.label', 'Kernel ID')} labelWidth={16} tooltip={t('queryEditor.kernelId.tooltip', 'Kernel ID for executing query')}>
+              <Combobox
+                id="query-editor-kernel-id"
+                options={kernels}
+                onChange={onKernelIdChange}
+                value={query.kernelId}
+                width={40}
+              />
+            </InlineField>
           <Button aria-label={t('queryEditor.refreshKernels.label', 'Refresh Kernels')} icon="sync" onClick={refreshKernels} />
+          {runQueryButton}
         </InlineFieldRow>
       }
       { connectionType === ConnectionType.Info &&
-        <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
-          <Input
-            id="query-editor-kernel-type-info"
-            onChange={onKernelTypeChangeInfo}
-            value={query.kernelType}
-            placeholder="python3"
-            width={40}
-          />
-        </InlineField>
+        <InlineFieldRow>
+          <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
+            <Input
+              id="query-editor-kernel-type-info"
+              onChange={onKernelTypeChangeInfo}
+              value={query.kernelType}
+              placeholder="python3"
+              width={40}
+            />
+          </InlineField>
+          {runQueryButton}
+        </InlineFieldRow>
       }
       { connectionType === ConnectionType.Auto &&
         <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
