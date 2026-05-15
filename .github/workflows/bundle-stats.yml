@@ -16,6 +16,7 @@ permissions:
 
 jobs:
   compare:
+    runs-on: [self-hosted, linux, X64]
     runs-on: ubuntu-latest
 
     steps:
