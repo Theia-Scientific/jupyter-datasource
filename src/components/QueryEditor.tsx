@@ -15,7 +15,7 @@ import { t } from '@grafana/i18n';
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 function emptyNotebook(query: MyQuery) {
-  return query.notebook === undefined || query.notebook === '';
+  return query.notebook === '';
 }
 
 const ENTER_CODE = "<enter code>";
@@ -29,12 +29,15 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   // https://github.com/grafana/grafana/issues/81687
   const latestQuery = useLatest(query);
 
-  // give every query a uuid
+  // give every query a uuid (and defaults for all its props)
   useEffect(() => {
     if (query.uuid === undefined) {
-      onChange({...DEFAULT_QUERY, ...query, uuid: uuidv4() })
+      // The uuid module lies about its return types - it says that v4 returns a Uint8Array,
+      // but in fact it only returns that if you provide a buf parameter, which we don't.
+      // By default, it returns a string.  So we have to lie to the typechecker here.
+      onChange({...DEFAULT_QUERY, ...query, uuid: uuidv4() as unknown as string })
     }
-  }, [query, datasource, onChange]);
+  }, [query, onChange]);
 
   const onKernelIdChange = (selectableValue: ComboboxOption<string>) => {
     onChange({ ...query, kernelId: selectableValue.value });
@@ -61,10 +64,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   };
 
   let [kernels, setKernels] = useState<Array<ComboboxOption<string>>>([]);
-  if (kernels.length > 0 && query.kernelId === undefined) {
-    onChange({...query, kernelId: ''});
-  }
-
   const refreshKernels = () => {
     datasource.getKernels().then((response: KernelSpec[]) => {
       const labelForSpec = (ks: KernelSpec): string => {
@@ -91,11 +90,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   useEffect(refreshKernels, [datasource]);
 
   let [kernelTypes, setKernelTypes] = useState<Array<ComboboxOption<string>>>([]);
-  let [defaultKernelType, setDefaultKernelType] = useState<string|undefined>(undefined);
-  if (defaultKernelType !== undefined && query.kernelType === undefined) {
-    onChange({...query, kernelType: defaultKernelType});
-  }
-
   useEffect(() => {
     datasource.getKernelSpecs().then((response: KernelSpecResponse) => {
       let kernelTypes: Array<ComboboxOption<string>> =
@@ -104,7 +98,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           value: spec.name
         }));
       setKernelTypes(kernelTypes);
-      setDefaultKernelType(response.default);
     });
   }, [datasource]);
 

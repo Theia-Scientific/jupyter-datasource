@@ -1,9 +1,9 @@
 jest.mock('@grafana/ui');
 
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { MyDataSourceOptions, MySecureJsonData, ConnectionType, AuthType } from '@theia/types';
+import { type DataSource } from '@theia/datasource';
+import { AuthType, ConnectionType, MyQuery } from '@theia/types';
 import { TEST_IDS } from '@theia/constants';
-import { DataSourceSettings } from '@grafana/data';
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -12,14 +12,23 @@ import { QueryEditor } from './QueryEditor';
 jest.mock('uuid');
 
 describe('Query Editor', () => {
-  const baseQuery = {
+  const baseQuery: MyQuery = {
     uuid: 'k77MQ421TA649b78oqsJBO945x29Y9V7',
     kernelType: "python3",
+    connectionInfo: "",
     kernelId: "",
+    notebook: "",
+    code: "", 
+    vars: [], 
+    refId: 'A'
   };
 
   const mockDatasource = () => ({
-    options: { connectionType: ConnectionType.Auto },
+    options: {
+      connectionType: ConnectionType.Auto,
+      authType: AuthType.None,
+      packages: [],
+    },
 
     getListing: jest.fn(async (_path) => [{
       type: 'notebook',
@@ -51,8 +60,8 @@ describe('Query Editor', () => {
     })),
   });
 
-  const getComponent = ({query, datasource, onChange = jest.fn(), onRunQuery = jest.fn()}) => {
-    return <QueryEditor datasource={datasource} query={query} onChange={onChange} onRunQuery={onRunQuery}/>;
+  const getComponent = ({query, datasource, onChange, onRunQuery}: {query: MyQuery, datasource: any, onChange?: () => void, onRunQuery?: () => void}) => {
+    return <QueryEditor datasource={datasource as DataSource} query={query} onChange={onChange ?? jest.fn()} onRunQuery={onRunQuery ?? jest.fn()}/>;
   };
 
   const renderWithoutErrors = async (component: React.ReactElement) => {
@@ -65,10 +74,15 @@ describe('Query Editor', () => {
     const datasource = mockDatasource();
     const onChange = jest.fn();
     it('should set uuid', async () => {
-      uuidv4.mockReturnValue('<uuid>');
-      await renderWithoutErrors(getComponent({query: {}, datasource, onChange}));
+      const uuidv4mock = jest.mocked(uuidv4);
+      // The uuid module lies about its return types - it says that v4 returns a Uint8Array,
+      // but in fact it only returns that if you provide a buf parameter, which we don't.
+      // By default, it returns a string.  So we have to lie to the typechecker here.
+      uuidv4mock.mockReturnValue('<uuid>' as unknown as Uint8Array);
+      const query = {...baseQuery, uuid: undefined} as any as MyQuery;
+      await renderWithoutErrors(getComponent({query, datasource, onChange}));
 
-      expect(uuidv4).toHaveBeenCalled();
+      expect(uuidv4mock).toHaveBeenCalled();
       expect(onChange).toHaveBeenCalledWith(
         expect.objectContaining({
           uuid: '<uuid>',
@@ -81,10 +95,12 @@ describe('Query Editor', () => {
     const datasource = mockDatasource();
     const onChange = jest.fn();
     it('should not set uuid', async () => {
-      uuidv4.mockReturnValue('<uuid>');
+      const uuidv4mock = jest.mocked(uuidv4);
+      // same lie, see above.
+      uuidv4mock.mockReturnValue('<uuid>' as unknown as Uint8Array);
       await renderWithoutErrors(getComponent({query: baseQuery, datasource, onChange}));
 
-      expect(uuidv4).not.toHaveBeenCalled();
+      expect(uuidv4mock).not.toHaveBeenCalled();
       expect(onChange).not.toHaveBeenCalledWith(
         expect.objectContaining({
           uuid: '<uuid>',
@@ -109,9 +125,10 @@ describe('Query Editor', () => {
     });
 
     describe('with no notebook set', () => {
-      const query = {...baseQuery, notebook: undefined};
+      const datasource = mockDatasource();
+      const query = {...baseQuery, notebook: ''};
       it('should show the code editor', async () => {
-        await renderWithoutErrors(getComponent({query: baseQuery, datasource, onChange}));
+        await renderWithoutErrors(getComponent({query, datasource, onChange}));
         expect(screen.queryByLabelText('Source')).toBeInTheDocument();
         expect(screen.queryByTestId(TEST_IDS.filesList.root)).not.toBeInTheDocument();
         expect(screen.queryByText('Code')).toBeInTheDocument();
@@ -119,6 +136,7 @@ describe('Query Editor', () => {
     });
 
     describe('with a notebook set', () => {
+      const datasource = mockDatasource();
       const query = {...baseQuery, notebook: 'nb.ipynb'};
       it('should not show the code editor', async () => {
         await renderWithoutErrors(getComponent({query, datasource, onChange}));
@@ -137,8 +155,8 @@ describe('Query Editor', () => {
     const datasource = mockDatasource();
     const onRunQuery = jest.fn();
     it('should run the query', async () => {
-      await renderWithoutErrors(getComponent({query: {}, datasource, onRunQuery}));
-      fireEvent.click(screen.queryByText('Run Query'));
+      await renderWithoutErrors(getComponent({query: baseQuery, datasource, onRunQuery}));
+      fireEvent.click(await screen.findByText('Run Query'));
       expect(onRunQuery).toHaveBeenCalled();
     });
   });

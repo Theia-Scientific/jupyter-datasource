@@ -2,10 +2,10 @@ import { DataSourceJsonData } from '@grafana/data';
 import { DataQuery } from '@grafana/schema';
 
 export interface MyQuery extends DataQuery {
-  uuid?: string;
+  uuid: string;
   kernelId: string;
   kernelType: string;
-  connectionInfo?: string;
+  connectionInfo: string;
   notebook: string;
   code: string;
   vars: QueryFieldVariable[];
@@ -29,11 +29,10 @@ export interface QueryFieldVariable {
 }
 
 export const DEFAULT_QUERY: Partial<MyQuery> = {
-  uuid: undefined,
-  kernelId: undefined,
+  kernelId: '',
   kernelType: 'python3',
-  connectionInfo: undefined,
-  notebook: undefined,
+  connectionInfo: '',
+  notebook: '',
   vars: [
     { name: 'RANGE_MAX', value: '1000' },
     { name: 'FREQ0', value: '7' },
@@ -100,7 +99,7 @@ export interface KernelSpec {
   last_activity: string;
   execution_state: string;
   connections: number;
-  notebook_path?: number;
+  notebook_path?: string;
 }
 
 export interface KernelSpecification {
@@ -108,9 +107,11 @@ export interface KernelSpecification {
   spec: {
     display_name: string;
   };
-  resources: {
-    "logo-svg": string
-  };
+  // we get the following in the response and could potentially
+  // render it in the editor:
+  // resources: {
+  //   "logo-svg": string
+  // };
 }
 
 export interface KernelSpecResponse {
