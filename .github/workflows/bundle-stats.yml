@@ -16,7 +16,7 @@ permissions:
 
 jobs:
   compare:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, X64]
 
     steps:
       - name: Checkout repository

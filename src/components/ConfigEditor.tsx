@@ -11,7 +11,7 @@ export function ConfigEditor(props: Props) {
   const { jsonData } = options;
 
   const CONN_OPTIONS = useMemo(() => [
-    {label: t('enums.connOptions.automatic.name', 'Automatic'), value: ConnectionType.Auto, description: t('enums.connOptions.automatic.desc', 'Start or connect to a kernel via the Jupyterlab API')},
+    {label: t('enums.connOptions.automatic.name', 'Automatic'), value: ConnectionType.Auto, description: t('enums.connOptions.automatic.desc', 'Start or connect to a kernel via the JupyterLab API')},
     {label: t('enums.connOptions.connectionInfo.name', 'Connection Info'), value: ConnectionType.Info, description: t('enums.connOptions.connectionInfo.desc', 'Paste JSON connection info directly')},
   ], []);
 
@@ -130,7 +130,7 @@ export function ConfigEditor(props: Props) {
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto && jsonData.authType === AuthType.RawToken &&
-        <InlineField label={t('configEditor.rawToken.label', 'Token')} labelWidth={20} interactive tooltip={t('configEditor.rawToken.tooltip', 'Token for Jupyterlab auth')}>
+        <InlineField label={t('configEditor.rawToken.label', 'Token')} labelWidth={20} interactive tooltip={t('configEditor.rawToken.tooltip', 'Token for JupyterLab auth')}>
           <Input
             id="config-editor-raw-token"
             onChange={onRawTokenChange}
@@ -141,7 +141,7 @@ export function ConfigEditor(props: Props) {
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto && jsonData.authType === AuthType.Fetch &&
-        <InlineField label={t('configEditor.tokenUrl.label', 'Token URL')} labelWidth={20} interactive tooltip={t('configEditor.tokenUrl.tooltip', 'URL to fetch the Jupyterlab token from')}>
+        <InlineField label={t('configEditor.tokenUrl.label', 'Token URL')} labelWidth={20} interactive tooltip={t('configEditor.tokenUrl.tooltip', 'URL to fetch the JupyterLab token from')}>
           <Input
             id="config-editor-route"
             onChange={onRouteChange}
@@ -152,7 +152,7 @@ export function ConfigEditor(props: Props) {
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto && jsonData.authType === AuthType.Fetch &&
-        <InlineField label={t('configEditor.tokenMethod.label', 'Method')} labelWidth={20} interactive tooltip={t('configEditor.tokenMethod.tooltip', 'HTTP method for fetching the Jupyterlab token')}>
+        <InlineField label={t('configEditor.tokenMethod.label', 'Method')} labelWidth={20} interactive tooltip={t('configEditor.tokenMethod.tooltip', 'HTTP method for fetching the JupyterLab token')}>
           <Combobox
             id="config-editor-method"
             options={METHOD_OPTIONS}
@@ -163,7 +163,7 @@ export function ConfigEditor(props: Props) {
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto && jsonData.authType === AuthType.Fetch &&
-        <InlineField label={t('configEditor.fetchToken.label', 'Fetch Token')} labelWidth={20} interactive tooltip={t('configEditor.fetchToken.tooltip', 'Bearer token for fetching the Jupyterlab token')}>
+        <InlineField label={t('configEditor.fetchToken.label', 'Fetch Token')} labelWidth={20} interactive tooltip={t('configEditor.fetchToken.tooltip', 'Bearer token for fetching the JupyterLab token')}>
           <Input
             id="config-editor-fetch-token"
             onChange={onFetchTokenChange}
@@ -174,12 +174,12 @@ export function ConfigEditor(props: Props) {
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto &&
-        <InlineField label={t('configEditor.jupyterUrl.label', 'Jupyterlab URL')} labelWidth={20} interactive tooltip={t('configEditor.jupyterUrl.tooltip', 'Jupyterlab endpoint URL')}>
+        <InlineField label={t('configEditor.jupyterUrl.label', 'JupyterLab URL')} labelWidth={20} interactive tooltip={t('configEditor.jupyterUrl.tooltip', 'JupyterLab endpoint URL')}>
           <Input
             id="config-jupyter-url"
             onChange={onJupyterUrlChange}
             value={jsonData.jupyterUrl}
-            placeholder={t('configEditor.jupyterUrl.placeholder', 'Enter the Jupyterlab URL, e.g. http://localhost:8888/')}
+            placeholder={t('configEditor.jupyterUrl.placeholder', 'Enter the JupyterLab URL, e.g. http://localhost:8888/')}
             width={40}
           />
         </InlineField>

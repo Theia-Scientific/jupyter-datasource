@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import React, { ChangeEvent, useState, useEffect } from 'react';
 import { useLatest } from 'react-use';
-import { Button, InlineField, InlineFieldRow, TextArea, Input, Combobox, ComboboxOption, CodeEditor } from '@grafana/ui';
+import { Button, InlineField, InlineFieldRow, TextArea, Input, Combobox, ComboboxOption, CodeEditor} from '@grafana/ui';
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable } from '../types';
@@ -14,7 +14,7 @@ import { t } from '@grafana/i18n';
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 function emptyNotebook(query: MyQuery) {
-  return query.notebook === undefined || query.notebook === '';
+  return query.notebook === '';
 }
 
 const ENTER_CODE = "<enter code>";
@@ -28,12 +28,15 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   // https://github.com/grafana/grafana/issues/81687
   const latestQuery = useLatest(query);
 
-  // give every query a uuid
+  // give every query a uuid (and defaults for all its props)
   useEffect(() => {
     if (query.uuid === undefined) {
-      onChange({...DEFAULT_QUERY, ...query, uuid: uuidv4() })
+      // The uuid module lies about its return types - it says that v4 returns a Uint8Array,
+      // but in fact it only returns that if you provide a buf parameter, which we don't.
+      // By default, it returns a string.  So we have to lie to the typechecker here.
+      onChange({...DEFAULT_QUERY, ...query, uuid: uuidv4() as unknown as string })
     }
-  }, [query, datasource, onChange]);
+  }, [query, onChange]);
 
   const onKernelIdChange = (selectableValue: ComboboxOption<string>) => {
     onChange({ ...query, kernelId: selectableValue.value });
@@ -60,10 +63,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   };
 
   let [kernels, setKernels] = useState<Array<ComboboxOption<string>>>([]);
-  if (kernels.length > 0 && query.kernelId === undefined) {
-    onChange({...query, kernelId: ''});
-  }
-
   const refreshKernels = () => {
     datasource.getKernels().then((response: KernelSpec[]) => {
       const labelForSpec = (ks: KernelSpec): string => {
@@ -90,11 +89,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   useEffect(refreshKernels, [datasource]);
 
   let [kernelTypes, setKernelTypes] = useState<Array<ComboboxOption<string>>>([]);
-  let [defaultKernelType, setDefaultKernelType] = useState<string|undefined>(undefined);
-  if (defaultKernelType !== undefined && query.kernelType === undefined) {
-    onChange({...query, kernelType: defaultKernelType});
-  }
-
   useEffect(() => {
     datasource.getKernelSpecs().then((response: KernelSpecResponse) => {
       let kernelTypes: Array<ComboboxOption<string>> =
@@ -103,7 +97,6 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           value: spec.name
         }));
       setKernelTypes(kernelTypes);
-      setDefaultKernelType(response.default);
     });
   }, [datasource]);
 
@@ -121,32 +114,45 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     onChange({ ...query, notebook: f.path });
   };
 
+  const runQueryButton = (
+    <>
+      <div style={{display: "block", flexGrow: 1}} />
+      <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()}>
+        {t('queryEditor.runQuery.label', 'Run Query')}
+      </Button>
+    </>
+  );
+
   return (
-      <>
+    <>
       { connectionType === ConnectionType.Auto &&
         <InlineFieldRow>
-        <InlineField label={t('queryEditor.kernelId.label', 'Kernel ID')} labelWidth={16} tooltip={t('queryEditor.kernelId.tooltip', 'Kernel ID for executing query')}>
-            <Combobox
-              id="query-editor-kernel-id"
-              options={kernels}
-              onChange={onKernelIdChange}
-              value={query.kernelId}
-              width={40}
-            />
-          </InlineField>
+          <InlineField label={t('queryEditor.kernelId.label', 'Kernel ID')} labelWidth={16} tooltip={t('queryEditor.kernelId.tooltip', 'Kernel ID for executing query')}>
+              <Combobox
+                id="query-editor-kernel-id"
+                options={kernels}
+                onChange={onKernelIdChange}
+                value={query.kernelId}
+                width={40}
+              />
+            </InlineField>
           <Button aria-label={t('queryEditor.refreshKernels.label', 'Refresh Kernels')} icon="sync" onClick={refreshKernels} />
+          {runQueryButton}
         </InlineFieldRow>
       }
       { connectionType === ConnectionType.Info &&
-        <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
-          <Input
-            id="query-editor-kernel-type-info"
-            onChange={onKernelTypeChangeInfo}
-            value={query.kernelType}
-            placeholder="python3"
-            width={40}
-          />
-        </InlineField>
+        <InlineFieldRow>
+          <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
+            <Input
+              id="query-editor-kernel-type-info"
+              onChange={onKernelTypeChangeInfo}
+              value={query.kernelType}
+              placeholder="python3"
+              width={40}
+            />
+          </InlineField>
+          {runQueryButton}
+        </InlineFieldRow>
       }
       { connectionType === ConnectionType.Auto &&
         <InlineField label={t('queryEditor.kernelType.label', 'Kernel Type')} labelWidth={16} tooltip={t('queryEditor.kernelType.tooltip', 'Kernel type (e.g. python3)')}>
@@ -160,7 +166,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         </InlineField>
       }
       { connectionType === ConnectionType.Info &&
-        <InlineField label={t('queryEditor.connectionInfo.label', 'Connection Info')} labelWidth={16} tooltip={t('queryEditor.connectionInfo.tooltip', 'Connection file from Jupyterlab')}>
+        <InlineField label={t('queryEditor.connectionInfo.label', 'Connection Info')} labelWidth={16} tooltip={t('queryEditor.connectionInfo.tooltip', 'Connection file from JupyterLab')}>
           <TextArea
             style={{resize: 'both'}}
             id="query-editor-connection-info"

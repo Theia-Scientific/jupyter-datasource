@@ -21,7 +21,7 @@
     "fetchToken": {
       "label": "Fetch Token",
       "placeholder": "Enter the Bearer token for fetching the Jupyter token",
-      "tooltip": "Bearer token for fetching the Jupyterlab token"
+      "tooltip": "Bearer token for fetching the JupyterLab token"
     },
     "importStatements": {
       "label": "Import Statements",
@@ -29,9 +29,9 @@
       "tooltip": "Import statements to run for every kernel"
     },
     "jupyterUrl": {
-      "label": "Jupyterlab URL",
-      "placeholder": "Enter the Jupyterlab URL, e.g. http://localhost:8888/",
-      "tooltip": "Jupyterlab endpoint URL"
+      "label": "JupyterLab URL",
+      "placeholder": "Enter the JupyterLab URL, e.g. http://localhost:8888/",
+      "tooltip": "JupyterLab endpoint URL"
     },
     "packages": {
       "add": "Add Package",
@@ -42,16 +42,16 @@
     "rawToken": {
       "label": "Token",
       "placeholder": "Enter the token",
-      "tooltip": "Token for Jupyterlab auth"
+      "tooltip": "Token for JupyterLab auth"
     },
     "tokenMethod": {
       "label": "Method",
-      "tooltip": "HTTP method for fetching the Jupyterlab token"
+      "tooltip": "HTTP method for fetching the JupyterLab token"
     },
     "tokenUrl": {
       "label": "Token URL",
       "placeholder": "Enter the token URL, e.g. http://localhost/tokens/jupyter",
-      "tooltip": "URL to fetch the Jupyterlab token from"
+      "tooltip": "URL to fetch the JupyterLab token from"
     }
   },
   "enums": {
@@ -71,7 +71,7 @@
     },
     "connOptions": {
       "automatic": {
-        "desc": "Start or connect to a kernel via the Jupyterlab API",
+        "desc": "Start or connect to a kernel via the JupyterLab API",
         "name": "Automatic"
       },
       "connectionInfo": {
@@ -128,7 +128,7 @@
     "connectionInfo": {
       "label": "Connection Info",
       "placeholder": "Enter connection info",
-      "tooltip": "Connection file from Jupyterlab"
+      "tooltip": "Connection file from JupyterLab"
     },
     "kernelFormat": {
       "base": "{{name}} ({{id}})",
@@ -148,6 +148,9 @@
     },
     "refreshKernels": {
       "label": "Refresh Kernels"
+    },
+    "runQuery": {
+      "label": "Run Query"
     },
     "source": {
       "code": "Enter code below...",
