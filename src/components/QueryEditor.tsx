@@ -5,7 +5,6 @@ import { Button, InlineField, InlineFieldRow, TextArea, Input, Combobox, Combobo
 import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable } from '../types';
-import { FlexItem } from '@grafana/plugin-ui';
 import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
 import { v4 as uuidv4 } from 'uuid';
 import { FilesList } from './FilesList';
@@ -117,7 +116,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
 
   const runQueryButton = (
     <>
-      <FlexItem grow={1} />
+      <div style={{display: "block", flexGrow: 1}} />
       <Button icon="play" variant="primary" size="sm" onClick={() => onRunQuery()}>
         {t('queryEditor.runQuery.label', 'Run Query')}
       </Button>
