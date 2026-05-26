@@ -242,7 +242,7 @@ Ensure the following system dependencies are installed on the host test machine.
 6. Build all components.
 
    ```sh
-   npm run build-all
+   npm run build:all
    ```
    
    Instead of using the [NPM] [script], the individual commands can be executed
