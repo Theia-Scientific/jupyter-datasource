@@ -29,6 +29,11 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          cache: true
+
       - name: Setup Node.js environment
         uses: actions/setup-node@v6.4.0
         with:
@@ -36,7 +41,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: rm -rf node_modules && pnpm i
+        run: pnpm install
 
       - name: Check types
         run: pnpm run typecheck

@@ -10,6 +10,20 @@ Grafana supports a wide range of data sources, including Prometheus, MySQL, and 
 
 ### Theia-Specific info
 
+1. Install pnpm
+
+We use pnpm instead of npm for additional performance and security.
+
+https://pnpm.io/installation
+
+2. pnpm install
+
+Install dependent node modules using pnpm:
+
+```bash
+pnpm install
+```
+
 1. Install golang
 
 https://go.dev/doc/install
