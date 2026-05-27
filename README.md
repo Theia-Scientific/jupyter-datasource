@@ -52,7 +52,7 @@ rm -rf ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-datasource
 cp -rp dist ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-datasource
 ```
 
-1. run `pnpm build` and then `pnpm start` in the Grafana repo
+1. run `npm run build` and `npm run start` in the Grafana repo
 
 ### Backend
 
