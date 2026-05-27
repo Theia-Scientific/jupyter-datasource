@@ -2,6 +2,7 @@
   "name": "jupyter",
   "version": "1.0.0",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "build": "webpack -c ./webpack.config.ts --env production",
     "build:all": "webpack -c ./webpack.config.ts --env production && mage -v",
     "build:clean": "rm -rf dist && webpack -c ./webpack.config.ts --env production && mage -v",
@@ -87,5 +88,5 @@
     "react-use": "^17.6.0",
     "uuid": "^13.0.0"
   },
-  "packageManager": "npm@9.2.0"
+  "packageManager": "pnpm@10.33.0"
 }
