@@ -19,7 +19,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm ci
+        run: rm -rf node_modules && pnpm i
 
       - name: Build plugin
         run: pnpm run build
