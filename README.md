@@ -10,6 +10,20 @@ Grafana supports a wide range of data sources, including Prometheus, MySQL, and 
 
 ### Theia-Specific info
 
+1. Install pnpm
+
+We use pnpm instead of npm for additional performance and security.
+
+https://pnpm.io/installation
+
+2. pnpm install
+
+Install dependent node modules using pnpm:
+
+```bash
+pnpm install
+```
+
 1. Install golang
 
 https://go.dev/doc/install
@@ -27,7 +41,7 @@ invocation, which will build windows and macos binaries as well.
 
 ```bash
 rm -rf dist
-npm run build
+pnpm run build
 mage -v build:linux
 mage -v build:linuxARM64
 ```
@@ -52,7 +66,7 @@ rm -rf ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-datasource
 cp -rp dist ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-datasource
 ```
 
-1. run `npm build` and then `npm start` in the Grafana repo
+1. run `npm run build` and `npm run start` in the Grafana repo
 
 ### Backend
 
@@ -80,58 +94,58 @@ cp -rp dist ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-dataso
 1. Install dependencies
 
    ```bash
-   npm install
+   pnpm install
    ```
 
 2. Build plugin in development mode and run in watch mode
 
    ```bash
-   npm run dev
+   pnpm run dev
    ```
 
 3. Build plugin in production mode
 
    ```bash
-   npm run build
+   pnpm run build
    ```
 
 4. Run the tests (using Jest)
 
    ```bash
    # Runs the tests and watches for changes, requires git init first
-   npm run test
+   pnpm run test
 
    # Exits after running all the tests
-   npm run test:ci
+   pnpm run test:ci
    ```
 
 5. Spin up a Grafana instance and run the plugin inside it (using Docker)
 
    ```bash
-   npm run server
+   pnpm run server
    ```
 
 6. Run the E2E tests (using Playwright)
 
    ```bash
    # Spins up a Grafana instance first that we tests against
-   npm run server
+   pnpm run server
 
    # If you wish to start a certain Grafana version. If not specified will use latest by default
-   GRAFANA_VERSION=11.3.0 npm run server
+   GRAFANA_VERSION=11.3.0 pnpm run server
 
    # Starts the tests
-   npm run e2e
+   pnpm run e2e
    ```
 
 7. Run the linter
 
    ```bash
-   npm run lint
+   pnpm run lint
 
    # or
 
-   npm run lint:fix
+   pnpm run lint:fix
    ```
 
 # Distributing your plugin
@@ -170,7 +184,7 @@ If the plugin is using the github actions supplied with `@grafana/create-plugin`
 
 To trigger the workflow we need to push a version tag to github. This can be achieved with the following steps:
 
-1. Run `npm version <major|minor|patch>`
+1. Run `pnpm version <major|minor|patch>`
 2. Run `git push origin main --follow-tags`
 
 ## Learn more
@@ -183,9 +197,9 @@ Below you can find source code for existing app plugins and other related docume
 
 ### Development
 
-- Run `npm run dev` in one terminal to watch/compile the .ts.
-- In another terminal, `npm run server` to run a grafana server with this plugin in it.
-- if you make golang changes: `npm run restart` (will compile and restart the server)
+- Run `pnpm run dev` in one terminal to watch/compile the .ts.
+- In another terminal, `pnpm run server` to run a grafana server with this plugin in it.
+- if you make golang changes: `pnpm run restart` (will compile and restart the server)
 - If at some point you sign the token (e.g. via the instructions above to sign and
   install it elsewhere), subsequent debug builds will not be recognized. At
   this point you'll want to nuke the dist/ folder and rebuild/restart.
@@ -211,7 +225,7 @@ Ensure the following system dependencies are installed on the host test machine.
 2. Install frontend, [NodeJS], dependencies.
 
    ```sh
-   npm install
+   pnpm install
    ```
 
 3. Configure access to the private Python package index hosted at Envelope.dev.
@@ -242,10 +256,10 @@ Ensure the following system dependencies are installed on the host test machine.
 6. Build all components.
 
    ```sh
-   npm run build:all
+   pnpm run build:all
    ```
    
-   Instead of using the [NPM] [script], the individual commands can be executed
+   Instead of using the [PNPM] [script], the individual commands can be executed
    from a shell terminal.
    
    1. Build the NodeJS frontend.
@@ -263,7 +277,7 @@ Ensure the following system dependencies are installed on the host test machine.
 7. Build and start the Grafana and Jupyter containers.
 
    ```sh
-   npm run server
+   pnpm run server
    ```
    
    or
@@ -304,5 +318,5 @@ Ensure the following system dependencies are installed on the host test machine.
 [go programming language]: https://go.dev/
 [mage]: https://magefile.org/
 [nodejs]: https://nodejs.org/en
-[npm]: https://www.npmjs.com/
+[pnpm]: https://pnpm.io/
 [script]: https://docs.npmjs.com/cli/v8/using-npm/scripts
