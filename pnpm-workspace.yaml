@@ -1,0 +1,4 @@
+allowBuilds:
+  '@swc/core': false
+  protobufjs: false
+  unrs-resolver: false
