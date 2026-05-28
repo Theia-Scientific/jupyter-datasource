@@ -2,7 +2,6 @@
   "name": "jupyter",
   "version": "1.0.0",
   "scripts": {
-    "preinstall": "npx only-allow pnpm",
     "build": "webpack -c ./webpack.config.ts --env production",
     "build:all": "webpack -c ./webpack.config.ts --env production && mage -v",
     "build:clean": "rm -rf dist && webpack -c ./webpack.config.ts --env production && mage -v",
@@ -69,6 +68,13 @@
     "webpack-subresource-integrity": "^5.1.0",
     "webpack-virtual-modules": "^0.6.2"
   },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": ">=10.33.0 <12.0.0",
+      "onFail": "download"
+    }
+  },
   "engines": {
     "node": ">=22"
   },
@@ -87,6 +93,5 @@
     "react-use": "^17.6.0",
     "rxjs": "7.8.2",
     "uuid": "^13.0.0"
-  },
-  "packageManager": "pnpm@10.33.0"
+  }
 }
