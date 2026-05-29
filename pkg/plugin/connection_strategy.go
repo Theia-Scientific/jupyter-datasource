@@ -65,39 +65,54 @@ func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (ju
 func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error) {
 	wrapped := WrappedLogger{logger: logger}
 
-	if qm.KernelId != "" {
-		logger.Debug(fmt.Sprintf("given kernelid %v", qm.KernelId))
-		// we have an assigned kernel id - connect to that.
-		ci, err := d.httpClient.GetConnectionInfo(qm.KernelId)
+	sessionFromKernelId := func(kernelId string) (SessionState, error) {
+		ci, err := d.httpClient.GetConnectionInfo(kernelId)
 		if err != nil {
 			return SessionState{}, err
 		}
 
 		session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-		return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: qm.KernelId}, err
-	} else {
-		kt := qm.KernelType
-		if kt == "" {
-			kt = "python3"
-		}
-		logger.Debug(fmt.Sprintf("creating kernel of type '%v'", kt))
-		// create a kernel of qm.KernelType
-		ks, err := d.httpClient.CreateKernel(kt)
-		if err != nil {
-			return SessionState{}, err
-		}
-
-		logger.Debug(fmt.Sprintf("kernel created, id %v", ks.Id))
-		d.createdKernels = append(d.createdKernels, ks.Id)
-		ci, err := d.httpClient.GetConnectionInfo(ks.Id)
-		if err != nil {
-			return SessionState{}, err
-		}
-
-		logger.Debug(fmt.Sprintf("ci gotten %v", ci))
-		session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-		return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: ks.Id}, err
+		return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: kernelId, kernelTag: qm.KernelTag}, err
 	}
+
+	if qm.KernelId != "" {
+		logger.Debug(fmt.Sprintf("given kernelId %v", qm.KernelId))
+		return sessionFromKernelId(qm.KernelId)
+	}
+
+	if kernelId := d.taggedKernels[qm.KernelTag]; kernelId != "" {
+		logger.Debug(fmt.Sprintf("given kernelTag %v, found kernelId %v", qm.KernelTag, kernelId))
+		return sessionFromKernelId(kernelId)
+	}
+
+	// either no kernel tag, or no kernel created yet for this tag, so: create one!
+	kt := qm.KernelType
+	if kt == "" {
+		kt = "python3"
+	}
+	logger.Debug(fmt.Sprintf("creating kernel of type '%v'", kt))
+	// create a kernel of qm.KernelType
+	ks, err := d.httpClient.CreateKernel(kt)
+	if err != nil {
+		return SessionState{}, err
+	}
+
+	logger.Debug(fmt.Sprintf("kernel created, id %v", ks.Id))
+	d.createdKernels = append(d.createdKernels, ks.Id)
+	ci, err := d.httpClient.GetConnectionInfo(ks.Id)
+	if err != nil {
+		return SessionState{}, err
+	}
+
+	logger.Debug(fmt.Sprintf("got ConnectionInfo: %v", ci))
+	session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
+
+	// if we're creating a tagged kernel, record an entry for it
+	if qm.KernelTag != "" {
+		d.taggedKernels[qm.KernelTag] = ks.Id
+	}
+
+	return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: ks.Id, kernelTag: qm.KernelTag}, err
 }	
 
 func (_ ConnectionStrategyAuto) fetchCode(d *Datasource, settings *InstanceSettings, qm *queryModel) (string, error) {

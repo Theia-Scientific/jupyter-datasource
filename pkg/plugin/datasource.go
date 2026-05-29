@@ -61,6 +61,7 @@ type SessionState struct {
 	session jupyterclient.IJupyterSession
 	queryKernelId string
 	actualKernelId string
+	kernelTag string
 	code string
 }
 
@@ -69,6 +70,7 @@ type SessionState struct {
 type Datasource struct {
 	sessions map[string]SessionState
 	createdKernels []string
+	taggedKernels map[string]string
 	httpClient jupyterclient.IJupyterHttpClient
 	context context.Context
 	cancel context.CancelFunc
@@ -219,6 +221,7 @@ func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInsta
 	return &Datasource{
 		sessions: make(map[string]SessionState),
 		createdKernels: []string{},
+		taggedKernels: make(map[string]string),
 		httpClient: httpClient,
 		context: ctx,
 		cancel: cancel,
@@ -272,6 +275,7 @@ type Var struct {
 type queryModel struct {
 	Uuid *string `json:"uuid"`
   KernelId string `json:"kernelId"`
+	KernelTag string `json:"kernelTag"`
   KernelType string `json:"kernelType"`
   ConnectionInfo *string `json:"connectionInfo"`
   Notebook string `json:"notebook"`
