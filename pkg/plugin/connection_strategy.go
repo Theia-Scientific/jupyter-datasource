@@ -8,6 +8,27 @@ import (
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
 )
 
+func makeConnectionStrategy(settings *InstanceSettings) (ConnectionStrategy, error) {
+	switch settings.ConnectionType {
+	case "AUTO":
+		return ConnectionStrategyAuto{sessionFactory: JupyterSessionFactory{}}, nil
+	case "INFO":
+		return ConnectionStrategyInfo{}, nil
+	default:
+		return nil, fmt.Errorf("Unknown connection type '%s'", settings.ConnectionType)
+	}
+}
+
+type IJupyterSessionFactory interface {
+	MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error)
+}
+
+type JupyterSessionFactory struct {}
+
+func (_ JupyterSessionFactory) MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error) {
+	return jupyterclient.MakeJupyterSession(ctx, ci, logger)
+}
+
 // uses internal types (queryModel); we can't mock this
 //mockery:generate: false
 type ConnectionStrategy interface {
@@ -41,7 +62,9 @@ func (_ ConnectionStrategyInfo) fetchCode(d *Datasource, settings *InstanceSetti
 	return qm.Code, nil
 }
 
-type ConnectionStrategyAuto struct {}
+type ConnectionStrategyAuto struct {
+  sessionFactory IJupyterSessionFactory
+}
 
 func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (jupyterclient.IJupyterHttpClient, error) {
 	if settings.JupyterUrl == nil {
@@ -61,7 +84,7 @@ func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (ju
 	return client, nil
 }
 
-func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel) (SessionState, error) {
+func (cs ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel) (SessionState, error) {
 	wrapped := WrappedLogger{logger: d.logger}
 
 	sessionFromKernelId := func(kernelId string) (SessionState, error) {
@@ -104,14 +127,18 @@ func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Contex
 	}
 
 	d.logger.Debug(fmt.Sprintf("got ConnectionInfo: %v", ci))
-	session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
+	session, err := cs.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
+	d.logger.Debug(fmt.Sprintf("got session=%+v, err=%+v", session, err))
+	if err != nil {
+		return SessionState{}, err
+	}
 
 	// if we're creating a tagged kernel, record an entry for it
 	if qm.KernelTag != "" {
 		d.taggedKernels[qm.KernelTag] = ks.Id
 	}
 
-	return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: ks.Id, kernelTag: qm.KernelTag}, err
+	return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: ks.Id, kernelTag: qm.KernelTag}, nil
 }	
 
 func (_ ConnectionStrategyAuto) fetchCode(d *Datasource, settings *InstanceSettings, qm *queryModel) (string, error) {

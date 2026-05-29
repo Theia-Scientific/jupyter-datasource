@@ -194,17 +194,6 @@ func getJupyterToken(settings *InstanceSettings) (string, error) {
 	}
 }
 
-func makeConnectionStrategy(settings *InstanceSettings) (ConnectionStrategy, error) {
-	switch settings.ConnectionType {
-	case "AUTO":
-		return ConnectionStrategyAuto{}, nil
-	case "INFO":
-		return ConnectionStrategyInfo{}, nil
-	default:
-		return nil, fmt.Errorf("Unknown connection type '%s'", settings.ConnectionType)
-	}
-}
-
 // NewDatasource creates a new datasource instance.
 func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	settings, err := unmarshalInstanceSettings(instanceSettings.JSONData)
@@ -312,6 +301,7 @@ func (d *Datasource) kernelIdRefCount(kernelId string) int {
 }
 
 func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryModel) (SessionState, error) {
+	var err error
 	sessionState, foundSession := d.sessions[*qm.Uuid]
 
 	d.logger.Debug(fmt.Sprintf("query uuid: %v", *qm.Uuid))
@@ -319,7 +309,8 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 		foundSession, qm.KernelId, sessionState.queryKernelId, sessionState.actualKernelId))
 	if !foundSession {
 		d.logger.Debug("session not found, creating")
-		sessionState, err := d.createSession(d.context, settings, qm)
+		sessionState, err = d.createSession(d.context, settings, qm)
+		d.logger.Debug(fmt.Sprintf("d.CreateSession: %+v, %+v", sessionState, err))
 		if err != nil {
 			return SessionState{}, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
@@ -359,7 +350,8 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 			}
 		}
 		// update the kernelId and reconnect
-		sessionState, err := d.createSession(d.context, settings, qm)
+		sessionState, err = d.createSession(d.context, settings, qm)
+		d.logger.Debug(fmt.Sprintf("d.CreateSession: %+v, %+v", sessionState, err))
 
 		if err != nil {
 			delete(d.sessions, *qm.Uuid)
@@ -394,6 +386,7 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 	}
 
 	sessionState, err := d.findOrCreateSession(d.settings, &qm)
+	d.logger.Debug(fmt.Sprintf("d.findOrCreateSession: %+v, %+v", sessionState, err))
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 	}
@@ -405,6 +398,8 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 
 	if code != sessionState.code {
 		d.logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
+		d.logger.Debug(fmt.Sprintf("d.settings: %+v", d.settings))
+		d.logger.Debug(fmt.Sprintf("sessionState: %+v", sessionState))
 		err = sessionState.session.Initialize(d.settings.Packages, code)
 		if err != nil {
 			delete(d.sessions, *qm.Uuid)

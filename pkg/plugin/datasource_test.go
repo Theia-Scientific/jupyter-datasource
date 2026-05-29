@@ -53,15 +53,26 @@ func TestCallResource(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+type MockJupyterSessionFactory struct {
+	session jupyterclient.IJupyterSession
+}
+
+func (f MockJupyterSessionFactory) MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error) {
+	log.New().Debug("mock factory being called")
+	return f.session, nil
+}
+
 func TestCreateKernel(t *testing.T) {
 	httpClient := jupyterclient_test.NewMockIJupyterHttpClient(t)
 	jupyterUrl := "http://jupyter.corndog.edu/";
+	session :=	jupyterclient_test.NewMockIJupyterSession(t)
+	sessionFactory := MockJupyterSessionFactory{session}
 	d := &Datasource{
 		settings: &InstanceSettings{
 			ConnectionType: "AUTO",
 			AuthType: "NONE",
 			JupyterUrl: &jupyterUrl,
-			connectionStrategy: ConnectionStrategyAuto{},
+			connectionStrategy: ConnectionStrategyAuto{sessionFactory},
 		},
 		logger: log.New(),
 		sessions: make(map[string]SessionState),
@@ -71,11 +82,15 @@ func TestCreateKernel(t *testing.T) {
 		cancel: func(){},
 	}
 
-	httpClient.EXPECT().CreateKernel(mock.Anything).Return(jupyterclient.KernelSpec{}, nil);
-	httpClient.EXPECT().GetConnectionInfo(mock.Anything).Return(jupyterclient.ConnectionInfo{}, nil);
-	httpClient.EXPECT().KillKernel(mock.Anything).Return(nil);
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id:"kid"}, nil);
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	session.EXPECT().Initialize(mock.Anything, "1+1").Return(nil)
+	// import statements
+	val := json.RawMessage("2")
+	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val},nil)
 
-	_ = d.query(context.Background(), backend.DataQuery{
+	resp := d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","code":"1+1"}`),
 	})
+	d.logger.Debug("Got result: %+v", resp)
 }
