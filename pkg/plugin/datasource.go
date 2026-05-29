@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
-	"github.com/Theia-Scientific/jupyter-datasource/pkg/models"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -471,12 +470,6 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 // a datasource is working as expected.
 func (d *Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	res := &backend.CheckHealthResult{}
-	_, err := models.LoadPluginSettings(*req.PluginContext.DataSourceInstanceSettings)
-	if err != nil {
-		res.Status = backend.HealthStatusError
-		res.Message = "Unable to load plugin settings"
-		return res, nil
-	}
 
 	settings, err := unmarshalInstanceSettings(req.PluginContext.DataSourceInstanceSettings.JSONData)
 	if err != nil {
