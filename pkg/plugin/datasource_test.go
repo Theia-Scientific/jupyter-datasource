@@ -103,14 +103,13 @@ func setupDatasourceWithSession(t *testing.T) (*jupyterclient_test.MockIJupyterH
 	return httpClient, session, d
 }
 
-
 // a query with no kernelId specified should create a new kernel
 func TestUnspecifiedKernelIdCreatesKernel(t *testing.T) {
 	httpClient, session, d := setupDatasourceWithSession(t)
 
 	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id:"kid"}, nil);
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
-	session.EXPECT().Initialize(mock.Anything, "1+1").Return(nil)
+	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil)
 
 	val := json.RawMessage("2")
 	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val},nil)
@@ -125,7 +124,7 @@ func TestSpecifiedKernelIdDoesNotCreateKernel(t *testing.T) {
 	httpClient, session, d := setupDatasourceWithSession(t)
 
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
-	session.EXPECT().Initialize(mock.Anything, "1+1").Return(nil)
+	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil)
 	val := json.RawMessage("2")
 	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val},nil)
 
@@ -134,20 +133,86 @@ func TestSpecifiedKernelIdDoesNotCreateKernel(t *testing.T) {
 	})
 }
 
-// a datasource with import statements should initialize a new kernel with them
+// a datasource with import statements should Execute them once
 func TestImportStatementsAreIncludedInInitialize(t *testing.T) {
-}
+	httpClient, session, d := setupDatasourceWithSession(t)
+	importStatements := "from treats import candy"
+	d.settings.ImportStatements = &importStatements
 
-// a query with a code change should call Initialize again
-func TestCodeChangeReinitializes(t *testing.T) {
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil)
+	val := json.RawMessage("2")
+	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val},nil).Times(2)
+	session.EXPECT().Execute("from treats import candy").Return(jupyterclient.Result{}, nil).Once()
+
+	d.query(context.Background(), backend.DataQuery{
+		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+1"}`),
+	})
+
+	d.query(context.Background(), backend.DataQuery{
+		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+1"}`),
+	})
 }
 
 // a query without a code change should NOT call Initialize again
 func TestNoCodeChangeDoesNotReinitialize(t *testing.T) {
+	httpClient, session, d := setupDatasourceWithSession(t)
+
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
+	val := json.RawMessage("2")
+	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val},nil).Times(2)
+
+	d.query(context.Background(), backend.DataQuery{
+		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+1"}`),
+	})
+
+	d.query(context.Background(), backend.DataQuery{
+		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+1"}`),
+	})
+}
+
+// a query with a code change should call Initialize again
+func TestCodeChangeReinitializes(t *testing.T) {
+	httpClient, session, d := setupDatasourceWithSession(t)
+
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
+	session.EXPECT().Initialize((*[]string)(nil), "1+2").Return(nil).Once()
+	val1 := json.RawMessage("2")
+	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val1},nil).Once()
+	val2 := json.RawMessage("3")
+	session.EXPECT().Query("1+2").Return(jupyterclient.Result{Val: &val2},nil).Once()
+
+	d.query(context.Background(), backend.DataQuery{
+		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+1"}`),
+	})
+
+	d.query(context.Background(), backend.DataQuery{
+		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+2"}`),
+	})
 }
 
 // a query with a vars change should not reinitialize
 func TestVarChangeDoesNotReinitialize(t *testing.T) {
+	httpClient, session, d := setupDatasourceWithSession(t)
+
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	session.EXPECT().Initialize((*[]string)(nil), "1+foo").Return(nil).Once()
+
+	val1 := json.RawMessage("2")
+	session.EXPECT().Query("foo = 1\n1+foo").Return(jupyterclient.Result{Val: &val1},nil).Once()
+
+	val2 := json.RawMessage("3")
+	session.EXPECT().Query("foo = 2\n1+foo").Return(jupyterclient.Result{Val: &val2},nil).Once()
+
+	d.query(context.Background(), backend.DataQuery{
+		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+foo","vars":[{"name":"foo","value":"1"}]}`),
+	})
+
+	d.query(context.Background(), backend.DataQuery{
+		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+foo","vars":[{"name":"foo","value":"2"}]}`),
+	})
 }
 
 // switching from an unspecified kernelId to a specified kernelId should kill the old kernelId
@@ -166,4 +231,3 @@ func TestTwoQueriesWithSameTagShouldUseSameKernel(t *testing.T) {
 func TestKernelTagChangeShouldCreateNewKernel(t *testing.T) {
 }
 
-// a 
