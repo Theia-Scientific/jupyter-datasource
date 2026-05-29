@@ -129,7 +129,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
 
   const isAuto = (connectionType === ConnectionType.Auto);
   const isInfo = (connectionType === ConnectionType.Info);
-  const kernelIdUnspecified = (query.kernelId === undefined || query.kernelId === '');
+  const kernelIdUnspecified = (query.kernelId === '');
   const notebookSource = (source === CHOOSE_NOTEBOOK);
   const codeSource = (source === ENTER_CODE);
 
