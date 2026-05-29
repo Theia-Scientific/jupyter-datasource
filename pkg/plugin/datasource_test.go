@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient_test"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
+	"github.com/Theia-Scientific/jupyter-datasource/pkg/plugin_test"
 )
 
 func TestConnectionStrategy(t *testing.T) {
@@ -25,6 +26,7 @@ func TestConnectionStrategy(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
+// calling GetListing will return a list of paths
 func TestCallResource(t *testing.T) {
 	httpClient := jupyterclient_test.NewMockIJupyterHttpClient(t)
 	jupyterUrl := "http://jupyter.corndog.edu/";
@@ -54,20 +56,10 @@ func TestCallResource(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-type MockJupyterSessionFactory struct {
-	session jupyterclient.IJupyterSession
-}
-
-func (f MockJupyterSessionFactory) MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error) {
-	log.New().Debug("mock factory being called")
-	return f.session, nil
-}
-
-func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, *jupyterclient_test.MockIJupyterSession, *Datasource) {
+func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, *Datasource) {
 	httpClient := jupyterclient_test.NewMockIJupyterHttpClient(t)
 	jupyterUrl := "http://jupyter.corndog.edu/";
-	session :=	jupyterclient_test.NewMockIJupyterSession(t)
-	sessionFactory := MockJupyterSessionFactory{session}
+
 	d := &Datasource{
 		settings: &InstanceSettings{
 			ConnectionType: "AUTO",
@@ -77,19 +69,19 @@ func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, 
 		},
 		logger: log.New(),
 		sessions: make(map[string]SessionState),
-		sessionFactory: sessionFactory,
+		sessionFactory: nil,
 		createdKernels: []string{},
 		httpClient: httpClient,
 		context: context.Background(),
 		cancel: func(){},
 	}
 
-	return httpClient, session, d
+	return httpClient, d
 }
 
 // a query with no UUID specified should fail
 func TestNoUUIDReturnsError(t *testing.T) {
-	_, _, d := setupDatasource(t)
+	_, d := setupDatasource(t)
 
 	resp := d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"code":"1+1"}`),
@@ -99,9 +91,22 @@ func TestNoUUIDReturnsError(t *testing.T) {
 	assert.Equal(t, resp.Error.Error(), "query missing uuid")
 }
 
+func setupDatasourceWithSession(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, *jupyterclient_test.MockIJupyterSession, *Datasource) {
+	httpClient, d := setupDatasource(t)
+	session := jupyterclient_test.NewMockIJupyterSession(t)
+	sessionFactory := plugin_test.NewMockIJupyterSessionFactory(t)
+	sessionFactory.EXPECT().
+		MakeJupyterSession(mock.Anything, mock.Anything, mock.Anything).
+		Return(session, nil)
+	d.sessionFactory = sessionFactory
+
+	return httpClient, session, d
+}
+
+
 // a query with no kernelId specified should create a new kernel
 func TestUnspecifiedKernelIdCreatesKernel(t *testing.T) {
-	httpClient, session, d := setupDatasource(t)
+	httpClient, session, d := setupDatasourceWithSession(t)
 
 	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id:"kid"}, nil);
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
@@ -117,7 +122,7 @@ func TestUnspecifiedKernelIdCreatesKernel(t *testing.T) {
 
 // a query with a kernelId specified should reuse an existing kernel
 func TestSpecifiedKernelIdDoesNotCreateKernel(t *testing.T) {
-	httpClient, session, d := setupDatasource(t)
+	httpClient, session, d := setupDatasourceWithSession(t)
 
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
 	session.EXPECT().Initialize(mock.Anything, "1+1").Return(nil)

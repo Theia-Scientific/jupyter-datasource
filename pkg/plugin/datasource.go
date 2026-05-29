@@ -65,6 +65,7 @@ type SessionState struct {
 	code string
 }
 
+//mockery:generate: true
 type IJupyterSessionFactory interface {
 	MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error)
 }
