@@ -295,45 +295,17 @@ func (d *Datasource) createSession(pctx context.Context, settings *InstanceSetti
 		d, pctx, settings, qm, logger)
 }
 
-func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
-	logger := log.New()
-	logger.Debug(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
-
-	settings, err := unmarshalInstanceSettings(pCtx.DataSourceInstanceSettings.JSONData)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("couldn't retrieve settings: %v", err.Error()))
-	}
-
-	var response backend.DataResponse
-
-	// Unmarshal the JSON into our queryModel.
-	var qm queryModel
-	err = json.Unmarshal(query.JSON, &qm)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
-	}
-
-	logger.Debug(fmt.Sprintf("got query: %v", qm))
-
-	// first, find/create the session
-	if (qm.Uuid == nil) {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("query missing uuid"))
-	}
+func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error) {
 	sessionState, foundSession := d.sessions[*qm.Uuid]
-
-	code, err := settings.connectionStrategy.fetchCode(d, settings, &qm)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("err fetching notebook %s: %v", qm.Notebook, err.Error()))
-	}
 
 	logger.Debug(fmt.Sprintf("query uuid: %v", *qm.Uuid))
 	logger.Debug(fmt.Sprintf("foundSession=%v, qm.KernelId=%v, sessionState.queryKernelId=%v, sessionState.actualKernelId=%v",
 		foundSession, qm.KernelId, sessionState.queryKernelId, sessionState.actualKernelId))
 	if !foundSession {
 		logger.Debug("session not found, creating")
-		sessionState, err = d.createSession(d.context, settings, &qm, logger)
+		sessionState, err := d.createSession(d.context, settings, qm, logger)
 		if err != nil {
-			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
+			return SessionState{}, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
 		d.sessions[*qm.Uuid] = sessionState
@@ -363,23 +335,61 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 		}
 		sessionState.session.Quit()
 		if killKernel {
-			err  = d.httpClient.KillKernel(sessionState.actualKernelId)
+			err := d.httpClient.KillKernel(sessionState.actualKernelId)
 			if err != nil {
 				delete(d.sessions, *qm.Uuid)
-				return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session cleanup failure: %v", err.Error()))
+				return SessionState{}, errors.New(fmt.Sprintf("session cleanup failure: %v", err.Error()))
 			}
 		}
 		// update the kernelId and reconnecct
-		sessionState, err = d.createSession(d.context, settings, &qm, logger)
+		sessionState, err := d.createSession(d.context, settings, qm, logger)
 
 		if err != nil {
 			delete(d.sessions, *qm.Uuid)
-			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
+			return SessionState{}, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
 		d.sessions[*qm.Uuid] = sessionState
   } else {
 		logger.Debug("session found")
+	}
+
+	return sessionState, nil
+}
+
+func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
+	logger := log.New()
+	logger.Debug(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
+
+	settings, err := unmarshalInstanceSettings(pCtx.DataSourceInstanceSettings.JSONData)
+	if err != nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("couldn't retrieve settings: %v", err.Error()))
+	}
+
+	var response backend.DataResponse
+
+	// Unmarshal the JSON into our queryModel.
+	var qm queryModel
+	err = json.Unmarshal(query.JSON, &qm)
+	if err != nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
+	}
+
+	logger.Debug(fmt.Sprintf("got query: %v", qm))
+
+	// first, find/create the session
+	if (qm.Uuid == nil) {
+		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("query missing uuid"))
+	}
+
+	sessionState, err := d.findOrCreateSession(settings, &qm, logger)
+	if err != nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
+	}
+
+	code, err := settings.connectionStrategy.fetchCode(d, settings, &qm)
+	if err != nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("err fetching notebook %s: %v", qm.Notebook, err.Error()))
 	}
 
 	if code != sessionState.code {
