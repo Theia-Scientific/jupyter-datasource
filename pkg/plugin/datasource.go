@@ -296,9 +296,9 @@ func (wrapped WrappedLogger) Log(s string) {
 	wrapped.logger.Debug(s)
 }
 
-func (d *Datasource) createSession(pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error) {
+func (d *Datasource) createSession(pctx context.Context, settings *InstanceSettings, qm *queryModel) (SessionState, error) {
 	return settings.connectionStrategy.createSession(
-		d, pctx, settings, qm, logger)
+		d, pctx, settings, qm)
 }
 
 func (d *Datasource) kernelIdRefCount(kernelId string) int {
@@ -311,15 +311,15 @@ func (d *Datasource) kernelIdRefCount(kernelId string) int {
 	return uses
 }
 
-func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error) {
+func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryModel) (SessionState, error) {
 	sessionState, foundSession := d.sessions[*qm.Uuid]
 
-	logger.Debug(fmt.Sprintf("query uuid: %v", *qm.Uuid))
-	logger.Debug(fmt.Sprintf("foundSession=%v, qm.KernelId=%v, sessionState.queryKernelId=%v, sessionState.actualKernelId=%v",
+	d.logger.Debug(fmt.Sprintf("query uuid: %v", *qm.Uuid))
+	d.logger.Debug(fmt.Sprintf("foundSession=%v, qm.KernelId=%v, sessionState.queryKernelId=%v, sessionState.actualKernelId=%v",
 		foundSession, qm.KernelId, sessionState.queryKernelId, sessionState.actualKernelId))
 	if !foundSession {
-		logger.Debug("session not found, creating")
-		sessionState, err := d.createSession(d.context, settings, qm, logger)
+		d.logger.Debug("session not found, creating")
+		sessionState, err := d.createSession(d.context, settings, qm)
 		if err != nil {
 			return SessionState{}, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
@@ -328,12 +328,12 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 	} else if (qm.KernelId != sessionState.queryKernelId || qm.KernelTag != sessionState.kernelTag) {
 		// if the kernel in the query differs from the session kernel,
 		// OR the tag in the query differs from the session tag, reconnect
-		logger.Debug("session kernel updated, reinitializing")
+		d.logger.Debug("session kernel updated, reinitializing")
 		oldKernel := sessionState.actualKernelId
 		// if it was an owned kernel, and this was the last use, kill it
 		killKernel := false
 		if slices.Contains(d.createdKernels, oldKernel) {
-			logger.Debug(fmt.Sprintf("checking if kernel %v should die", oldKernel))
+			d.logger.Debug(fmt.Sprintf("checking if kernel %v should die", oldKernel))
 			uses := d.kernelIdRefCount(oldKernel)
 			if qm.KernelId == oldKernel {
 				// we're switching from 'new kernel' to this very kernel. this
@@ -342,9 +342,9 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 			}
 
 			killKernel = (uses == 1)
-			logger.Debug(fmt.Sprintf("uses=%v, killKernel=%v", uses, killKernel))
+			d.logger.Debug(fmt.Sprintf("uses=%v, killKernel=%v", uses, killKernel))
 		} else {
-			logger.Debug(fmt.Sprintf("kernel %v was NOT created, not killing", oldKernel))
+			d.logger.Debug(fmt.Sprintf("kernel %v was NOT created, not killing", oldKernel))
 		}
 		sessionState.session.Quit()
 		if killKernel {
@@ -359,7 +359,7 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 			}
 		}
 		// update the kernelId and reconnect
-		sessionState, err := d.createSession(d.context, settings, qm, logger)
+		sessionState, err := d.createSession(d.context, settings, qm)
 
 		if err != nil {
 			delete(d.sessions, *qm.Uuid)
@@ -368,7 +368,7 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 
 		d.sessions[*qm.Uuid] = sessionState
   } else {
-		logger.Debug("session found")
+		d.logger.Debug("session found")
 	}
 
 	return sessionState, nil
@@ -393,7 +393,7 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("query missing uuid"))
 	}
 
-	sessionState, err := d.findOrCreateSession(d.settings, &qm, d.logger)
+	sessionState, err := d.findOrCreateSession(d.settings, &qm)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 	}
