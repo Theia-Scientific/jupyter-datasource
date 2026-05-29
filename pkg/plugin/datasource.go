@@ -68,6 +68,8 @@ type SessionState struct {
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
 type Datasource struct {
+	settings *InstanceSettings
+	logger log.Logger
 	sessions map[string]SessionState
 	createdKernels []string
 	taggedKernels map[string]string
@@ -101,8 +103,7 @@ func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 }
 
 func (p *Datasource) callResource(req *backend.CallResourceRequest) ([]byte, error) {
-	logger := log.New()
-	logger.Debug(fmt.Sprintf("got a resource request for %+v", req.Path))
+	p.logger.Debug(fmt.Sprintf("got a resource request for %+v", req.Path))
 	switch req.Path {
   case "list": {
 		u, err := url.Parse(req.URL)
@@ -219,6 +220,8 @@ func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInsta
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Datasource{
+		settings: settings,
+		logger: log.New(),
 		sessions: make(map[string]SessionState),
 		createdKernels: []string{},
 		taggedKernels: make(map[string]string),
@@ -243,7 +246,14 @@ func (d *Datasource) Dispose() {
 }
 
 func (d *Datasource) UpdateDatasourceFromQuery(req *backend.QueryDataRequest) error {
-	// queries don't change datasource
+	d.logger.Debug("updating instance settings")
+
+	settings, err := unmarshalInstanceSettings(req.PluginContext.DataSourceInstanceSettings.JSONData)
+	if err != nil {
+		return err
+	}
+
+	d.settings = settings
 	return nil
 }
 
@@ -257,11 +267,7 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 
 	// loop over queries and execute them individually.
 	for _, q := range req.Queries {
-		res := d.query(ctx, req.PluginContext, q)
-
-		// save the response in a hashmap
-		// based on with RefID as identifier
-		response.Responses[q.RefID] = res
+		response.Responses[q.RefID] = d.query(ctx, q)
 	}
 
 	return response, nil
@@ -368,52 +374,46 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 	return sessionState, nil
 }
 
-func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
-	logger := log.New()
-	logger.Debug(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
-
-	settings, err := unmarshalInstanceSettings(pCtx.DataSourceInstanceSettings.JSONData)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("couldn't retrieve settings: %v", err.Error()))
-	}
+func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backend.DataResponse {
+	d.logger.Debug(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
 
 	var response backend.DataResponse
 
 	// Unmarshal the JSON into our queryModel.
 	var qm queryModel
-	err = json.Unmarshal(query.JSON, &qm)
+	err := json.Unmarshal(query.JSON, &qm)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
 	}
 
-	logger.Debug(fmt.Sprintf("got query: %v", qm))
+	d.logger.Debug(fmt.Sprintf("got query: %v", qm))
 
 	// first, find/create the session
 	if (qm.Uuid == nil) {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("query missing uuid"))
 	}
 
-	sessionState, err := d.findOrCreateSession(settings, &qm, logger)
+	sessionState, err := d.findOrCreateSession(d.settings, &qm, d.logger)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
 	}
 
-	code, err := settings.connectionStrategy.fetchCode(d, settings, &qm)
+	code, err := d.settings.connectionStrategy.fetchCode(d, d.settings, &qm)
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("err fetching notebook %s: %v", qm.Notebook, err.Error()))
 	}
 
 	if code != sessionState.code {
-		logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
-		err = sessionState.session.Initialize(settings.Packages, code)
+		d.logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
+		err = sessionState.session.Initialize(d.settings.Packages, code)
 		if err != nil {
 			delete(d.sessions, *qm.Uuid)
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
-		logger.Debug("Initialized")
-		if settings.ImportStatements != nil {
-			sessionState.session.Execute(*settings.ImportStatements)
+		d.logger.Debug("Initialized")
+		if d.settings.ImportStatements != nil {
+			sessionState.session.Execute(*d.settings.ImportStatements)
 		}
 		sessionState.code = code
 		d.sessions[*qm.Uuid] = sessionState
