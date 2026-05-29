@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -62,7 +63,7 @@ func (f MockJupyterSessionFactory) MakeJupyterSession(ctx context.Context, ci *j
 	return f.session, nil
 }
 
-func TestCreateKernel(t *testing.T) {
+func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, *jupyterclient_test.MockIJupyterSession, *Datasource) {
 	httpClient := jupyterclient_test.NewMockIJupyterHttpClient(t)
 	jupyterUrl := "http://jupyter.corndog.edu/";
 	session :=	jupyterclient_test.NewMockIJupyterSession(t)
@@ -81,6 +82,25 @@ func TestCreateKernel(t *testing.T) {
 		context: context.Background(),
 		cancel: func(){},
 	}
+
+	return httpClient, session, d
+}
+
+// a query with no UUID specified should fail
+func TestNoUUID(t *testing.T) {
+	_, _, d := setupDatasource(t)
+
+	resp := d.query(context.Background(), backend.DataQuery{
+		JSON: json.RawMessage(`{"code":"1+1"}`),
+	})
+	d.logger.Debug(fmt.Sprintf("Got result: %+v", resp))
+	assert.NotNil(t, resp.Error)
+	assert.Equal(t, resp.Error.Error(), "query missing uuid")
+}
+
+// a query with no kernelId specified should create a new kernel
+func TestCreateKernel(t *testing.T) {
+	httpClient, session, d := setupDatasource(t)
 
 	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id:"kid"}, nil);
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
