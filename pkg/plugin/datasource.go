@@ -295,6 +295,16 @@ func (d *Datasource) createSession(pctx context.Context, settings *InstanceSetti
 		d, pctx, settings, qm, logger)
 }
 
+func (d *Datasource) kernelIdRefCount(kernelId string) int {
+	uses := 0
+	for _, sessionState := range d.sessions {
+		if sessionState.actualKernelId == kernelId {
+			uses += 1
+		}
+	}
+	return uses
+}
+
 func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error) {
 	sessionState, foundSession := d.sessions[*qm.Uuid]
 
@@ -309,25 +319,22 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 		}
 
 		d.sessions[*qm.Uuid] = sessionState
-	} else if (qm.KernelId != sessionState.queryKernelId) {
-		// if the kernel in the query differs from the session kernel, reconnect
+	} else if (qm.KernelId != sessionState.queryKernelId || qm.KernelTag != sessionState.kernelTag) {
+		// if the kernel in the query differs from the session kernel,
+		// OR the tag in the query differs from the session tag, reconnect
 		logger.Debug("session kernel updated, reinitializing")
 		oldKernel := sessionState.actualKernelId
 		// if it was an owned kernel, and this was the last use, kill it
 		killKernel := false
 		if slices.Contains(d.createdKernels, oldKernel) {
-			logger.Debug(fmt.Sprintf("kernel %v was created, checking if it should die", oldKernel))
-			uses := 0
+			logger.Debug(fmt.Sprintf("checking if kernel %v should die", oldKernel))
+			uses := d.kernelIdRefCount(oldKernel)
 			if qm.KernelId == oldKernel {
 				// we're switching from 'new kernel' to this very kernel. this
 				// counts as a use.  don't kill it.
 				uses += 1
 			}
-			for _, sessionState := range d.sessions {
-				if sessionState.actualKernelId == oldKernel {
-					uses += 1
-				}
-			}
+
 			killKernel = (uses == 1)
 			logger.Debug(fmt.Sprintf("uses=%v, killKernel=%v", uses, killKernel))
 		} else {
@@ -335,13 +342,17 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 		}
 		sessionState.session.Quit()
 		if killKernel {
+			// if this was a tagged kernel, remove the tag
+			if sessionState.kernelTag != "" {
+				delete(d.taggedKernels, sessionState.kernelTag)
+			}
 			err := d.httpClient.KillKernel(sessionState.actualKernelId)
 			if err != nil {
 				delete(d.sessions, *qm.Uuid)
 				return SessionState{}, errors.New(fmt.Sprintf("session cleanup failure: %v", err.Error()))
 			}
 		}
-		// update the kernelId and reconnecct
+		// update the kernelId and reconnect
 		sessionState, err := d.createSession(d.context, settings, qm, logger)
 
 		if err != nil {
