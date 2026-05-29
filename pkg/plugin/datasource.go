@@ -65,12 +65,23 @@ type SessionState struct {
 	code string
 }
 
+type IJupyterSessionFactory interface {
+	MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error)
+}
+
+type JupyterSessionFactory struct {}
+
+func (_ JupyterSessionFactory) MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error) {
+	return jupyterclient.MakeJupyterSession(ctx, ci, logger)
+}
+
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
 type Datasource struct {
 	settings *InstanceSettings
 	logger log.Logger
 	sessions map[string]SessionState
+  sessionFactory IJupyterSessionFactory
 	createdKernels []string
 	taggedKernels map[string]string
 	httpClient jupyterclient.IJupyterHttpClient
@@ -211,6 +222,7 @@ func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInsta
 	return &Datasource{
 		settings: settings,
 		logger: log.New(),
+		sessionFactory: JupyterSessionFactory{},
 		sessions: make(map[string]SessionState),
 		createdKernels: []string{},
 		taggedKernels: make(map[string]string),

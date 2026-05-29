@@ -73,10 +73,11 @@ func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, 
 			ConnectionType: "AUTO",
 			AuthType: "NONE",
 			JupyterUrl: &jupyterUrl,
-			connectionStrategy: ConnectionStrategyAuto{sessionFactory},
+			connectionStrategy: ConnectionStrategyAuto{},
 		},
 		logger: log.New(),
 		sessions: make(map[string]SessionState),
+		sessionFactory: sessionFactory,
 		createdKernels: []string{},
 		httpClient: httpClient,
 		context: context.Background(),
@@ -87,7 +88,7 @@ func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, 
 }
 
 // a query with no UUID specified should fail
-func TestNoUUID(t *testing.T) {
+func TestNoUUIDReturnsError(t *testing.T) {
 	_, _, d := setupDatasource(t)
 
 	resp := d.query(context.Background(), backend.DataQuery{
@@ -99,18 +100,65 @@ func TestNoUUID(t *testing.T) {
 }
 
 // a query with no kernelId specified should create a new kernel
-func TestCreateKernel(t *testing.T) {
+func TestUnspecifiedKernelIdCreatesKernel(t *testing.T) {
 	httpClient, session, d := setupDatasource(t)
 
 	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id:"kid"}, nil);
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
 	session.EXPECT().Initialize(mock.Anything, "1+1").Return(nil)
-	// import statements
+
 	val := json.RawMessage("2")
 	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val},nil)
 
-	resp := d.query(context.Background(), backend.DataQuery{
+	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","code":"1+1"}`),
 	})
-	d.logger.Debug("Got result: %+v", resp)
 }
+
+// a query with a kernelId specified should reuse an existing kernel
+func TestSpecifiedKernelIdDoesNotCreateKernel(t *testing.T) {
+	httpClient, session, d := setupDatasource(t)
+
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	session.EXPECT().Initialize(mock.Anything, "1+1").Return(nil)
+	val := json.RawMessage("2")
+	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val},nil)
+
+	d.query(context.Background(), backend.DataQuery{
+		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+1"}`),
+	})
+}
+
+// a datasource with import statements should initialize a new kernel with them
+func TestImportStatementsAreIncludedInInitialize(t *testing.T) {
+}
+
+// a query with a code change should call Initialize again
+func TestCodeChangeReinitializes(t *testing.T) {
+}
+
+// a query without a code change should NOT call Initialize again
+func TestNoCodeChangeDoesNotReinitialize(t *testing.T) {
+}
+
+// a query with a vars change should not reinitialize
+func TestVarChangeDoesNotReinitialize(t *testing.T) {
+}
+
+// switching from an unspecified kernelId to a specified kernelId should kill the old kernelId
+func TestMovingToSpecifiedKernelIdDeletesOldKernel(t *testing.T) {
+}
+
+// a kernelId should not be killed if it's still in use
+func TestKernelsStillInUseShouldNotBeKilled(t *testing.T) {
+}
+
+// two queries using the same kernel tag should use the same kernel
+func TestTwoQueriesWithSameTagShouldUseSameKernel(t *testing.T) {
+}
+
+// a query whose kernel tag changes should create a new kernel
+func TestKernelTagChangeShouldCreateNewKernel(t *testing.T) {
+}
+
+// a 

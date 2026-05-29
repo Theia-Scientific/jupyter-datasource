@@ -11,22 +11,12 @@ import (
 func makeConnectionStrategy(settings *InstanceSettings) (ConnectionStrategy, error) {
 	switch settings.ConnectionType {
 	case "AUTO":
-		return ConnectionStrategyAuto{sessionFactory: JupyterSessionFactory{}}, nil
+		return ConnectionStrategyAuto{}, nil
 	case "INFO":
 		return ConnectionStrategyInfo{}, nil
 	default:
 		return nil, fmt.Errorf("Unknown connection type '%s'", settings.ConnectionType)
 	}
-}
-
-type IJupyterSessionFactory interface {
-	MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error)
-}
-
-type JupyterSessionFactory struct {}
-
-func (_ JupyterSessionFactory) MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error) {
-	return jupyterclient.MakeJupyterSession(ctx, ci, logger)
 }
 
 // uses internal types (queryModel); we can't mock this
@@ -52,7 +42,7 @@ func (_ ConnectionStrategyInfo) createSession(d *Datasource, pctx context.Contex
 	if err != nil {
 		return SessionState{}, err
 	}
-	session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
+	session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
 	// there's no way to know the ID of a kernel that we connect to
 	// via connectionfile.  this seems like a problem.
 	return SessionState{session: session}, err
@@ -62,9 +52,7 @@ func (_ ConnectionStrategyInfo) fetchCode(d *Datasource, settings *InstanceSetti
 	return qm.Code, nil
 }
 
-type ConnectionStrategyAuto struct {
-  sessionFactory IJupyterSessionFactory
-}
+type ConnectionStrategyAuto struct {}
 
 func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (jupyterclient.IJupyterHttpClient, error) {
 	if settings.JupyterUrl == nil {
@@ -84,7 +72,7 @@ func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (ju
 	return client, nil
 }
 
-func (cs ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel) (SessionState, error) {
+func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel) (SessionState, error) {
 	wrapped := WrappedLogger{logger: d.logger}
 
 	sessionFromKernelId := func(kernelId string) (SessionState, error) {
@@ -93,7 +81,7 @@ func (cs ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Conte
 			return SessionState{}, err
 		}
 
-		session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
+		session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
 		return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: kernelId, kernelTag: qm.KernelTag}, err
 	}
 
@@ -127,7 +115,7 @@ func (cs ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Conte
 	}
 
 	d.logger.Debug(fmt.Sprintf("got ConnectionInfo: %v", ci))
-	session, err := cs.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
+	session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
 	d.logger.Debug(fmt.Sprintf("got session=%+v, err=%+v", session, err))
 	if err != nil {
 		return SessionState{}, err
