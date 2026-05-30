@@ -223,8 +223,8 @@ func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInsta
 	return &Datasource{
 		settings: settings,
 		logger: log.New(),
-		sessionFactory: JupyterSessionFactory{},
 		sessions: make(map[string]SessionState),
+		sessionFactory: JupyterSessionFactory{},
 		createdKernels: []string{},
 		taggedKernels: make(map[string]string),
 		httpClient: httpClient,
