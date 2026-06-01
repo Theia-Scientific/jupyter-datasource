@@ -20,6 +20,7 @@ func makeConnectionStrategy(settings *InstanceSettings) (ConnectionStrategy, err
 }
 
 // uses internal types (queryModel); we can't mock this
+//
 //mockery:generate: false
 type ConnectionStrategy interface {
 	createHttpClient(settings *InstanceSettings) (jupyterclient.IJupyterHttpClient, error)
@@ -27,7 +28,7 @@ type ConnectionStrategy interface {
 	fetchCode(d *Datasource, settings *InstanceSettings, qm *queryModel) (string, error)
 }
 
-type ConnectionStrategyInfo struct {}
+type ConnectionStrategyInfo struct{}
 
 func (_ ConnectionStrategyInfo) createHttpClient(settings *InstanceSettings) (jupyterclient.IJupyterHttpClient, error) {
 	return nil, nil
@@ -52,7 +53,7 @@ func (_ ConnectionStrategyInfo) fetchCode(d *Datasource, settings *InstanceSetti
 	return qm.Code, nil
 }
 
-type ConnectionStrategyAuto struct {}
+type ConnectionStrategyAuto struct{}
 
 func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (jupyterclient.IJupyterHttpClient, error) {
 	if settings.JupyterUrl == nil {
@@ -128,7 +129,7 @@ func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Contex
 	}
 
 	return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: ks.Id, kernelTag: qm.KernelTag}, nil
-}	
+}
 
 func (_ ConnectionStrategyAuto) fetchCode(d *Datasource, settings *InstanceSettings, qm *queryModel) (string, error) {
 	if qm.Notebook != "" {
@@ -137,4 +138,3 @@ func (_ ConnectionStrategyAuto) fetchCode(d *Datasource, settings *InstanceSetti
 		return qm.Code, nil
 	}
 }
-

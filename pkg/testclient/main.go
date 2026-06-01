@@ -11,7 +11,8 @@ import (
 )
 
 // implement Logger for MakeJupyterSession
-type Logger struct {}
+type Logger struct{}
+
 func (_ Logger) Log(s string) {
 	fmt.Println(s)
 }
@@ -19,26 +20,26 @@ func (_ Logger) Log(s string) {
 func main() {
 	sys := jupyterclient.DefaultSystemServiceSettings()
 	jup, err := jupyterclient.DefaultJupyterServiceSettings(sys)
-  if err != nil {
-    log.Fatal(err)
-  }
-  jc := jupyterclient.MakeJupyterHttpClient(jup)
+	if err != nil {
+		log.Fatal(err)
+	}
+	jc := jupyterclient.MakeJupyterHttpClient(jup)
 
-  kernel, err := jc.SelectKernel()
-  if err != nil {
-    log.Fatal(err)
-  }
+	kernel, err := jc.SelectKernel()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-  ci, err := jc.GetConnectionInfo(kernel.Id)
-  if err != nil {
-    log.Fatal(err)
-  }
+	ci, err := jc.GetConnectionInfo(kernel.Id)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	js, err := jupyterclient.MakeJupyterSession(ctx, &ci, Logger{})
-  if err != nil {
-    log.Fatal(err)
-  }
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	reader := bufio.NewReader(os.Stdin)
 	for {

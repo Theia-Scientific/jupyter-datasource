@@ -2,70 +2,70 @@ package jupyterclient
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
-  "encoding/json"
-  "fmt"
-  "io"
-  "net/http"
+	"fmt"
+	"io"
+	"net/http"
 	"strings"
 )
 
 //mockery:generate: true
 type IJupyterHttpClient interface {
-  GetSessions() ([]Session, error);
-  KillKernel(id string) error;
-  GetKernels() ([]KernelSpec, error);
-  GetKernelSpecs() ([]byte, error);
-  GetListing(path string) ([]PathEntry, error);
-  GetNotebooks() ([]PathEntry, error);
-  GetNotebook(path string) (string, error);
-  CreateKernel(kernelType string) (KernelSpec, error);
-  SelectKernel() (KernelSpec, error);
-  GetConnectionInfo(id string) (ConnectionInfo, error);
-  Restart(id string) error;
+	GetSessions() ([]Session, error)
+	KillKernel(id string) error
+	GetKernels() ([]KernelSpec, error)
+	GetKernelSpecs() ([]byte, error)
+	GetListing(path string) ([]PathEntry, error)
+	GetNotebooks() ([]PathEntry, error)
+	GetNotebook(path string) (string, error)
+	CreateKernel(kernelType string) (KernelSpec, error)
+	SelectKernel() (KernelSpec, error)
+	GetConnectionInfo(id string) (ConnectionInfo, error)
+	Restart(id string) error
 }
 
 func MakeJupyterHttpClient(settings *JupyterServiceSettings) IJupyterHttpClient {
-  return &JupyterHttpClient{
-    AuthHeader: fmt.Sprintf("Bearer %s", settings.Token),
-		BasePath: strings.TrimRight(settings.BaseUrl, "/"),
+	return &JupyterHttpClient{
+		AuthHeader: fmt.Sprintf("Bearer %s", settings.Token),
+		BasePath:   strings.TrimRight(settings.BaseUrl, "/"),
 	}
 }
 
 func (jc *JupyterHttpClient) NewRequest(method, path string, body io.Reader) (*http.Request, error) {
-  req, err := http.NewRequest(method, fmt.Sprintf("%s/%s", jc.BasePath, path), body)
-  if err != nil {
-    return nil, err
-  }
-  req.Header.Add("Authorization", jc.AuthHeader)
-  return req, nil
+	req, err := http.NewRequest(method, fmt.Sprintf("%s/%s", jc.BasePath, path), body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Add("Authorization", jc.AuthHeader)
+	return req, nil
 }
 
 func (jc *JupyterHttpClient) Get(path string) (*http.Request, error) {
-  return jc.NewRequest(http.MethodGet, path, http.NoBody)
+	return jc.NewRequest(http.MethodGet, path, http.NoBody)
 }
 
 func (jc *JupyterHttpClient) Post(path string, body string) (*http.Request, error) {
-  return jc.NewRequest(http.MethodPost, path, strings.NewReader(body))
+	return jc.NewRequest(http.MethodPost, path, strings.NewReader(body))
 }
 
 func (jc *JupyterHttpClient) PostEmpty(path string) (*http.Request, error) {
-  return jc.NewRequest(http.MethodPost, path, http.NoBody)
+	return jc.NewRequest(http.MethodPost, path, http.NoBody)
 }
 
 func (jc *JupyterHttpClient) PostBytes(path string, body []byte) (*http.Request, error) {
-  return jc.NewRequest(http.MethodPost, path, bytes.NewReader(body))
+	return jc.NewRequest(http.MethodPost, path, bytes.NewReader(body))
 }
 
 func (jc *JupyterHttpClient) Delete(path string) (*http.Request, error) {
-  return jc.NewRequest(http.MethodDelete, path, http.NoBody)
+	return jc.NewRequest(http.MethodDelete, path, http.NoBody)
 }
 
 func requestBody(req *http.Request) (io.ReadCloser, error) {
-  res, err := http.DefaultClient.Do(req)
-  if err != nil {
-    return nil, err
-  }
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
 	if res.StatusCode < 200 || res.StatusCode >= 300 {
 		return res.Body, errors.New(res.Status)
 	}
@@ -73,22 +73,22 @@ func requestBody(req *http.Request) (io.ReadCloser, error) {
 }
 
 func requestBytes(req *http.Request) ([]byte, error) {
-  body, err := requestBody(req)
+	body, err := requestBody(req)
 	if body != nil {
 		defer body.Close()
 	}
-  if err != nil {
-    return []byte{}, err
-  }
+	if err != nil {
+		return []byte{}, err
+	}
 	return io.ReadAll(body)
 }
 
 func requestJSON(req *http.Request, val any) error {
 	bytes, err := requestBytes(req)
-  if err != nil {
-    return err
-  }
-  return json.Unmarshal(bytes, val)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(bytes, val)
 }
 
 func request(req *http.Request) error {
@@ -100,7 +100,7 @@ func request(req *http.Request) error {
 }
 
 func (jc *JupyterHttpClient) GetSessions() ([]Session, error) {
-  var sessions []Session
+	var sessions []Session
 	req, err := jc.Get("sessions")
 	if err != nil {
 		return sessions, err
@@ -110,15 +110,15 @@ func (jc *JupyterHttpClient) GetSessions() ([]Session, error) {
 }
 
 func (jc *JupyterHttpClient) KillKernel(id string) error {
-  req, err := jc.Delete(fmt.Sprintf("kernels/%s", id))
-  if err != nil {
-    return err
-  }
+	req, err := jc.Delete(fmt.Sprintf("kernels/%s", id))
+	if err != nil {
+		return err
+	}
 	return request(req)
 }
 
 func (jc *JupyterHttpClient) GetKernels() ([]KernelSpec, error) {
-  var kernels []KernelSpec
+	var kernels []KernelSpec
 	req, err := jc.Get("kernels")
 	if err != nil {
 		return kernels, err
@@ -136,18 +136,17 @@ func (jc *JupyterHttpClient) GetKernelSpecs() ([]byte, error) {
 }
 
 func (jc *JupyterHttpClient) GetListing(path string) ([]PathEntry, error) {
-  var entry PathEntry
+	var entry PathEntry
 	req, err := jc.Get(fmt.Sprintf("contents/%s", path))
 	if err != nil {
 		return []PathEntry{}, err
 	}
 	err = requestJSON(req, &entry)
 	if err != nil {
-    return []PathEntry{}, err
+		return []PathEntry{}, err
 	}
-  return *entry.Content, err
+	return *entry.Content, err
 }
-
 
 func (jc *JupyterHttpClient) GetNotebooks() ([]PathEntry, error) {
 	var recur func(string) ([]PathEntry, error)
@@ -156,7 +155,7 @@ func (jc *JupyterHttpClient) GetNotebooks() ([]PathEntry, error) {
 		if err != nil {
 			return entries, err
 		}
-		for i := range(entries) {
+		for i := range entries {
 			if entries[i].Type == "directory" {
 				subdir, err := recur(entries[i].Path)
 				entries[i].Content = &subdir
@@ -171,21 +170,21 @@ func (jc *JupyterHttpClient) GetNotebooks() ([]PathEntry, error) {
 }
 
 func (jc *JupyterHttpClient) GetNotebook(path string) (string, error) {
-  var notebook Notebook
+	var notebook Notebook
 	req, err := jc.Get(fmt.Sprintf("contents/%s", strings.TrimLeft(path, "/")))
 	if err != nil {
 		return "", err
 	}
 	err = requestJSON(req, &notebook)
 	if err != nil {
-    return "", err
+		return "", err
 	}
 	if notebook.Content == nil {
 		return "", nil
 	}
 
 	var buffer bytes.Buffer
-	for _, cell := range(notebook.Content.Cells) {
+	for _, cell := range notebook.Content.Cells {
 		if cell.CellType == "code" {
 			buffer.WriteString(cell.Source)
 			buffer.WriteString("\n")
@@ -196,48 +195,48 @@ func (jc *JupyterHttpClient) GetNotebook(path string) (string, error) {
 }
 
 func (jc *JupyterHttpClient) CreateKernel(kernelType string) (KernelSpec, error) {
-  var kernel KernelSpec
+	var kernel KernelSpec
 	type createKernelRequest struct {
 		Name string `json:"name"`
 	}
-	ckr := createKernelRequest{Name:kernelType}
+	ckr := createKernelRequest{Name: kernelType}
 	post, err := json.Marshal(ckr)
-  if err != nil {
-    return kernel, err
-  }
+	if err != nil {
+		return kernel, err
+	}
 
-  req, err := jc.PostBytes("kernels", post)
-  if err != nil {
-    return kernel, err
-  }
+	req, err := jc.PostBytes("kernels", post)
+	if err != nil {
+		return kernel, err
+	}
 	err = requestJSON(req, &kernel)
-  return kernel, err
+	return kernel, err
 }
 
 func (jc *JupyterHttpClient) SelectKernel() (KernelSpec, error) {
-  kernels, err := jc.GetKernels()
-  if err != nil {
-    return KernelSpec{}, err
-  }
-  if len(kernels) == 0 {
-    // create a kernel
-    kernel, err := jc.CreateKernel("python3")
-    if err != nil {
-      return KernelSpec{}, err
-    }
-    return kernel, nil
-  } else {
-    // use the first kernel
-    return kernels[0], nil
-  }
+	kernels, err := jc.GetKernels()
+	if err != nil {
+		return KernelSpec{}, err
+	}
+	if len(kernels) == 0 {
+		// create a kernel
+		kernel, err := jc.CreateKernel("python3")
+		if err != nil {
+			return KernelSpec{}, err
+		}
+		return kernel, nil
+	} else {
+		// use the first kernel
+		return kernels[0], nil
+	}
 }
 
 func (jc *JupyterHttpClient) GetConnectionInfo(id string) (ConnectionInfo, error) {
-  var connectionInfo ConnectionInfo
-  req, err := jc.Get(fmt.Sprintf("kernels/%s/connection", id))
-  if err != nil {
-    return connectionInfo, err
-  }
+	var connectionInfo ConnectionInfo
+	req, err := jc.Get(fmt.Sprintf("kernels/%s/connection", id))
+	if err != nil {
+		return connectionInfo, err
+	}
 	err = requestJSON(req, &connectionInfo)
 	return connectionInfo, err
 }

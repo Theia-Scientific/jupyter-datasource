@@ -6,46 +6,46 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
+	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient_test"
+	"github.com/Theia-Scientific/jupyter-datasource/pkg/plugin_test"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient_test"
-	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
-	"github.com/Theia-Scientific/jupyter-datasource/pkg/plugin_test"
 )
 
 // calling makeConnectionStrategy with a valid string will succeed, an invalid string will fail
 func TestConnectionStrategy(t *testing.T) {
-	_, err := makeConnectionStrategy(&InstanceSettings{ConnectionType:"AUTO"})
+	_, err := makeConnectionStrategy(&InstanceSettings{ConnectionType: "AUTO"})
 	assert.Nil(t, err)
 
-	_, err = makeConnectionStrategy(&InstanceSettings{ConnectionType:"INFO"})
+	_, err = makeConnectionStrategy(&InstanceSettings{ConnectionType: "INFO"})
 	assert.Nil(t, err)
 
-	_, err = makeConnectionStrategy(&InstanceSettings{ConnectionType:"CORNDOG"})
+	_, err = makeConnectionStrategy(&InstanceSettings{ConnectionType: "CORNDOG"})
 	assert.NotNil(t, err)
 }
 
 func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, *Datasource) {
 	httpClient := jupyterclient_test.NewMockIJupyterHttpClient(t)
-	jupyterUrl := "http://jupyter.corndog.edu/";
+	jupyterUrl := "http://jupyter.corndog.edu/"
 
 	d := &Datasource{
 		settings: &InstanceSettings{
-			ConnectionType: "AUTO",
-			AuthType: "NONE",
-			JupyterUrl: &jupyterUrl,
+			ConnectionType:     "AUTO",
+			AuthType:           "NONE",
+			JupyterUrl:         &jupyterUrl,
 			connectionStrategy: ConnectionStrategyAuto{},
 		},
-		logger: log.New(),
-		sessions: make(map[string]SessionState),
+		logger:         log.New(),
+		sessions:       make(map[string]SessionState),
 		sessionFactory: nil,
 		createdKernels: []string{},
-		taggedKernels: make(map[string]string),
-		httpClient: httpClient,
-		context: context.Background(),
-		cancel: func(){},
+		taggedKernels:  make(map[string]string),
+		httpClient:     httpClient,
+		context:        context.Background(),
+		cancel:         func() {},
 	}
 
 	return httpClient, d
@@ -55,12 +55,12 @@ func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, 
 func TestCallResource(t *testing.T) {
 	httpClient, d := setupDatasource(t)
 
-	httpClient.EXPECT().GetListing("some/path").Return([]jupyterclient.PathEntry{}, nil);
+	httpClient.EXPECT().GetListing("some/path").Return([]jupyterclient.PathEntry{}, nil)
 
 	rv, err := d.callResource(&backend.CallResourceRequest{
 		Path: "list",
-		URL: "http://whatever/list?path=some/path",
-	});
+		URL:  "http://whatever/list?path=some/path",
+	})
 
 	assert.Equal(t, string(rv), "[]")
 	assert.Nil(t, err)
@@ -94,12 +94,12 @@ func setupDatasourceWithSession(t *testing.T) (*jupyterclient_test.MockIJupyterH
 func TestUnspecifiedKernelIdCreatesKernel(t *testing.T) {
 	httpClient, session, d := setupDatasourceWithSession(t)
 
-	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id:"kid"}, nil);
-	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil)
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil)
 
 	val := json.RawMessage("2")
-	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val},nil)
+	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val}, nil)
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","code":"1+1"}`),
@@ -110,10 +110,10 @@ func TestUnspecifiedKernelIdCreatesKernel(t *testing.T) {
 func TestSpecifiedKernelIdDoesNotCreateKernel(t *testing.T) {
 	httpClient, session, d := setupDatasourceWithSession(t)
 
-	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil)
 	val := json.RawMessage("2")
-	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val},nil)
+	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val}, nil)
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+1"}`),
@@ -126,10 +126,10 @@ func TestImportStatementsAreIncludedInInitialize(t *testing.T) {
 	importStatements := "from treats import candy"
 	d.settings.ImportStatements = &importStatements
 
-	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil)
 	val := json.RawMessage("2")
-	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val},nil).Times(2)
+	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val}, nil).Times(2)
 	session.EXPECT().Execute("from treats import candy").Return(jupyterclient.Result{}, nil).Once()
 
 	d.query(context.Background(), backend.DataQuery{
@@ -145,10 +145,10 @@ func TestImportStatementsAreIncludedInInitialize(t *testing.T) {
 func TestNoCodeChangeDoesNotReinitialize(t *testing.T) {
 	httpClient, session, d := setupDatasourceWithSession(t)
 
-	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
 	val := json.RawMessage("2")
-	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val},nil).Times(2)
+	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val}, nil).Times(2)
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+1"}`),
@@ -163,13 +163,13 @@ func TestNoCodeChangeDoesNotReinitialize(t *testing.T) {
 func TestCodeChangeReinitializes(t *testing.T) {
 	httpClient, session, d := setupDatasourceWithSession(t)
 
-	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
 	session.EXPECT().Initialize((*[]string)(nil), "1+2").Return(nil).Once()
 	val1 := json.RawMessage("2")
-	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val1},nil).Once()
+	session.EXPECT().Query("1+1").Return(jupyterclient.Result{Val: &val1}, nil).Once()
 	val2 := json.RawMessage("3")
-	session.EXPECT().Query("1+2").Return(jupyterclient.Result{Val: &val2},nil).Once()
+	session.EXPECT().Query("1+2").Return(jupyterclient.Result{Val: &val2}, nil).Once()
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+1"}`),
@@ -184,14 +184,14 @@ func TestCodeChangeReinitializes(t *testing.T) {
 func TestVarChangeDoesNotReinitialize(t *testing.T) {
 	httpClient, session, d := setupDatasourceWithSession(t)
 
-	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session.EXPECT().Initialize((*[]string)(nil), "1+foo").Return(nil).Once()
 
 	val1 := json.RawMessage("2")
-	session.EXPECT().Query("foo = 1\n1+foo").Return(jupyterclient.Result{Val: &val1},nil).Once()
+	session.EXPECT().Query("foo = 1\n1+foo").Return(jupyterclient.Result{Val: &val1}, nil).Once()
 
 	val2 := json.RawMessage("3")
-	session.EXPECT().Query("foo = 2\n1+foo").Return(jupyterclient.Result{Val: &val2},nil).Once()
+	session.EXPECT().Query("foo = 2\n1+foo").Return(jupyterclient.Result{Val: &val2}, nil).Once()
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+foo","vars":[{"name":"foo","value":"1"}]}`),
@@ -212,10 +212,10 @@ func TestMovingToSpecifiedKernelIdDeletesOldKernel(t *testing.T) {
 		MakeJupyterSession(mock.Anything, mock.Anything, mock.Anything).
 		Return(session1, nil).Once()
 
-	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id:"dyn"}, nil);
-	httpClient.EXPECT().GetConnectionInfo("dyn").Return(jupyterclient.ConnectionInfo{}, nil);
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "dyn"}, nil)
+	httpClient.EXPECT().GetConnectionInfo("dyn").Return(jupyterclient.ConnectionInfo{}, nil)
 	session1.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
-	session1.EXPECT().Query("1+1").Return(jupyterclient.Result{},nil).Once()
+	session1.EXPECT().Query("1+1").Return(jupyterclient.Result{}, nil).Once()
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","code":"1+1"}`),
@@ -226,13 +226,13 @@ func TestMovingToSpecifiedKernelIdDeletesOldKernel(t *testing.T) {
 		MakeJupyterSession(mock.Anything, mock.Anything, mock.Anything).
 		Return(session2, nil).Once()
 
-	session1.EXPECT().Quit().Return();
-	httpClient.EXPECT().KillKernel("dyn").Return(nil);
-	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	session1.EXPECT().Quit().Return()
+	httpClient.EXPECT().KillKernel("dyn").Return(nil)
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session2.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
-	session2.EXPECT().Query("1+1").Return(jupyterclient.Result{},nil).Once()
+	session2.EXPECT().Query("1+1").Return(jupyterclient.Result{}, nil).Once()
 
-	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+1"}`),
@@ -249,10 +249,10 @@ func TestKernelsStillInUseShouldNotBeKilled(t *testing.T) {
 		MakeJupyterSession(mock.Anything, mock.Anything, mock.Anything).
 		Return(session1, nil).Once()
 
-	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id:"kid"}, nil);
-	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil)
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session1.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
-	session1.EXPECT().Query("1+1").Return(jupyterclient.Result{},nil).Once()
+	session1.EXPECT().Query("1+1").Return(jupyterclient.Result{}, nil).Once()
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","code":"1+1"}`),
@@ -263,9 +263,9 @@ func TestKernelsStillInUseShouldNotBeKilled(t *testing.T) {
 		MakeJupyterSession(mock.Anything, mock.Anything, mock.Anything).
 		Return(session2, nil).Once()
 
-	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session2.EXPECT().Initialize((*[]string)(nil), "2+2").Return(nil).Once()
-	session2.EXPECT().Query("2+2").Return(jupyterclient.Result{},nil).Once()
+	session2.EXPECT().Query("2+2").Return(jupyterclient.Result{}, nil).Once()
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"y","kernelId":"kid","code":"2+2"}`),
@@ -276,10 +276,10 @@ func TestKernelsStillInUseShouldNotBeKilled(t *testing.T) {
 		MakeJupyterSession(mock.Anything, mock.Anything, mock.Anything).
 		Return(session3, nil).Once()
 
-	httpClient.EXPECT().GetConnectionInfo("kid2").Return(jupyterclient.ConnectionInfo{}, nil);
+	httpClient.EXPECT().GetConnectionInfo("kid2").Return(jupyterclient.ConnectionInfo{}, nil)
 	session1.EXPECT().Quit().Return().Once()
 	session3.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
-	session3.EXPECT().Query("1+1").Return(jupyterclient.Result{},nil).Once()
+	session3.EXPECT().Query("1+1").Return(jupyterclient.Result{}, nil).Once()
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid2","code":"1+1"}`),
@@ -296,10 +296,10 @@ func TestTwoQueriesWithSameTagShouldUseSameKernel(t *testing.T) {
 		MakeJupyterSession(mock.Anything, mock.Anything, mock.Anything).
 		Return(session1, nil).Once()
 
-	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id:"kid"}, nil).Once();
-	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil);
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil).Once()
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session1.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
-	session1.EXPECT().Query("1+1").Return(jupyterclient.Result{},nil).Once()
+	session1.EXPECT().Query("1+1").Return(jupyterclient.Result{}, nil).Once()
 
 	d.logger.Debug("------------------------------------------------------")
 
@@ -313,7 +313,7 @@ func TestTwoQueriesWithSameTagShouldUseSameKernel(t *testing.T) {
 		Return(session2, nil).Once()
 
 	session2.EXPECT().Initialize((*[]string)(nil), "2+2").Return(nil).Once()
-	session2.EXPECT().Query("2+2").Return(jupyterclient.Result{},nil).Once()
+	session2.EXPECT().Query("2+2").Return(jupyterclient.Result{}, nil).Once()
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"y","kernelTag":"tomato","code":"2+2"}`),
@@ -330,10 +330,10 @@ func TestKernelTagChangeShouldCreateNewKernel(t *testing.T) {
 		MakeJupyterSession(mock.Anything, mock.Anything, mock.Anything).
 		Return(session1, nil).Once()
 
-	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id:"kid"}, nil).Once();
-	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil).Once();
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil).Once()
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil).Once()
 	session1.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
-	session1.EXPECT().Query("1+1").Return(jupyterclient.Result{},nil).Once()
+	session1.EXPECT().Query("1+1").Return(jupyterclient.Result{}, nil).Once()
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","kernelTag":"tomato","code":"1+1"}`),
@@ -344,15 +344,14 @@ func TestKernelTagChangeShouldCreateNewKernel(t *testing.T) {
 		MakeJupyterSession(mock.Anything, mock.Anything, mock.Anything).
 		Return(session2, nil).Once()
 
-	session1.EXPECT().Quit().Return().Once();
-	httpClient.EXPECT().KillKernel("kid").Return(nil).Once();
-	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id:"kid2"}, nil).Once();
-	httpClient.EXPECT().GetConnectionInfo("kid2").Return(jupyterclient.ConnectionInfo{}, nil).Once();
+	session1.EXPECT().Quit().Return().Once()
+	httpClient.EXPECT().KillKernel("kid").Return(nil).Once()
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid2"}, nil).Once()
+	httpClient.EXPECT().GetConnectionInfo("kid2").Return(jupyterclient.ConnectionInfo{}, nil).Once()
 	session2.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
-	session2.EXPECT().Query("1+1").Return(jupyterclient.Result{},nil).Once()
+	session2.EXPECT().Query("1+1").Return(jupyterclient.Result{}, nil).Once()
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","kernelTag":"tomatillo","code":"1+1"}`),
 	})
 }
-

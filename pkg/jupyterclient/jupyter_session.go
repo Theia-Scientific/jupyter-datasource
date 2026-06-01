@@ -2,64 +2,64 @@ package jupyterclient
 
 import (
 	"context"
-  "encoding/json"
+	"encoding/json"
 	"errors"
-  "fmt"
+	"fmt"
 	"golang.org/x/sync/errgroup"
 	"io"
 	"slices"
 	"strings"
 
-  zmq "github.com/go-zeromq/zmq4"
+	zmq "github.com/go-zeromq/zmq4"
 )
 
 type resultMsg struct {
-	val *json.RawMessage
+	val    *json.RawMessage
 	stdout string
 	stderr string
-	err error
+	err    error
 }
 
 type Result struct {
-	Val *json.RawMessage
+	Val    *json.RawMessage
 	Stdout string
 	Stderr string
 }
 
 type requestMsg struct {
-	code string
+	code          string
 	resultChannel chan resultMsg
 }
 
 type replyMsg struct {
-	id string
+	id  string
 	res resultMsg
 }
 
 type resetRequest struct {
 	completionChannel chan resultMsg
-	restart bool
+	restart           bool
 }
 
 //mockery:generate: true
 type IJupyterSession interface {
-	Start() error;
-	Execute(code string) (Result, error);
-	Query(code string) (Result, error);
-	Restart();
-	Initialize(packages *[]string, code string) error;
-	Quit();
+	Start() error
+	Execute(code string) (Result, error)
+	Query(code string) (Result, error)
+	Restart()
+	Initialize(packages *[]string, code string) error
+	Quit()
 }
 
 type JupyterSession struct {
-	requests chan requestMsg
-	resets chan resetRequest
-	replies chan replyMsg
+	requests       chan requestMsg
+	resets         chan resetRequest
+	replies        chan replyMsg
 	connectionInfo *ConnectionInfo
-	ctx context.Context
-	group *errgroup.Group
-	groupCtx context.Context
-	logger Logger
+	ctx            context.Context
+	group          *errgroup.Group
+	groupCtx       context.Context
+	logger         Logger
 }
 
 var ShutdownError = errors.New("Session shutdown")
@@ -67,12 +67,12 @@ var ShutdownError = errors.New("Session shutdown")
 // pctx should be a context that bounds the entire session (use context.Background() if unsure)
 func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) (IJupyterSession, error) {
 	rv := &JupyterSession{
-		requests: make(chan requestMsg),
-		resets: make(chan resetRequest),
-		replies: make(chan replyMsg),
+		requests:       make(chan requestMsg),
+		resets:         make(chan resetRequest),
+		replies:        make(chan replyMsg),
 		connectionInfo: ci,
-		ctx: ctx,
-		logger: logger,
+		ctx:            ctx,
+		logger:         logger,
 	}
 	return rv, rv.Start()
 }
@@ -102,7 +102,7 @@ func (js *JupyterSession) Execute(code string) (Result, error) {
 	// fake an await with channels
 	resultChannel := make(chan resultMsg)
 	js.requests <- requestMsg{code: code, resultChannel: resultChannel}
-	res := <- resultChannel
+	res := <-resultChannel
 	if res.err == ShutdownError {
 		// retry
 		return js.Execute(code)
@@ -160,7 +160,7 @@ func (js *JupyterSession) Initialize(packages *[]string, code string) error {
 func (js *JupyterSession) shutdown(restart bool) {
 	completionChannel := make(chan resultMsg)
 	js.resets <- resetRequest{completionChannel: completionChannel, restart: restart}
-	<- completionChannel
+	<-completionChannel
 }
 
 func (js *JupyterSession) Quit() {
@@ -176,74 +176,78 @@ func (js *JupyterSession) requestor() error {
 	zmqId := NewId()
 	sessionId := NewId()
 	shell, err := makeJupyterShellSocket(js.groupCtx, js.connectionInfo, zmqId, sessionId)
-  if err != nil {
+	if err != nil {
 		return err
-  }
+	}
 	defer shell.Close()
 
 	control, err := makeJupyterControlSocket(js.groupCtx, js.connectionInfo, zmqId, sessionId)
-  if err != nil {
+	if err != nil {
 		return err
-  }
+	}
 	defer control.Close()
 
 	for {
 		select {
-		case resetRequest := <- js.resets: {
-			content, err := json.Marshal(ShutdownRequestContent{
-				Restart: resetRequest.restart,
-			})
-			if err != nil {
-				return err
+		case resetRequest := <-js.resets:
+			{
+				content, err := json.Marshal(ShutdownRequestContent{
+					Restart: resetRequest.restart,
+				})
+				if err != nil {
+					return err
+				}
+				msgId, err := control.sendMessage("shutdown_request", content)
+				if err != nil {
+					return err
+				}
+				liveRequests[msgId] = resetRequest.completionChannel
 			}
-			msgId, err := control.sendMessage("shutdown_request", content)
-			if err != nil {
-				return err
+		case request := <-js.requests:
+			{
+				content, err := json.Marshal(ExecuteRequestContent{
+					Code: request.code,
+				})
+				if err != nil {
+					return err
+				}
+				msgId, err := shell.sendMessage("execute_request", content)
+				if err != nil {
+					return err
+				}
+				liveRequests[msgId] = request.resultChannel
 			}
-			liveRequests[msgId] = resetRequest.completionChannel
-		}
-		case request := <- js.requests: {
-			content, err := json.Marshal(ExecuteRequestContent{
-				Code: request.code,
-			})
-			if err != nil {
-				return err
+		case reply := <-js.replies:
+			{
+				replyChannel, ok := liveRequests[reply.id]
+				if ok {
+					replyChannel <- reply.res
+				}
+				delete(liveRequests, reply.id)
 			}
-			msgId, err := shell.sendMessage("execute_request", content)
-			if err != nil {
-				return err
+		case <-js.groupCtx.Done():
+			{
+				for _, resultChannel := range liveRequests {
+					resultChannel <- resultMsg{err: context.Cause(js.groupCtx)}
+				}
+				return nil
 			}
-			liveRequests[msgId] = request.resultChannel
-		}
-		case reply := <- js.replies: {
-			replyChannel, ok := liveRequests[reply.id]
-			if ok {
-				replyChannel <- reply.res
-			}
-			delete(liveRequests, reply.id)
-		}
-		case <-js.groupCtx.Done(): {
-			for _, resultChannel := range liveRequests {
-				resultChannel <- resultMsg{err: context.Cause(js.groupCtx)}
-			}
-			return nil
-		}
 		}
 	}
 }
 
 func (js *JupyterSession) listener() error {
-  sub := zmq.NewSub(js.groupCtx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
-  var ioPubAddr = fmt.Sprintf("tcp://%s:%d", js.connectionInfo.IP, js.connectionInfo.IOPubPort)
-  err := sub.Dial(ioPubAddr)
-  if err != nil {
+	sub := zmq.NewSub(js.groupCtx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
+	var ioPubAddr = fmt.Sprintf("tcp://%s:%d", js.connectionInfo.IP, js.connectionInfo.IOPubPort)
+	err := sub.Dial(ioPubAddr)
+	if err != nil {
 		return err
-  }
+	}
 	defer sub.Close()
 	err = sub.SetOption(zmq.OptionSubscribe, "")
-  if err != nil {
+	if err != nil {
 		return err
-  }
+	}
 
 	results := make(map[string]resultMsg)
 
@@ -253,7 +257,7 @@ func (js *JupyterSession) listener() error {
 			return nil
 		default:
 		}
-		
+
 		msg, err := sub.Recv()
 		if err != nil {
 			if err == context.Canceled {

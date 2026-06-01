@@ -30,15 +30,15 @@ var (
 )
 
 type InstanceSettings struct {
-	ConnectionType   string  `json:"connectionType"`
-	AuthType         string  `json:"authType"`
-	FetchRoute       *string `json:"fetchRoute"`
-	FetchMethod      *string `json:"fetchMethod"`
-	FetchToken       *string `json:"fetchToken"`
-	RawToken         *string `json:"rawToken"`
-	JupyterUrl       *string `json:"jupyterUrl"`
-	ImportStatements *string `json:"importStatements"`
-	Packages         *[]string `json:"packages"`
+	ConnectionType     string    `json:"connectionType"`
+	AuthType           string    `json:"authType"`
+	FetchRoute         *string   `json:"fetchRoute"`
+	FetchMethod        *string   `json:"fetchMethod"`
+	FetchToken         *string   `json:"fetchToken"`
+	RawToken           *string   `json:"rawToken"`
+	JupyterUrl         *string   `json:"jupyterUrl"`
+	ImportStatements   *string   `json:"importStatements"`
+	Packages           *[]string `json:"packages"`
 	connectionStrategy ConnectionStrategy
 }
 
@@ -58,11 +58,11 @@ func unmarshalInstanceSettings(src []byte) (*InstanceSettings, error) {
 }
 
 type SessionState struct {
-	session jupyterclient.IJupyterSession
-	queryKernelId string
+	session        jupyterclient.IJupyterSession
+	queryKernelId  string
 	actualKernelId string
-	kernelTag string
-	code string
+	kernelTag      string
+	code           string
 }
 
 //mockery:generate: true
@@ -70,7 +70,7 @@ type IJupyterSessionFactory interface {
 	MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error)
 }
 
-type JupyterSessionFactory struct {}
+type JupyterSessionFactory struct{}
 
 func (_ JupyterSessionFactory) MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error) {
 	return jupyterclient.MakeJupyterSession(ctx, ci, logger)
@@ -79,15 +79,15 @@ func (_ JupyterSessionFactory) MakeJupyterSession(ctx context.Context, ci *jupyt
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
 type Datasource struct {
-	settings *InstanceSettings
-	logger log.Logger
-	sessions map[string]SessionState
-  sessionFactory IJupyterSessionFactory
+	settings       *InstanceSettings
+	logger         log.Logger
+	sessions       map[string]SessionState
+	sessionFactory IJupyterSessionFactory
 	createdKernels []string
-	taggedKernels map[string]string
-	httpClient jupyterclient.IJupyterHttpClient
-	context context.Context
-	cancel context.CancelFunc
+	taggedKernels  map[string]string
+	httpClient     jupyterclient.IJupyterHttpClient
+	context        context.Context
+	cancel         context.CancelFunc
 }
 
 var err404 = errors.New("Not found")
@@ -104,77 +104,83 @@ func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 	if err != nil {
 		return sender.Send(&backend.CallResourceResponse{
 			Status: http.StatusInternalServerError,
-			Body: []byte(err.Error()),
+			Body:   []byte(err.Error()),
 		})
 	}
 
 	return sender.Send(&backend.CallResourceResponse{
 		Status: http.StatusOK,
-		Body: response,
+		Body:   response,
 	})
 }
 
 func (p *Datasource) callResource(req *backend.CallResourceRequest) ([]byte, error) {
 	p.logger.Debug(fmt.Sprintf("got a resource request for %+v", req.Path))
 	switch req.Path {
-  case "list": {
-		u, err := url.Parse(req.URL)
-		if err != nil {
-			return nil, err
-		}
+	case "list":
+		{
+			u, err := url.Parse(req.URL)
+			if err != nil {
+				return nil, err
+			}
 
-		m, err := url.ParseQuery(u.RawQuery)
-		if err != nil {
-			return nil, err
-		}
+			m, err := url.ParseQuery(u.RawQuery)
+			if err != nil {
+				return nil, err
+			}
 
-		pathArgs := m["path"]
-		if len(pathArgs) == 0 {
-			return nil, errMissingPath
-		}
+			pathArgs := m["path"]
+			if len(pathArgs) == 0 {
+				return nil, errMissingPath
+			}
 
-		path := strings.TrimLeft(pathArgs[len(pathArgs)-1], "/")
-		entries, err := p.httpClient.GetListing(path)
-		if err != nil {
-			return nil, err
-		}
+			path := strings.TrimLeft(pathArgs[len(pathArgs)-1], "/")
+			entries, err := p.httpClient.GetListing(path)
+			if err != nil {
+				return nil, err
+			}
 
-		return json.Marshal(entries)
-	}
-	case "notebooks": {
-		notebooks, err := p.httpClient.GetNotebooks()
-		if err != nil {
-			return nil, err
+			return json.Marshal(entries)
 		}
+	case "notebooks":
+		{
+			notebooks, err := p.httpClient.GetNotebooks()
+			if err != nil {
+				return nil, err
+			}
 
-		return json.Marshal(notebooks)
-	}
-	case "kernels": {
-		kernels, err := p.httpClient.GetKernels()
-		if err != nil {
-			return nil, err
+			return json.Marshal(notebooks)
 		}
+	case "kernels":
+		{
+			kernels, err := p.httpClient.GetKernels()
+			if err != nil {
+				return nil, err
+			}
 
-		sessions, err := p.httpClient.GetSessions()
-		if err != nil {
-			return nil, err
-		}
+			sessions, err := p.httpClient.GetSessions()
+			if err != nil {
+				return nil, err
+			}
 
-		for i, k := range kernels {
-			for _, s := range sessions {
-				if s.Kernel.Id == k.Id {
-					kernels[i].NotebookPath = &s.Path
-					break
+			for i, k := range kernels {
+				for _, s := range sessions {
+					if s.Kernel.Id == k.Id {
+						kernels[i].NotebookPath = &s.Path
+						break
+					}
 				}
 			}
-		}
 
-		return json.Marshal(kernels)
-	}
-	case "kernelspecs": {
-		return p.httpClient.GetKernelSpecs()
-	}
-	default: {}
+			return json.Marshal(kernels)
+		}
+	case "kernelspecs":
+		{
+			return p.httpClient.GetKernelSpecs()
+		}
+	default:
+		{
+		}
 	}
 
 	return nil, err404
@@ -221,15 +227,15 @@ func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInsta
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Datasource{
-		settings: settings,
-		logger: log.New(),
-		sessions: make(map[string]SessionState),
+		settings:       settings,
+		logger:         log.New(),
+		sessions:       make(map[string]SessionState),
 		sessionFactory: JupyterSessionFactory{},
 		createdKernels: []string{},
-		taggedKernels: make(map[string]string),
-		httpClient: httpClient,
-		context: ctx,
-		cancel: cancel,
+		taggedKernels:  make(map[string]string),
+		httpClient:     httpClient,
+		context:        ctx,
+		cancel:         cancel,
 	}, nil
 }
 
@@ -241,7 +247,7 @@ func (d *Datasource) Dispose() {
 		killKernel := slices.Contains(d.createdKernels, sessionState.actualKernelId)
 		sessionState.session.Quit()
 		if killKernel {
-			_  = d.httpClient.KillKernel(sessionState.actualKernelId)
+			_ = d.httpClient.KillKernel(sessionState.actualKernelId)
 		}
 	}
 	d.cancel()
@@ -276,24 +282,25 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 }
 
 type Var struct {
-	Name string `json:"name"`
+	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
 type queryModel struct {
-	Uuid *string `json:"uuid"`
-  KernelId string `json:"kernelId"`
-	KernelTag string `json:"kernelTag"`
-  KernelType string `json:"kernelType"`
-  ConnectionInfo *string `json:"connectionInfo"`
-  Notebook string `json:"notebook"`
-  Code string `json:"code"`
-  Vars []Var `json:"vars"`
+	Uuid           *string `json:"uuid"`
+	KernelId       string  `json:"kernelId"`
+	KernelTag      string  `json:"kernelTag"`
+	KernelType     string  `json:"kernelType"`
+	ConnectionInfo *string `json:"connectionInfo"`
+	Notebook       string  `json:"notebook"`
+	Code           string  `json:"code"`
+	Vars           []Var   `json:"vars"`
 }
 
 type WrappedLogger struct {
 	logger log.Logger
 }
+
 func (wrapped WrappedLogger) Log(s string) {
 	wrapped.logger.Debug(s)
 }
@@ -329,7 +336,7 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 		}
 
 		d.sessions[*qm.Uuid] = sessionState
-	} else if (qm.KernelId != sessionState.queryKernelId || qm.KernelTag != sessionState.kernelTag) {
+	} else if qm.KernelId != sessionState.queryKernelId || qm.KernelTag != sessionState.kernelTag {
 		// if the kernel in the query differs from the session kernel,
 		// OR the tag in the query differs from the session tag, reconnect
 		d.logger.Debug("session kernel updated, reinitializing")
@@ -372,7 +379,7 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 		}
 
 		d.sessions[*qm.Uuid] = sessionState
-  } else {
+	} else {
 		d.logger.Debug("session found")
 	}
 
@@ -394,7 +401,7 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 	d.logger.Debug(fmt.Sprintf("got query: %v", qm))
 
 	// first, find/create the session
-	if (qm.Uuid == nil) {
+	if qm.Uuid == nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("query missing uuid"))
 	}
 
@@ -440,16 +447,18 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 	result, err := sessionState.session.Query(queryText)
 	if err != nil {
 		switch err.(type) {
-		case jupyterclient.ErrorContent: {
-			// @TODO if it's an ErrorContent, return it as {error:}
-			return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
-		}
-		default: {
-			// goroutines have been terminated - restart the session next query
-			// @TODO may be too late to clean up here
-			delete(d.sessions, *qm.Uuid)
-			return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
-		}
+		case jupyterclient.ErrorContent:
+			{
+				// @TODO if it's an ErrorContent, return it as {error:}
+				return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
+			}
+		default:
+			{
+				// goroutines have been terminated - restart the session next query
+				// @TODO may be too late to clean up here
+				delete(d.sessions, *qm.Uuid)
+				return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
+			}
 		}
 	}
 
@@ -458,11 +467,11 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 	}
 
 	type pyfield struct {
-		Name string `json:"name"`
+		Name   string            `json:"name"`
 		Values []json.RawMessage `json:"values"`
 	}
 	type pyframe struct {
-		Name string `json:"name"`
+		Name string    `json:"name"`
 		Data []pyfield `json:"data"`
 	}
 
