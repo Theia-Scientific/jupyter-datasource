@@ -4,6 +4,7 @@ import { DataQuery } from '@grafana/schema';
 export interface MyQuery extends DataQuery {
   uuid: string;
   kernelId: string;
+  kernelTag: string;
   kernelType: string;
   connectionInfo: string;
   notebook: string;
@@ -30,6 +31,7 @@ export interface QueryFieldVariable {
 
 export const DEFAULT_QUERY: Partial<MyQuery> = {
   kernelId: '',
+  kernelTag: '',
   kernelType: 'python3',
   connectionInfo: '',
   notebook: '',

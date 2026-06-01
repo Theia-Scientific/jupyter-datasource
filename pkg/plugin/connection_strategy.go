@@ -5,24 +5,36 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
 )
 
+func makeConnectionStrategy(settings *InstanceSettings) (ConnectionStrategy, error) {
+	switch settings.ConnectionType {
+	case "AUTO":
+		return ConnectionStrategyAuto{}, nil
+	case "INFO":
+		return ConnectionStrategyInfo{}, nil
+	default:
+		return nil, fmt.Errorf("Unknown connection type '%s'", settings.ConnectionType)
+	}
+}
+
+// uses internal types (queryModel); we can't mock this
+//mockery:generate: false
 type ConnectionStrategy interface {
-	createHttpClient(settings *InstanceSettings) (*jupyterclient.JupyterHttpClient, error)
-	createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error)
+	createHttpClient(settings *InstanceSettings) (jupyterclient.IJupyterHttpClient, error)
+	createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel) (SessionState, error)
 	fetchCode(d *Datasource, settings *InstanceSettings, qm *queryModel) (string, error)
 }
 
 type ConnectionStrategyInfo struct {}
 
-func (_ ConnectionStrategyInfo) createHttpClient(settings *InstanceSettings) (*jupyterclient.JupyterHttpClient, error) {
+func (_ ConnectionStrategyInfo) createHttpClient(settings *InstanceSettings) (jupyterclient.IJupyterHttpClient, error) {
 	return nil, nil
 }
 
-func (_ ConnectionStrategyInfo) createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error) {
-	wrapped := WrappedLogger{logger: logger}
+func (_ ConnectionStrategyInfo) createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel) (SessionState, error) {
+	wrapped := WrappedLogger{logger: d.logger}
 
 	// we (should) have a connection file
 	var ci jupyterclient.ConnectionInfo
@@ -30,7 +42,7 @@ func (_ ConnectionStrategyInfo) createSession(d *Datasource, pctx context.Contex
 	if err != nil {
 		return SessionState{}, err
 	}
-	session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
+	session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
 	// there's no way to know the ID of a kernel that we connect to
 	// via connectionfile.  this seems like a problem.
 	return SessionState{session: session}, err
@@ -42,7 +54,7 @@ func (_ ConnectionStrategyInfo) fetchCode(d *Datasource, settings *InstanceSetti
 
 type ConnectionStrategyAuto struct {}
 
-func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (*jupyterclient.JupyterHttpClient, error) {
+func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (jupyterclient.IJupyterHttpClient, error) {
 	if settings.JupyterUrl == nil {
 		return nil, fmt.Errorf("AUTO connection type selected, but no jupyterUrl supplied")
 	}
@@ -57,45 +69,65 @@ func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (*j
 		Token:   jupyterToken,
 	}
 	client := jupyterclient.MakeJupyterHttpClient(jupyterSettings)
-	return &client, nil
+	return client, nil
 }
 
-func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error) {
-	wrapped := WrappedLogger{logger: logger}
+func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel) (SessionState, error) {
+	wrapped := WrappedLogger{logger: d.logger}
+
+	sessionFromKernelId := func(kernelId string) (SessionState, error) {
+		ci, err := d.httpClient.GetConnectionInfo(kernelId)
+		if err != nil {
+			return SessionState{}, err
+		}
+
+		session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
+		return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: kernelId, kernelTag: qm.KernelTag}, err
+	}
 
 	if qm.KernelId != "" {
-		logger.Debug(fmt.Sprintf("given kernelid %v", qm.KernelId))
-		// we have an assigned kernel id - connect to that.
-		ci, err := d.httpClient.GetConnectionInfo(qm.KernelId)
-		if err != nil {
-			return SessionState{}, err
-		}
-
-		session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-		return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: qm.KernelId}, err
-	} else {
-		kt := qm.KernelType
-		if kt == "" {
-			kt = "python3"
-		}
-		logger.Debug(fmt.Sprintf("creating kernel of type '%v'", kt))
-		// create a kernel of qm.KernelType
-		ks, err := d.httpClient.CreateKernel(kt)
-		if err != nil {
-			return SessionState{}, err
-		}
-
-		logger.Debug(fmt.Sprintf("kernel created, id %v", ks.Id))
-		d.createdKernels = append(d.createdKernels, ks.Id)
-		ci, err := d.httpClient.GetConnectionInfo(ks.Id)
-		if err != nil {
-			return SessionState{}, err
-		}
-
-		logger.Debug(fmt.Sprintf("ci gotten %v", ci))
-		session, err := jupyterclient.MakeJupyterSession(pctx, &ci, wrapped)
-		return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: ks.Id}, err
+		d.logger.Debug(fmt.Sprintf("given kernelId %v", qm.KernelId))
+		return sessionFromKernelId(qm.KernelId)
 	}
+
+	if kernelId := d.taggedKernels[qm.KernelTag]; kernelId != "" {
+		d.logger.Debug(fmt.Sprintf("given kernelTag %v, found kernelId %v", qm.KernelTag, kernelId))
+		return sessionFromKernelId(kernelId)
+	}
+
+	// either no kernel tag, or no kernel created yet for this tag, so: create one!
+	kt := qm.KernelType
+	if kt == "" {
+		kt = "python3"
+	}
+	d.logger.Debug(fmt.Sprintf("creating kernel of type '%v'", kt))
+	// create a kernel of qm.KernelType
+	ks, err := d.httpClient.CreateKernel(kt)
+	if err != nil {
+		return SessionState{}, err
+	}
+
+	d.logger.Debug(fmt.Sprintf("kernel created, id %v", ks.Id))
+	d.createdKernels = append(d.createdKernels, ks.Id)
+	ci, err := d.httpClient.GetConnectionInfo(ks.Id)
+	if err != nil {
+		return SessionState{}, err
+	}
+
+	d.logger.Debug(fmt.Sprintf("got ConnectionInfo: %v", ci))
+	session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
+	d.logger.Debug(fmt.Sprintf("got session=%+v, err=%+v", session, err))
+	if err != nil {
+		return SessionState{}, err
+	}
+
+	// if we're creating a tagged kernel, record an entry for it
+	d.logger.Debug(fmt.Sprintf("oopfh %+v", d.taggedKernels))
+	if qm.KernelTag != "" {
+		d.taggedKernels[qm.KernelTag] = ks.Id
+	}
+
+	return SessionState{session: session, queryKernelId: qm.KernelId, actualKernelId: ks.Id, kernelTag: qm.KernelTag}, nil
 }	
 
 func (_ ConnectionStrategyAuto) fetchCode(d *Datasource, settings *InstanceSettings, qm *queryModel) (string, error) {

@@ -204,6 +204,12 @@ Below you can find source code for existing app plugins and other related docume
   install it elsewhere), subsequent debug builds will not be recognized. At
   this point you'll want to nuke the dist/ folder and rebuild/restart.
 
+### Running backend tests
+
+- Just run `mage test` generally.
+- For updating mocks: `go install github.com/vektra/mockery/v3@v3.7.0`
+  and then run `mockery` in the root of the repo.
+
 ### Testing
 
 Ensure the following system dependencies are installed on the host test machine.

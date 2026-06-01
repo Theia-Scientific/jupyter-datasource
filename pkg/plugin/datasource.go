@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
-	"github.com/Theia-Scientific/jupyter-datasource/pkg/models"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/instancemgmt"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
@@ -59,97 +58,106 @@ func unmarshalInstanceSettings(src []byte) (*InstanceSettings, error) {
 }
 
 type SessionState struct {
-	session *jupyterclient.JupyterSession
+	session jupyterclient.IJupyterSession
 	queryKernelId string
 	actualKernelId string
+	kernelTag string
 	code string
+}
+
+//mockery:generate: true
+type IJupyterSessionFactory interface {
+	MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error)
+}
+
+type JupyterSessionFactory struct {}
+
+func (_ JupyterSessionFactory) MakeJupyterSession(ctx context.Context, ci *jupyterclient.ConnectionInfo, logger jupyterclient.Logger) (jupyterclient.IJupyterSession, error) {
+	return jupyterclient.MakeJupyterSession(ctx, ci, logger)
 }
 
 // Datasource is an example datasource which can respond to data queries, reports
 // its health and has streaming skills.
 type Datasource struct {
+	settings *InstanceSettings
+	logger log.Logger
 	sessions map[string]SessionState
+  sessionFactory IJupyterSessionFactory
 	createdKernels []string
-	httpClient *jupyterclient.JupyterHttpClient
+	taggedKernels map[string]string
+	httpClient jupyterclient.IJupyterHttpClient
 	context context.Context
 	cancel context.CancelFunc
 }
 
+var err404 = errors.New("Not found")
+var errMissingPath = errors.New("missing 'path' argument on request")
+
 func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	logger := log.New()
-	logger.Debug(fmt.Sprintf("got a resource request for %+v", req.Path))
+	response, err := p.callResource(req)
+	if err == err404 {
+		return sender.Send(&backend.CallResourceResponse{
+			Status: http.StatusNotFound,
+		})
+	}
+
+	if err != nil {
+		return sender.Send(&backend.CallResourceResponse{
+			Status: http.StatusInternalServerError,
+			Body: []byte(err.Error()),
+		})
+	}
+
+	return sender.Send(&backend.CallResourceResponse{
+		Status: http.StatusOK,
+		Body: response,
+	})
+}
+
+func (p *Datasource) callResource(req *backend.CallResourceRequest) ([]byte, error) {
+	p.logger.Debug(fmt.Sprintf("got a resource request for %+v", req.Path))
 	switch req.Path {
   case "list": {
-		jsonData, err := (func() ([]byte, error) {
-			u, err := url.Parse(req.URL)
-			if err != nil {
-				return nil, err
-			}
-
-			m, err := url.ParseQuery(u.RawQuery)
-			if err != nil {
-				return nil, err
-			}
-
-			pathArgs := m["path"]
-			if len(pathArgs) == 0 {
-				return nil, errors.New("missing 'path' argument on request")
-			}
-
-			path := strings.TrimLeft(pathArgs[len(pathArgs)-1], "/")
-			entries, err := p.httpClient.GetListing(path)
-			if err != nil {
-				return nil, err
-			}
-
-			return json.Marshal(entries)
-		})()
-
+		u, err := url.Parse(req.URL)
 		if err != nil {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusInternalServerError,
-				Body: []byte(err.Error()),
-			})
+			return nil, err
 		}
 
-		return sender.Send(&backend.CallResourceResponse{
-			Status: http.StatusOK,
-			Body:   jsonData,
-		})
+		m, err := url.ParseQuery(u.RawQuery)
+		if err != nil {
+			return nil, err
+		}
+
+		pathArgs := m["path"]
+		if len(pathArgs) == 0 {
+			return nil, errMissingPath
+		}
+
+		path := strings.TrimLeft(pathArgs[len(pathArgs)-1], "/")
+		entries, err := p.httpClient.GetListing(path)
+		if err != nil {
+			return nil, err
+		}
+
+		return json.Marshal(entries)
 	}
 	case "notebooks": {
 		notebooks, err := p.httpClient.GetNotebooks()
-		var jsonData []byte
-		if err == nil {
-			jsonData, err = json.Marshal(notebooks)
-		}
 		if err != nil {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusInternalServerError,
-				Body: []byte(err.Error()),
-			})
-		} else {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusOK,
-				Body:   jsonData,
-			})
+			return nil, err
 		}
+
+		return json.Marshal(notebooks)
 	}
 	case "kernels": {
 		kernels, err := p.httpClient.GetKernels()
 		if err != nil {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusInternalServerError,
-				Body: []byte(err.Error()),
-			})
+			return nil, err
 		}
 
 		sessions, err := p.httpClient.GetSessions()
 		if err != nil {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusInternalServerError,
-				Body: []byte(err.Error()),
-			})
+			return nil, err
 		}
 
 		for i, k := range kernels {
@@ -161,40 +169,15 @@ func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 			}
 		}
 
-		jsonData, err := json.Marshal(kernels)
-		if err != nil {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusInternalServerError,
-				Body: []byte(err.Error()),
-			})
-		}
-
-		return sender.Send(&backend.CallResourceResponse{
-			Status: http.StatusOK,
-			Body:   jsonData,
-		})
+		return json.Marshal(kernels)
 	}
 	case "kernelspecs": {
-		kernelspecs, err := p.httpClient.GetKernelSpecs()
-		if err != nil {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusInternalServerError,
-				Body: []byte(err.Error()),
-			})
-		} else {
-			return sender.Send(&backend.CallResourceResponse{
-				Status: http.StatusOK,
-				Body:   kernelspecs,
-			})
-		}
+		return p.httpClient.GetKernelSpecs()
 	}
-	default: {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: http.StatusNotFound,
-		})
+	default: {}
 	}
-	}
-	return nil
+
+	return nil, err404
 }
 
 func getJupyterToken(settings *InstanceSettings) (string, error) {
@@ -223,17 +206,6 @@ func getJupyterToken(settings *InstanceSettings) (string, error) {
 	}
 }
 
-func makeConnectionStrategy(settings *InstanceSettings) (ConnectionStrategy, error) {
-	switch settings.ConnectionType {
-	case "AUTO":
-		return ConnectionStrategyAuto{}, nil
-	case "INFO":
-		return ConnectionStrategyInfo{}, nil
-	default:
-		return nil, fmt.Errorf("Unknown connection type '%s'", settings.ConnectionType)
-	}
-}
-
 // NewDatasource creates a new datasource instance.
 func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
 	settings, err := unmarshalInstanceSettings(instanceSettings.JSONData)
@@ -249,8 +221,12 @@ func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInsta
 	ctx, cancel := context.WithCancel(context.Background())
 
 	return &Datasource{
+		settings: settings,
+		logger: log.New(),
 		sessions: make(map[string]SessionState),
+		sessionFactory: JupyterSessionFactory{},
 		createdKernels: []string{},
+		taggedKernels: make(map[string]string),
 		httpClient: httpClient,
 		context: ctx,
 		cancel: cancel,
@@ -272,7 +248,14 @@ func (d *Datasource) Dispose() {
 }
 
 func (d *Datasource) UpdateDatasourceFromQuery(req *backend.QueryDataRequest) error {
-	// queries don't change datasource
+	d.logger.Debug("updating instance settings")
+
+	settings, err := unmarshalInstanceSettings(req.PluginContext.DataSourceInstanceSettings.JSONData)
+	if err != nil {
+		return err
+	}
+
+	d.settings = settings
 	return nil
 }
 
@@ -286,11 +269,7 @@ func (d *Datasource) QueryData(ctx context.Context, req *backend.QueryDataReques
 
 	// loop over queries and execute them individually.
 	for _, q := range req.Queries {
-		res := d.query(ctx, req.PluginContext, q)
-
-		// save the response in a hashmap
-		// based on with RefID as identifier
-		response.Responses[q.RefID] = res
+		response.Responses[q.RefID] = d.query(ctx, q)
 	}
 
 	return response, nil
@@ -304,6 +283,7 @@ type Var struct {
 type queryModel struct {
 	Uuid *string `json:"uuid"`
   KernelId string `json:"kernelId"`
+	KernelTag string `json:"kernelTag"`
   KernelType string `json:"kernelType"`
   ConnectionInfo *string `json:"connectionInfo"`
   Notebook string `json:"notebook"`
@@ -318,109 +298,130 @@ func (wrapped WrappedLogger) Log(s string) {
 	wrapped.logger.Debug(s)
 }
 
-func (d *Datasource) createSession(pctx context.Context, settings *InstanceSettings, qm *queryModel, logger log.Logger) (SessionState, error) {
+func (d *Datasource) createSession(pctx context.Context, settings *InstanceSettings, qm *queryModel) (SessionState, error) {
 	return settings.connectionStrategy.createSession(
-		d, pctx, settings, qm, logger)
+		d, pctx, settings, qm)
 }
 
-func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, query backend.DataQuery) backend.DataResponse {
-	logger := log.New()
-	logger.Debug(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
-
-	settings, err := unmarshalInstanceSettings(pCtx.DataSourceInstanceSettings.JSONData)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("couldn't retrieve settings: %v", err.Error()))
+func (d *Datasource) kernelIdRefCount(kernelId string) int {
+	uses := 0
+	for _, sessionState := range d.sessions {
+		if sessionState.actualKernelId == kernelId {
+			uses += 1
+		}
 	}
+	return uses
+}
 
-	var response backend.DataResponse
-
-	// Unmarshal the JSON into our queryModel.
-	var qm queryModel
-	err = json.Unmarshal(query.JSON, &qm)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
-	}
-
-	logger.Debug(fmt.Sprintf("got query: %v", qm))
-
-	// first, find/create the session
-	if (qm.Uuid == nil) {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("query missing uuid"))
-	}
+func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryModel) (SessionState, error) {
+	var err error
 	sessionState, foundSession := d.sessions[*qm.Uuid]
 
-	code, err := settings.connectionStrategy.fetchCode(d, settings, &qm)
-	if err != nil {
-		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("err fetching notebook %s: %v", qm.Notebook, err.Error()))
-	}
-
-	logger.Debug(fmt.Sprintf("query uuid: %v", *qm.Uuid))
-	logger.Debug(fmt.Sprintf("foundSession=%v, qm.KernelId=%v, sessionState.queryKernelId=%v, sessionState.actualKernelId=%v",
+	d.logger.Debug(fmt.Sprintf("query uuid: %v", *qm.Uuid))
+	d.logger.Debug(fmt.Sprintf("foundSession=%v, qm.KernelId=%v, sessionState.queryKernelId=%v, sessionState.actualKernelId=%v",
 		foundSession, qm.KernelId, sessionState.queryKernelId, sessionState.actualKernelId))
 	if !foundSession {
-		logger.Debug("session not found, creating")
-		sessionState, err = d.createSession(d.context, settings, &qm, logger)
+		d.logger.Debug("session not found, creating")
+		sessionState, err = d.createSession(d.context, settings, qm)
+		d.logger.Debug(fmt.Sprintf("d.CreateSession: %+v, %+v", sessionState, err))
 		if err != nil {
-			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
+			return SessionState{}, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
 		d.sessions[*qm.Uuid] = sessionState
-	} else if (qm.KernelId != sessionState.queryKernelId) {
-		// if the kernel in the query differs from the session kernel, reconnect
-		logger.Debug("session kernel updated, reinitializing")
+	} else if (qm.KernelId != sessionState.queryKernelId || qm.KernelTag != sessionState.kernelTag) {
+		// if the kernel in the query differs from the session kernel,
+		// OR the tag in the query differs from the session tag, reconnect
+		d.logger.Debug("session kernel updated, reinitializing")
 		oldKernel := sessionState.actualKernelId
 		// if it was an owned kernel, and this was the last use, kill it
 		killKernel := false
 		if slices.Contains(d.createdKernels, oldKernel) {
-			logger.Debug(fmt.Sprintf("kernel %v was created, checking if it should die", oldKernel))
-			uses := 0
+			d.logger.Debug(fmt.Sprintf("checking if kernel %v should die", oldKernel))
+			uses := d.kernelIdRefCount(oldKernel)
 			if qm.KernelId == oldKernel {
 				// we're switching from 'new kernel' to this very kernel. this
 				// counts as a use.  don't kill it.
 				uses += 1
 			}
-			for _, sessionState := range d.sessions {
-				if sessionState.actualKernelId == oldKernel {
-					uses += 1
-				}
-			}
+
 			killKernel = (uses == 1)
-			logger.Debug(fmt.Sprintf("uses=%v, killKernel=%v", uses, killKernel))
+			d.logger.Debug(fmt.Sprintf("uses=%v, killKernel=%v", uses, killKernel))
 		} else {
-			logger.Debug(fmt.Sprintf("kernel %v was NOT created, not killing", oldKernel))
+			d.logger.Debug(fmt.Sprintf("kernel %v was NOT created, not killing", oldKernel))
 		}
 		sessionState.session.Quit()
 		if killKernel {
-			err  = d.httpClient.KillKernel(sessionState.actualKernelId)
+			// if this was a tagged kernel, remove the tag
+			if sessionState.kernelTag != "" {
+				delete(d.taggedKernels, sessionState.kernelTag)
+			}
+			err := d.httpClient.KillKernel(sessionState.actualKernelId)
 			if err != nil {
 				delete(d.sessions, *qm.Uuid)
-				return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session cleanup failure: %v", err.Error()))
+				return SessionState{}, errors.New(fmt.Sprintf("session cleanup failure: %v", err.Error()))
 			}
 		}
-		// update the kernelId and reconnecct
-		sessionState, err = d.createSession(d.context, settings, &qm, logger)
+		// update the kernelId and reconnect
+		sessionState, err = d.createSession(d.context, settings, qm)
+		d.logger.Debug(fmt.Sprintf("d.CreateSession: %+v, %+v", sessionState, err))
 
 		if err != nil {
 			delete(d.sessions, *qm.Uuid)
-			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
+			return SessionState{}, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
 		d.sessions[*qm.Uuid] = sessionState
   } else {
-		logger.Debug("session found")
+		d.logger.Debug("session found")
+	}
+
+	return sessionState, nil
+}
+
+func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backend.DataResponse {
+	d.logger.Debug(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
+
+	var response backend.DataResponse
+
+	// Unmarshal the JSON into our queryModel.
+	var qm queryModel
+	err := json.Unmarshal(query.JSON, &qm)
+	if err != nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("json unmarshal: %v", err.Error()))
+	}
+
+	d.logger.Debug(fmt.Sprintf("got query: %v", qm))
+
+	// first, find/create the session
+	if (qm.Uuid == nil) {
+		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("query missing uuid"))
+	}
+
+	sessionState, err := d.findOrCreateSession(d.settings, &qm)
+	d.logger.Debug(fmt.Sprintf("d.findOrCreateSession: %+v, %+v", sessionState, err))
+	if err != nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
+	}
+
+	code, err := d.settings.connectionStrategy.fetchCode(d, d.settings, &qm)
+	if err != nil {
+		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("err fetching notebook %s: %v", qm.Notebook, err.Error()))
 	}
 
 	if code != sessionState.code {
-		logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
-		err = sessionState.session.Initialize(settings.Packages, code)
+		d.logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
+		d.logger.Debug(fmt.Sprintf("d.settings: %+v", d.settings))
+		d.logger.Debug(fmt.Sprintf("sessionState: %+v", sessionState))
+		err = sessionState.session.Initialize(d.settings.Packages, code)
 		if err != nil {
 			delete(d.sessions, *qm.Uuid)
 			return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
-		logger.Debug("Initialized")
-		if settings.ImportStatements != nil {
-			sessionState.session.Execute(*settings.ImportStatements)
+		d.logger.Debug("Initialized")
+		if d.settings.ImportStatements != nil {
+			sessionState.session.Execute(*d.settings.ImportStatements)
 		}
 		sessionState.code = code
 		d.sessions[*qm.Uuid] = sessionState
@@ -502,12 +503,6 @@ func (d *Datasource) query(pctx context.Context, pCtx backend.PluginContext, que
 // a datasource is working as expected.
 func (d *Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	res := &backend.CheckHealthResult{}
-	_, err := models.LoadPluginSettings(*req.PluginContext.DataSourceInstanceSettings)
-	if err != nil {
-		res.Status = backend.HealthStatusError
-		res.Message = "Unable to load plugin settings"
-		return res, nil
-	}
 
 	settings, err := unmarshalInstanceSettings(req.PluginContext.DataSourceInstanceSettings.JSONData)
 	if err != nil {

@@ -15,6 +15,7 @@ describe('Query Editor', () => {
   const baseQuery: MyQuery = {
     uuid: 'k77MQ421TA649b78oqsJBO945x29Y9V7',
     kernelType: "python3",
+    kernelTag: "",
     connectionInfo: "",
     kernelId: "",
     notebook: "",
@@ -117,12 +118,22 @@ describe('Query Editor', () => {
 
       expect(screen.queryByText('Run Query')).toBeInTheDocument();
       expect(screen.queryByLabelText('Kernel ID')).toBeInTheDocument();
+      expect(screen.queryByLabelText('Kernel Tag')).toBeInTheDocument();
       expect(screen.queryByLabelText('Kernel Type')).toBeInTheDocument();
       expect(screen.queryByLabelText('Kernel Type')).toHaveRole('combobox');
       expect(screen.queryByLabelText('Connection Info')).not.toBeInTheDocument();
       expect(screen.queryByText('Variables')).toBeInTheDocument();
       expect(screen.queryByLabelText('Source')).toBeInTheDocument();
     });
+
+    describe('with a kernelId set', () => {
+      const datasource = mockDatasource();
+      const query = {...baseQuery, kernelId: 'candycorn'};
+      it('should not show kernel tag', async () => {
+        await renderWithoutErrors(getComponent({query, datasource, onChange}));
+        expect(screen.queryByLabelText('Kernel Tag')).not.toBeInTheDocument();
+      })
+    })
 
     describe('with no notebook set', () => {
       const datasource = mockDatasource();
