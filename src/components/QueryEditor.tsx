@@ -14,7 +14,7 @@ import { t } from '@grafana/i18n';
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
 
 function emptyNotebook(query: MyQuery) {
-  return query.notebook === '';
+  return query.notebook === undefined || query.notebook === '';
 }
 
 const ENTER_CODE = "<enter code>";
@@ -111,7 +111,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     { label: t('queryEditor.source.code', 'Enter code below...'), value: ENTER_CODE },
     { label: t('queryEditor.source.notebook', 'Choose notebook below...'), value: CHOOSE_NOTEBOOK },
   ];
-  const [source, setSource] = useState(emptyNotebook(query) ? ENTER_CODE : query.notebook);
+  const [source, setSource] = useState(() => emptyNotebook(query) ? ENTER_CODE : query.notebook);
 
   const onSelectFile = (f: PathEntryNotebook) => {
     setSource(f.path);
