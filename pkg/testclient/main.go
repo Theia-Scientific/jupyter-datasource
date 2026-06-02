@@ -18,8 +18,7 @@ func (_ Logger) Log(s string) {
 }
 
 func main() {
-	sys := jupyterclient.DefaultSystemServiceSettings()
-	jup, err := jupyterclient.DefaultJupyterServiceSettings(sys)
+	jup, err := jupyterclient.DefaultJupyterServiceSettings()
 	if err != nil {
 		log.Fatal(err)
 	}

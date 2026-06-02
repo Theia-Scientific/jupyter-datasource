@@ -62,15 +62,9 @@ create_frame("frame", [
 ])
 `};
 
-export enum Method {
-  Get = "GET",
-  Put = "PUT",
-}
-
 export enum AuthType {
   None = "NONE",
   RawToken = "RAW",
-  Fetch = "FETCH",
 }
 
 export enum ConnectionType {
@@ -84,9 +78,6 @@ export enum ConnectionType {
 export interface MyDataSourceOptions extends DataSourceJsonData {
   connectionType: ConnectionType;
   authType: AuthType;
-  fetchRoute?: string;
-  fetchMethod?: Method;
-  fetchToken?: string;
   rawToken?: string;
   jupyterUrl?: string;
   prelude?: string;
