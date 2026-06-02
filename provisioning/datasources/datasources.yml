@@ -13,4 +13,8 @@ datasources:
       authType: RAW
       rawToken: '${JUPYTER_TOKEN}'
       jupyterUrl: http://localhost:8888/api
-      prelude: 'from IPython.display import JSON'
+      prelude: |
+        from IPython.display import JSON
+
+        def Frame(data):
+          return JSON([{"name":"frame", "data": data}])
