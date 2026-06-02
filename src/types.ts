@@ -91,7 +91,7 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
   fetchToken?: string;
   rawToken?: string;
   jupyterUrl?: string;
-  importStatements?: string;
+  prelude?: string;
   packages: string[];
 }
 

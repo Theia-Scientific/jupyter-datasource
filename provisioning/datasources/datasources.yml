@@ -13,4 +13,4 @@ datasources:
       authType: RAW
       rawToken: '${JUPYTER_TOKEN}'
       jupyterUrl: http://localhost:8888/api
-      importStatements: 'from IPython.display import JSON'
+      prelude: 'from IPython.display import JSON'

@@ -37,7 +37,7 @@ type InstanceSettings struct {
 	FetchToken         *string   `json:"fetchToken"`
 	RawToken           *string   `json:"rawToken"`
 	JupyterUrl         *string   `json:"jupyterUrl"`
-	ImportStatements   *string   `json:"importStatements"`
+	Prelude            *string   `json:"prelude"`
 	Packages           *[]string `json:"packages"`
 	connectionStrategy ConnectionStrategy
 }
@@ -427,8 +427,8 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 		}
 
 		d.logger.Debug("Initialized")
-		if d.settings.ImportStatements != nil {
-			sessionState.session.Execute(*d.settings.ImportStatements)
+		if d.settings.Prelude != nil {
+			sessionState.session.Execute(*d.settings.Prelude)
 		}
 		sessionState.code = code
 		d.sessions[*qm.Uuid] = sessionState

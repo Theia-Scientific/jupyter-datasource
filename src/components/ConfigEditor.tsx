@@ -96,13 +96,13 @@ export function ConfigEditor(props: Props) {
     });
   };
 
-  const onImportStatementsChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+  const onPreludeChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
     const val = event.target.value;
     onOptionsChange({
       ...options,
       jsonData: {
         ...jsonData,
-        importStatements: val.length > 0 ? val : undefined,
+        prelude: val.length > 0 ? val : undefined,
       },
     });
   }
@@ -236,13 +236,13 @@ export function ConfigEditor(props: Props) {
       </Button>
     </>
       </InlineField>
-      <InlineField label={t('configEditor.importStatements.label', 'Import Statements')} labelWidth={20} interactive tooltip={t('configEditor.importStatements.tooltip', 'Import statements to run for every kernel')}>
+      <InlineField label={t('configEditor.prelude.label', 'Prelude')} labelWidth={20} interactive tooltip={t('configEditor.prelude.tooltip', 'Code to run at start for every kernel')}>
         <TextArea
           style={{resize: 'both'}}
-          id="config-import-statements"
-          onChange={onImportStatementsChange}
-          value={jsonData.importStatements || ""}
-          placeholder={t('configEditor.importStatements.placeholder', 'Enter default import statements')}
+          id="config-prelude"
+          onChange={onPreludeChange}
+          value={jsonData.prelude || ""}
+          placeholder={t('configEditor.prelude.placeholder', 'Enter default imports, shared setup code, etc.')}
           rows={12}
           cols={80}
         />

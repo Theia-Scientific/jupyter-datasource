@@ -123,8 +123,8 @@ func TestSpecifiedKernelIdDoesNotCreateKernel(t *testing.T) {
 // a datasource with import statements should Execute them once
 func TestImportStatementsAreIncludedInInitialize(t *testing.T) {
 	httpClient, session, d := setupDatasourceWithSession(t)
-	importStatements := "from treats import candy"
-	d.settings.ImportStatements = &importStatements
+	prelude := "from treats import candy"
+	d.settings.Prelude = &prelude
 
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil)
