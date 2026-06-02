@@ -71,6 +71,13 @@ export function ConfigEditor(props: Props) {
     });
   }
 
+  const jupyterLabUrl =
+    (jsonData.jupyterUrl??'').replace(/\/$/,'') +
+    '/../lab' +
+    (jsonData.authType === AuthType.RawToken
+      ? `?token=${jsonData.rawToken}`
+      : '');
+
   return (
     <>
       <InlineField label={t('configEditor.connectionType.label', 'Connection Type')} labelWidth={20} interactive tooltip={t('configEditor.connectionType.tooltip', 'Type of connection')}>
@@ -105,15 +112,18 @@ export function ConfigEditor(props: Props) {
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto &&
-        <InlineField label={t('configEditor.jupyterUrl.label', 'JupyterLab URL')} labelWidth={20} interactive tooltip={t('configEditor.jupyterUrl.tooltip', 'JupyterLab endpoint URL')}>
-          <Input
-            id="config-jupyter-url"
-            onChange={onJupyterUrlChange}
-            value={jsonData.jupyterUrl}
-            placeholder={t('configEditor.jupyterUrl.placeholder', 'Enter the JupyterLab URL, e.g. http://localhost:8888/')}
-            width={40}
-          />
-        </InlineField>
+        <InlineFieldRow>
+          <InlineField label={t('configEditor.jupyterUrl.label', 'JupyterLab URL')} labelWidth={20} interactive tooltip={t('configEditor.jupyterUrl.tooltip', 'JupyterLab endpoint URL')}>
+            <Input
+              id="config-jupyter-url"
+              onChange={onJupyterUrlChange}
+              value={jsonData.jupyterUrl}
+              placeholder={t('configEditor.jupyterUrl.placeholder', 'Enter the JupyterLab URL, e.g. http://localhost:8888/')}
+              width={40}
+            />
+          </InlineField>
+        <a href={jupyterLabUrl}>Open JupyterLab</a>
+        </InlineFieldRow>
         }
       <InlineField label={t('configEditor.packages.label', 'Packages')} labelWidth={20} interactive tooltip={t('configEditor.packages.tooltip', 'Packages to install for every kernel')}>
       <>
