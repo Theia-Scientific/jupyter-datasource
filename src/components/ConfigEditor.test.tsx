@@ -40,7 +40,7 @@ describe('Config Editor', () => {
       // expected
       expect(screen.queryByLabelText('Connection Type')).toBeInTheDocument();
       expect(screen.queryByText('Packages')).toBeInTheDocument();
-      expect(screen.queryByLabelText('Prelude')).toBeInTheDocument();
+      expect(screen.queryByText('Prelude')).toBeInTheDocument();
 
       // unexpected
       expect(screen.queryByLabelText('Auth Type')).not.toBeInTheDocument();
@@ -62,7 +62,7 @@ describe('Config Editor', () => {
       expect(screen.queryByLabelText('Connection Type')).toBeInTheDocument();
       expect(screen.queryByLabelText('Auth Type')).toBeInTheDocument();
       expect(screen.queryByText('Packages')).toBeInTheDocument();
-      expect(screen.queryByLabelText('Prelude')).toBeInTheDocument();
+      expect(screen.queryByText('Prelude')).toBeInTheDocument();
       expect(screen.queryByLabelText('JupyterLab URL')).toBeInTheDocument();
 
       // unexpected
@@ -82,7 +82,7 @@ describe('Config Editor', () => {
         expect(screen.queryByLabelText('Connection Type')).toBeInTheDocument();
         expect(screen.queryByLabelText('Auth Type')).toBeInTheDocument();
         expect(screen.queryByText('Packages')).toBeInTheDocument();
-        expect(screen.queryByLabelText('Prelude')).toBeInTheDocument();
+        expect(screen.queryByText('Prelude')).toBeInTheDocument();
         expect(screen.queryByLabelText('JupyterLab URL')).toBeInTheDocument();
         expect(screen.queryByLabelText('Token')).toBeInTheDocument();
 
@@ -103,7 +103,7 @@ describe('Config Editor', () => {
         expect(screen.queryByLabelText('Connection Type')).toBeInTheDocument();
         expect(screen.queryByLabelText('Auth Type')).toBeInTheDocument();
         expect(screen.queryByText('Packages')).toBeInTheDocument();
-        expect(screen.queryByLabelText('Prelude')).toBeInTheDocument();
+        expect(screen.queryByText('Prelude')).toBeInTheDocument();
         expect(screen.queryByLabelText('JupyterLab URL')).toBeInTheDocument();
         expect(screen.queryByLabelText('Token URL')).toBeInTheDocument();
         expect(screen.queryByLabelText('Method')).toBeInTheDocument();

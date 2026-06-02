@@ -1,5 +1,6 @@
+import { css } from '@emotion/css';
 import React, { useMemo, ChangeEvent } from 'react';
-import { Button, Combobox, ComboboxOption, InlineField, InlineFieldRow, Input, TextArea } from '@grafana/ui';
+import { Button, CodeEditor, Combobox, ComboboxOption, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { AuthType, ConnectionType, Method, MyDataSourceOptions, MySecureJsonData } from '../types';
 import { t } from '@grafana/i18n';
@@ -96,8 +97,7 @@ export function ConfigEditor(props: Props) {
     });
   };
 
-  const onPreludeChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
-    const val = event.target.value;
+  const onPreludeChange = (val: string) => {
     onOptionsChange({
       ...options,
       jsonData: {
@@ -237,14 +237,12 @@ export function ConfigEditor(props: Props) {
     </>
       </InlineField>
       <InlineField label={t('configEditor.prelude.label', 'Prelude')} labelWidth={20} interactive tooltip={t('configEditor.prelude.tooltip', 'Code to run at start for every kernel')}>
-        <TextArea
-          style={{resize: 'both'}}
-          id="config-prelude"
+        <CodeEditor
+          value={jsonData.prelude ?? ""}
+          language="python"
           onChange={onPreludeChange}
-          value={jsonData.prelude || ""}
-          placeholder={t('configEditor.prelude.placeholder', 'Enter default imports, shared setup code, etc.')}
-          rows={12}
-          cols={80}
+          containerStyles={css`overflow: hidden; resize: both; width: 80em; height: 25em`}
+          showLineNumbers={true}
         />
       </InlineField>
     </>
