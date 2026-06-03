@@ -431,7 +431,12 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 
 		d.logger.Debug("Initialized")
 		if d.settings.Prelude != nil {
-			sessionState.session.Execute(*d.settings.Prelude)
+			d.logger.Debug(fmt.Sprintf("Executing prelude: %s", *d.settings.Prelude))
+			res, err := sessionState.session.Execute(*d.settings.Prelude)
+			d.logger.Debug(fmt.Sprintf("prelude executed: res=%+v, err=%+v", res, err))
+			if err != nil {
+				return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
+			}
 		}
 		sessionState.code = code
 		d.sessions[*qm.Uuid] = sessionState
