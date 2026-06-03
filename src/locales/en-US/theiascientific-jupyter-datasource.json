@@ -28,6 +28,9 @@
       "placeholder": "Enter the JupyterLab URL, e.g. http://localhost:8888/",
       "tooltip": "JupyterLab endpoint URL"
     },
+    "openJupyterLab": {
+      "buttonText": "Open JupyterLab"
+    },
     "packages": {
       "add": "Add Package",
       "label": "Packages",

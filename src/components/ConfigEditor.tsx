@@ -122,7 +122,7 @@ export function ConfigEditor(props: Props) {
               width={40}
             />
           </InlineField>
-        <a href={jupyterLabUrl}>Open JupyterLab</a>
+        <Button onClick={() => window.open(jupyterLabUrl)}>{t('configEditor.openJupyterLab.buttonText', 'Open JupyterLab')}</Button>
         </InlineFieldRow>
         }
       <InlineField label={t('configEditor.packages.label', 'Packages')} labelWidth={20} interactive tooltip={t('configEditor.packages.tooltip', 'Packages to install for every kernel')}>
