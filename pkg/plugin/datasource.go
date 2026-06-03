@@ -320,8 +320,9 @@ func (d *Datasource) kernelIdRefCount(kernelId string) int {
 	return uses
 }
 
-func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryModel) (SessionState, error) {
+func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryModel) (SessionState, bool, error) {
 	var err error
+	created := false
 	sessionState, foundSession := d.sessions[*qm.Uuid]
 
 	d.logger.Debug(fmt.Sprintf("query uuid: %v", *qm.Uuid))
@@ -332,9 +333,10 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 		sessionState, err = d.createSession(d.context, settings, qm)
 		d.logger.Debug(fmt.Sprintf("d.CreateSession: %+v, %+v", sessionState, err))
 		if err != nil {
-			return SessionState{}, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
+			return SessionState{}, created, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
+		created = true
 		d.sessions[*qm.Uuid] = sessionState
 	} else if qm.KernelId != sessionState.queryKernelId || qm.KernelTag != sessionState.kernelTag {
 		// if the kernel in the query differs from the session kernel,
@@ -366,7 +368,7 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 			err := d.httpClient.KillKernel(sessionState.actualKernelId)
 			if err != nil {
 				delete(d.sessions, *qm.Uuid)
-				return SessionState{}, errors.New(fmt.Sprintf("session cleanup failure: %v", err.Error()))
+				return SessionState{}, created, errors.New(fmt.Sprintf("session cleanup failure: %v", err.Error()))
 			}
 		}
 		// update the kernelId and reconnect
@@ -375,15 +377,16 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 
 		if err != nil {
 			delete(d.sessions, *qm.Uuid)
-			return SessionState{}, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
+			return SessionState{}, created, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
+		created = true
 		d.sessions[*qm.Uuid] = sessionState
 	} else {
 		d.logger.Debug("session found")
 	}
 
-	return sessionState, nil
+	return sessionState, created, nil
 }
 
 func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backend.DataResponse {
@@ -405,7 +408,7 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("query missing uuid"))
 	}
 
-	sessionState, err := d.findOrCreateSession(d.settings, &qm)
+	sessionState, newSession, err := d.findOrCreateSession(d.settings, &qm)
 	d.logger.Debug(fmt.Sprintf("d.findOrCreateSession: %+v, %+v", sessionState, err))
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
@@ -416,7 +419,7 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("err fetching notebook %s: %v", qm.Notebook, err.Error()))
 	}
 
-	if code != sessionState.code {
+	if code != sessionState.code || newSession {
 		d.logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
 		d.logger.Debug(fmt.Sprintf("d.settings: %+v", d.settings))
 		d.logger.Debug(fmt.Sprintf("sessionState: %+v", sessionState))
