@@ -283,7 +283,7 @@ Ensure the following system dependencies are installed on the host test machine.
 7. Build and start the Grafana and Jupyter containers.
 
    ```sh
-   pnpm run server
+   pnpm run start
    ```
    
    or
@@ -313,6 +313,12 @@ Ensure the following system dependencies are installed on the host test machine.
 14. Once done testing the branch, return to the terminal press `CTRL+C` to stop
     the containers. Alternatively, another terminal can be opened and the
     following command could be used:
+
+    ```sh
+    pnpm run stop
+    ```
+    
+    or
 
     ```sh
     docker compose down
