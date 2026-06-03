@@ -518,29 +518,72 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	res := &backend.CheckHealthResult{}
+func (d *Datasource) CheckHealth(pctx context.Context, req *backend.CheckHealthRequest) (res *backend.CheckHealthResult, resErr error) {
+	res = &backend.CheckHealthResult{Status: backend.HealthStatusError}
+	resErr = nil
 
 	settings, err := unmarshalInstanceSettings(req.PluginContext.DataSourceInstanceSettings.JSONData)
 	if err != nil {
-		res.Status = backend.HealthStatusError
 		res.Message = fmt.Sprintf("Unable to parse settings: %v", err)
-		return res, nil
+		return
 	}
 
 	httpClient, err := settings.connectionStrategy.createHttpClient(settings)
 	if err != nil {
-		res.Status = backend.HealthStatusError
 		res.Message = fmt.Sprintf("Unable to create JupyterHttpClient: %v", err)
-		return res, nil
+		return
 	}
 
 	if httpClient != nil {
 		_, err = httpClient.GetKernels()
 		if err != nil {
-			res.Status = backend.HealthStatusError
 			res.Message = fmt.Sprintf("Unable to browse kernels: %v", err)
-			return res, nil
+			return
+		}
+
+		if (settings.Packages != nil && len(*settings.Packages) > 0) ||
+			(settings.Prelude != nil && *settings.Prelude != "") {
+			ks, err := httpClient.CreateKernel("python3")
+			if err != nil {
+				res.Message = fmt.Sprintf("Unable to create a kernel: %v", err)
+				return
+			}
+			defer func() {
+				err = httpClient.KillKernel(ks.Id)
+				if err != nil {
+					res.Message = fmt.Sprintf("Unable to kill test kernel: %v", err)
+				}
+			}()
+
+			ci, err := d.httpClient.GetConnectionInfo(ks.Id)
+			if err != nil {
+				res.Message = fmt.Sprintf("Unable to get ConnectionInfo: %v", err)
+				return
+			}
+
+			wrapped := WrappedLogger{logger: d.logger}
+			session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
+			if err != nil {
+				res.Message = fmt.Sprintf("Unable to create session: %v", err)
+				return
+			}
+			defer session.Quit()
+
+			code := ""
+			if settings.Prelude != nil {
+				code = *settings.Prelude
+			}
+			err = session.Initialize(settings.Packages, code)
+			if err != nil {
+				res.Message = fmt.Sprintf("Unable to initialize session: %v", err)
+				return
+			}
+
+			_, err = session.Execute(code)
+			if err != nil {
+				res.Message = fmt.Sprintf("Unable to execute prelude: %v", err)
+				return
+			}
 		}
 	}
 
