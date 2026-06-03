@@ -55,7 +55,7 @@ timestamps = [(base - datetime.timedelta(seconds=i)).isoformat() for i in range(
 sine_wave = [sin(i/RANGE_MAX * FREQ0 * pi) for i in range(RANGE_MAX)]
 cosine_wave = [cos(i/RANGE_MAX * FREQ1 * pi) for i in range(RANGE_MAX)]
 
-Frame([
+create_frame("frame", [
   {"name": "time", "values": timestamps},
   {"name": "sine", "values": sine_wave},
   {"name": "cosine", "values": cosine_wave}

@@ -15,6 +15,7 @@ datasources:
       jupyterUrl: http://localhost:8888/api
       prelude: |
         from IPython.display import JSON
+        from typing import Any, Dict, List
 
-        def Frame(data):
-          return JSON([{"name":"frame", "data": data}])
+        def create_frame(name: str, data: List[Dict[str, Any]]):
+            return JSON([{"name": name, "data": data}])
