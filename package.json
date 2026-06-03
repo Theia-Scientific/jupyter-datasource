@@ -15,6 +15,7 @@
     "restart": "mage -v && docker compose restart grafana",
     "server": "docker compose up --build",
     "sign": "npx --yes @grafana/sign-plugin@latest"
+    "stop": "docker compose down",
   },
   "author": "Ben Morse <ben.morse@palecoyote.dev>",
   "license": "Apache-2.0",
