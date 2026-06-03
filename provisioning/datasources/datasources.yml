@@ -13,4 +13,9 @@ datasources:
       authType: RAW
       rawToken: '${JUPYTER_TOKEN}'
       jupyterUrl: http://localhost:8888/api
-      importStatements: 'from IPython.display import JSON'
+      prelude: |
+        from IPython.display import JSON
+        from typing import Any, Dict, List
+
+        def create_frame(name: str, data: List[Dict[str, Any]]):
+            return JSON([{"name": name, "data": data}])

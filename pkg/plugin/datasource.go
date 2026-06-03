@@ -37,7 +37,7 @@ type InstanceSettings struct {
 	FetchToken         *string   `json:"fetchToken"`
 	RawToken           *string   `json:"rawToken"`
 	JupyterUrl         *string   `json:"jupyterUrl"`
-	ImportStatements   *string   `json:"importStatements"`
+	Prelude            *string   `json:"prelude"`
 	Packages           *[]string `json:"packages"`
 	connectionStrategy ConnectionStrategy
 }
@@ -320,8 +320,9 @@ func (d *Datasource) kernelIdRefCount(kernelId string) int {
 	return uses
 }
 
-func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryModel) (SessionState, error) {
+func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryModel) (SessionState, bool, error) {
 	var err error
+	created := false
 	sessionState, foundSession := d.sessions[*qm.Uuid]
 
 	d.logger.Debug(fmt.Sprintf("query uuid: %v", *qm.Uuid))
@@ -332,9 +333,10 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 		sessionState, err = d.createSession(d.context, settings, qm)
 		d.logger.Debug(fmt.Sprintf("d.CreateSession: %+v, %+v", sessionState, err))
 		if err != nil {
-			return SessionState{}, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
+			return SessionState{}, created, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
+		created = true
 		d.sessions[*qm.Uuid] = sessionState
 	} else if qm.KernelId != sessionState.queryKernelId || qm.KernelTag != sessionState.kernelTag {
 		// if the kernel in the query differs from the session kernel,
@@ -366,7 +368,7 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 			err := d.httpClient.KillKernel(sessionState.actualKernelId)
 			if err != nil {
 				delete(d.sessions, *qm.Uuid)
-				return SessionState{}, errors.New(fmt.Sprintf("session cleanup failure: %v", err.Error()))
+				return SessionState{}, created, errors.New(fmt.Sprintf("session cleanup failure: %v", err.Error()))
 			}
 		}
 		// update the kernelId and reconnect
@@ -375,15 +377,16 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 
 		if err != nil {
 			delete(d.sessions, *qm.Uuid)
-			return SessionState{}, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
+			return SessionState{}, created, errors.New(fmt.Sprintf("session creation failure: %v", err.Error()))
 		}
 
+		created = true
 		d.sessions[*qm.Uuid] = sessionState
 	} else {
 		d.logger.Debug("session found")
 	}
 
-	return sessionState, nil
+	return sessionState, created, nil
 }
 
 func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backend.DataResponse {
@@ -405,7 +408,7 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("query missing uuid"))
 	}
 
-	sessionState, err := d.findOrCreateSession(d.settings, &qm)
+	sessionState, newSession, err := d.findOrCreateSession(d.settings, &qm)
 	d.logger.Debug(fmt.Sprintf("d.findOrCreateSession: %+v, %+v", sessionState, err))
 	if err != nil {
 		return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
@@ -416,7 +419,7 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 		return backend.ErrDataResponse(backend.StatusBadRequest, fmt.Sprintf("err fetching notebook %s: %v", qm.Notebook, err.Error()))
 	}
 
-	if code != sessionState.code {
+	if code != sessionState.code || newSession {
 		d.logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
 		d.logger.Debug(fmt.Sprintf("d.settings: %+v", d.settings))
 		d.logger.Debug(fmt.Sprintf("sessionState: %+v", sessionState))
@@ -427,8 +430,13 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 		}
 
 		d.logger.Debug("Initialized")
-		if d.settings.ImportStatements != nil {
-			sessionState.session.Execute(*d.settings.ImportStatements)
+		if d.settings.Prelude != nil {
+			d.logger.Debug(fmt.Sprintf("Executing prelude: %s", *d.settings.Prelude))
+			res, err := sessionState.session.Execute(*d.settings.Prelude)
+			d.logger.Debug(fmt.Sprintf("prelude executed: res=%+v, err=%+v", res, err))
+			if err != nil {
+				return backend.ErrDataResponse(backend.StatusBadRequest, err.Error())
+			}
 		}
 		sessionState.code = code
 		d.sessions[*qm.Uuid] = sessionState
@@ -510,29 +518,60 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *Datasource) CheckHealth(_ context.Context, req *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
-	res := &backend.CheckHealthResult{}
+func (d *Datasource) CheckHealth(pctx context.Context, _ *backend.CheckHealthRequest) (res *backend.CheckHealthResult, resErr error) {
+	res = &backend.CheckHealthResult{Status: backend.HealthStatusError}
+	resErr = nil
 
-	settings, err := unmarshalInstanceSettings(req.PluginContext.DataSourceInstanceSettings.JSONData)
-	if err != nil {
-		res.Status = backend.HealthStatusError
-		res.Message = fmt.Sprintf("Unable to parse settings: %v", err)
-		return res, nil
-	}
-
-	httpClient, err := settings.connectionStrategy.createHttpClient(settings)
-	if err != nil {
-		res.Status = backend.HealthStatusError
-		res.Message = fmt.Sprintf("Unable to create JupyterHttpClient: %v", err)
-		return res, nil
-	}
-
-	if httpClient != nil {
-		_, err = httpClient.GetKernels()
+	if d.httpClient != nil {
+		_, err := d.httpClient.GetKernels()
 		if err != nil {
-			res.Status = backend.HealthStatusError
 			res.Message = fmt.Sprintf("Unable to browse kernels: %v", err)
-			return res, nil
+			return
+		}
+
+		if (d.settings.Packages != nil && len(*d.settings.Packages) > 0) ||
+			(d.settings.Prelude != nil && *d.settings.Prelude != "") {
+			ks, err := d.httpClient.CreateKernel("python3")
+			if err != nil {
+				res.Message = fmt.Sprintf("Unable to create a kernel: %v", err)
+				return
+			}
+			defer func() {
+				err = d.httpClient.KillKernel(ks.Id)
+				if err != nil {
+					res.Message = fmt.Sprintf("Unable to kill test kernel: %v", err)
+				}
+			}()
+
+			ci, err := d.httpClient.GetConnectionInfo(ks.Id)
+			if err != nil {
+				res.Message = fmt.Sprintf("Unable to get ConnectionInfo: %v", err)
+				return
+			}
+
+			wrapped := WrappedLogger{logger: d.logger}
+			session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
+			if err != nil {
+				res.Message = fmt.Sprintf("Unable to create session: %v", err)
+				return
+			}
+			defer session.Quit()
+
+			code := ""
+			if d.settings.Prelude != nil {
+				code = *d.settings.Prelude
+			}
+			err = session.Initialize(d.settings.Packages, code)
+			if err != nil {
+				res.Message = fmt.Sprintf("Unable to initialize session: %v", err)
+				return
+			}
+
+			_, err = session.Execute(code)
+			if err != nil {
+				res.Message = fmt.Sprintf("Unable to execute prelude: %v", err)
+				return
+			}
 		}
 	}
 

@@ -3,6 +3,7 @@ package plugin
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -15,6 +16,9 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+////////////////////////////////////////////////////////////
+// ConnectionStrategy
+
 // calling makeConnectionStrategy with a valid string will succeed, an invalid string will fail
 func TestConnectionStrategy(t *testing.T) {
 	_, err := makeConnectionStrategy(&InstanceSettings{ConnectionType: "AUTO"})
@@ -26,6 +30,9 @@ func TestConnectionStrategy(t *testing.T) {
 	_, err = makeConnectionStrategy(&InstanceSettings{ConnectionType: "CORNDOG"})
 	assert.NotNil(t, err)
 }
+
+////////////////////////////////////////////////////////////
+// Datasource
 
 func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, *Datasource) {
 	httpClient := jupyterclient_test.NewMockIJupyterHttpClient(t)
@@ -51,6 +58,9 @@ func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, 
 	return httpClient, d
 }
 
+////////////////////////////////////////////////////////////
+// Datasource.callResource
+
 // calling GetListing will return a list of paths
 func TestCallResource(t *testing.T) {
 	httpClient, d := setupDatasource(t)
@@ -65,6 +75,9 @@ func TestCallResource(t *testing.T) {
 	assert.Equal(t, string(rv), "[]")
 	assert.Nil(t, err)
 }
+
+////////////////////////////////////////////////////////////
+// Datasource.query
 
 // a query with no UUID specified should fail
 func TestNoUUIDReturnsError(t *testing.T) {
@@ -123,8 +136,8 @@ func TestSpecifiedKernelIdDoesNotCreateKernel(t *testing.T) {
 // a datasource with import statements should Execute them once
 func TestImportStatementsAreIncludedInInitialize(t *testing.T) {
 	httpClient, session, d := setupDatasourceWithSession(t)
-	importStatements := "from treats import candy"
-	d.settings.ImportStatements = &importStatements
+	prelude := "from treats import candy"
+	d.settings.Prelude = &prelude
 
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil)
@@ -301,8 +314,6 @@ func TestTwoQueriesWithSameTagShouldUseSameKernel(t *testing.T) {
 	session1.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
 	session1.EXPECT().Query("1+1").Return(jupyterclient.Result{}, nil).Once()
 
-	d.logger.Debug("------------------------------------------------------")
-
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","kernelTag":"tomato","code":"1+1"}`),
 	})
@@ -354,4 +365,154 @@ func TestKernelTagChangeShouldCreateNewKernel(t *testing.T) {
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","kernelTag":"tomatillo","code":"1+1"}`),
 	})
+}
+
+////////////////////////////////////////////////////////////
+// Datasource.CheckHealth
+
+// failure to browse kernels will yield an error
+func TestCheckHealthBrowseKernelsFailureShouldError(t *testing.T) {
+	httpClient, d := setupDatasource(t)
+	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, errors.New("oof")).Once()
+	res, err := d.CheckHealth(context.Background(), nil)
+	assert.Nil(t, err)
+	assert.Equal(t, backend.HealthStatusError, res.Status)
+	assert.Equal(t, "Unable to browse kernels: oof", res.Message)
+}
+
+// no prelude or packages means we won't attempt to test the kernel
+func TestCheckHealthNoPrelude(t *testing.T) {
+	httpClient, d := setupDatasource(t)
+	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
+	res, err := d.CheckHealth(context.Background(), nil)
+	assert.Nil(t, err)
+	assert.Equal(t, backend.HealthStatusOk, res.Status)
+}
+
+// failure to create a test kernel will yield an error
+func TestCheckHealthCreateKernelFailureShouldError(t *testing.T) {
+	httpClient, d := setupDatasource(t)
+	prelude := "import whatever"
+	d.settings.Prelude = &prelude
+	d.logger.Debug("------------------------------------------------------------")
+	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{}, errors.New("ouch")).Once()
+	res, err := d.CheckHealth(context.Background(), nil)
+	assert.Nil(t, err)
+	assert.Equal(t, backend.HealthStatusError, res.Status)
+	assert.Equal(t, "Unable to create a kernel: ouch", res.Message)
+}
+
+// failure to get connectioninfo will yield an error, but still kill the kernel
+func TestCheckHealthGetConnectionInfoFailureShouldError(t *testing.T) {
+	httpClient, d := setupDatasource(t)
+	prelude := "import whatever"
+	d.settings.Prelude = &prelude
+	d.logger.Debug("------------------------------------------------------------")
+	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil).Once()
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, errors.New("yikes")).Once()
+	httpClient.EXPECT().KillKernel("kid").Return(nil).Once()
+	res, err := d.CheckHealth(context.Background(), nil)
+	assert.Nil(t, err)
+	assert.Equal(t, backend.HealthStatusError, res.Status)
+	assert.Equal(t, "Unable to get ConnectionInfo: yikes", res.Message)
+}
+
+// failure to create a session will yield an error, but still kill the kernel
+func TestCheckHealthCreateSessionFailureShouldError(t *testing.T) {
+	httpClient, d := setupDatasource(t)
+	sessionFactory := plugin_test.NewMockIJupyterSessionFactory(t)
+	sessionFactory.EXPECT().
+		MakeJupyterSession(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, errors.New("wince")).
+		Once()
+	d.sessionFactory = sessionFactory
+
+	prelude := "import whatever"
+	d.settings.Prelude = &prelude
+	d.logger.Debug("------------------------------------------------------------")
+	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil).Once()
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil).Once()
+	httpClient.EXPECT().KillKernel("kid").Return(nil).Once()
+	res, err := d.CheckHealth(context.Background(), nil)
+	assert.Nil(t, err)
+	assert.Equal(t, backend.HealthStatusError, res.Status)
+	assert.Equal(t, "Unable to create session: wince", res.Message)
+}
+
+// failure to initialize will yield an error, but still terminate session / kill kernel
+func TestCheckHealthInitializeFailureShouldError(t *testing.T) {
+	httpClient, session, d := setupDatasourceWithSession(t)
+	prelude := "import whatever"
+	d.settings.Prelude = &prelude
+	d.logger.Debug("------------------------------------------------------------")
+	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil).Once()
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil).Once()
+	session.EXPECT().Initialize((*[]string)(nil), "import whatever").Return(errors.New("bleaugh")).Once()
+	httpClient.EXPECT().KillKernel("kid").Return(nil).Once()
+	session.EXPECT().Quit().Once()
+	res, err := d.CheckHealth(context.Background(), nil)
+	assert.Nil(t, err)
+	assert.Equal(t, backend.HealthStatusError, res.Status)
+	assert.Equal(t, "Unable to initialize session: bleaugh", res.Message)
+}
+
+// failure to execute will yield an error, but still terminate session / kill kernel
+func TestCheckHealthExecuteFailureShouldError(t *testing.T) {
+	httpClient, session, d := setupDatasourceWithSession(t)
+	prelude := "import whatever"
+	d.settings.Prelude = &prelude
+	d.logger.Debug("------------------------------------------------------------")
+	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil).Once()
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil).Once()
+	session.EXPECT().Initialize((*[]string)(nil), "import whatever").Return(nil).Once()
+	session.EXPECT().Execute("import whatever").Return(jupyterclient.Result{}, errors.New("whappo")).Once()
+	httpClient.EXPECT().KillKernel("kid").Return(nil).Once()
+	session.EXPECT().Quit().Once()
+	res, err := d.CheckHealth(context.Background(), nil)
+	assert.Nil(t, err)
+	assert.Equal(t, backend.HealthStatusError, res.Status)
+	assert.Equal(t, "Unable to execute prelude: whappo", res.Message)
+}
+
+// failure to kill the kernel will yield that specific error
+func TestCheckHealthKillKernelFailureShouldError(t *testing.T) {
+	httpClient, session, d := setupDatasourceWithSession(t)
+	prelude := "import whatever"
+	d.settings.Prelude = &prelude
+	d.logger.Debug("------------------------------------------------------------")
+	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil).Once()
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil).Once()
+	session.EXPECT().Initialize((*[]string)(nil), "import whatever").Return(nil).Once()
+	session.EXPECT().Execute("import whatever").Return(jupyterclient.Result{}, errors.New("whappo")).Once()
+	httpClient.EXPECT().KillKernel("kid").Return(errors.New("zoinks")).Once()
+	session.EXPECT().Quit().Once()
+	res, err := d.CheckHealth(context.Background(), nil)
+	assert.Nil(t, err)
+	assert.Equal(t, backend.HealthStatusError, res.Status)
+	assert.Equal(t, "Unable to kill test kernel: zoinks", res.Message)
+}
+
+// success will still terminate the session and kill the kernel
+func TestCheckHealthSuccessShouldTerminateSessionAndKillKernel(t *testing.T) {
+	httpClient, session, d := setupDatasourceWithSession(t)
+	prelude := "import whatever"
+	d.settings.Prelude = &prelude
+	d.logger.Debug("------------------------------------------------------------")
+	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
+	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil).Once()
+	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil).Once()
+	session.EXPECT().Initialize((*[]string)(nil), "import whatever").Return(nil).Once()
+	session.EXPECT().Execute("import whatever").Return(jupyterclient.Result{}, nil).Once()
+	httpClient.EXPECT().KillKernel("kid").Return(nil).Once()
+	session.EXPECT().Quit().Once()
+	res, err := d.CheckHealth(context.Background(), nil)
+	assert.Nil(t, err)
+	assert.Equal(t, backend.HealthStatusOk, res.Status)
+	assert.Equal(t, "Data source is working", res.Message)
 }

@@ -123,7 +123,6 @@ func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Contex
 	}
 
 	// if we're creating a tagged kernel, record an entry for it
-	d.logger.Debug(fmt.Sprintf("oopfh %+v", d.taggedKernels))
 	if qm.KernelTag != "" {
 		d.taggedKernels[qm.KernelTag] = ks.Id
 	}
