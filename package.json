@@ -13,8 +13,9 @@
     "lint:fix": "pnpm run lint -- --fix && prettier --write --list-different .",
     "e2e": "playwright test",
     "restart": "mage -v && docker compose restart grafana",
-    "server": "docker compose up --build",
-    "sign": "npx --yes @grafana/sign-plugin@latest"
+    "sign": "npx --yes @grafana/sign-plugin@latest",
+    "start": "docker compose up --build",
+    "stop": "docker compose down"
   },
   "author": "Ben Morse <ben.morse@palecoyote.dev>",
   "license": "Apache-2.0",
