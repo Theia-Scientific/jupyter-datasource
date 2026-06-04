@@ -39,7 +39,7 @@ export const DEFAULT_QUERY: Partial<MyQuery> = {
     { name: 'RANGE_MAX', value: '1000' },
     { name: 'FREQ0', value: '7' },
     { name: 'FREQ1', value: '13' },
-    { name: 'TZ', value: '"$__timezone"' },
+    { name: 'TZ', value: '$__timezone' },
   ],
   code: `%pip install pytz
 
