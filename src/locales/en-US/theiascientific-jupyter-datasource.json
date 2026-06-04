@@ -18,11 +18,6 @@
       "label": "Connection Type",
       "tooltip": "Type of connection"
     },
-    "fetchToken": {
-      "label": "Fetch Token",
-      "placeholder": "Enter the Bearer token for fetching the Jupyter token",
-      "tooltip": "Bearer token for fetching the JupyterLab token"
-    },
     "prelude": {
       "label": "Prelude",
       "placeholder": "Enter default imports, shared setup code, etc.",
@@ -32,6 +27,9 @@
       "label": "JupyterLab URL",
       "placeholder": "Enter the JupyterLab URL, e.g. http://localhost:8888/",
       "tooltip": "JupyterLab endpoint URL"
+    },
+    "openJupyterLab": {
+      "buttonText": "Open JupyterLab"
     },
     "packages": {
       "add": "Add Package",
@@ -43,23 +41,10 @@
       "label": "Token",
       "placeholder": "Enter the token",
       "tooltip": "Token for JupyterLab auth"
-    },
-    "tokenMethod": {
-      "label": "Method",
-      "tooltip": "HTTP method for fetching the JupyterLab token"
-    },
-    "tokenUrl": {
-      "label": "Token URL",
-      "placeholder": "Enter the token URL, e.g. http://localhost/tokens/jupyter",
-      "tooltip": "URL to fetch the JupyterLab token from"
     }
   },
   "enums": {
     "authOptions": {
-      "fetch": {
-        "desc": "Fetch a token from a web service",
-        "name": "Fetch"
-      },
       "none": {
         "desc": "No authentication",
         "name": "None"
@@ -77,14 +62,6 @@
       "connectionInfo": {
         "desc": "Paste JSON connection info directly",
         "name": "Connection Info"
-      }
-    },
-    "methodOptions": {
-      "get": {
-        "name": "Get"
-      },
-      "put": {
-        "name": "Put"
       }
     },
     "sortOptions": {

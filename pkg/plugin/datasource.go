@@ -32,9 +32,6 @@ var (
 type InstanceSettings struct {
 	ConnectionType     string    `json:"connectionType"`
 	AuthType           string    `json:"authType"`
-	FetchRoute         *string   `json:"fetchRoute"`
-	FetchMethod        *string   `json:"fetchMethod"`
-	FetchToken         *string   `json:"fetchToken"`
 	RawToken           *string   `json:"rawToken"`
 	JupyterUrl         *string   `json:"jupyterUrl"`
 	Prelude            *string   `json:"prelude"`
@@ -194,19 +191,6 @@ func getJupyterToken(settings *InstanceSettings) (string, error) {
 			return "", fmt.Errorf("Raw token auth selected, but no rawToken supplied")
 		}
 		return *settings.RawToken, nil
-	} else if settings.AuthType == "FETCH" {
-		if settings.FetchRoute == nil {
-			return "", fmt.Errorf("Fetch auth selected, but no fetchRoute supplied")
-		}
-		if settings.FetchMethod == nil {
-			return "", fmt.Errorf("Fetch auth selected, but no fetchMethod supplied")
-		}
-		systemSettings := jupyterclient.SystemServiceSettings{
-			BaseUrl: *settings.FetchRoute,
-			Method:  *settings.FetchMethod,
-			Token:   settings.FetchToken,
-		}
-		return jupyterclient.GetJupyterToken(&systemSettings)
 	} else {
 		return "", fmt.Errorf("Unknown auth type '%s'", settings.AuthType)
 	}

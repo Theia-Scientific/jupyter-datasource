@@ -23,9 +23,6 @@ describe('Config Editor', () => {
   const baseOpts: MyDataSourceOptions = {
     connectionType: ConnectionType.Info,
     authType: AuthType.None,
-    fetchRoute: undefined,
-    fetchMethod: undefined,
-    fetchToken: undefined,
     rawToken: undefined,
     jupyterUrl: undefined,
     prelude: undefined,
@@ -45,10 +42,8 @@ describe('Config Editor', () => {
       // unexpected
       expect(screen.queryByLabelText('Auth Type')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Token')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Token URL')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Method')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Fetch Token')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('JupyterLab URL')).not.toBeInTheDocument();
+      expect(screen.queryByText('Open JupyterLab')).not.toBeInTheDocument();
     });
   });
 
@@ -64,12 +59,21 @@ describe('Config Editor', () => {
       expect(screen.queryByText('Packages')).toBeInTheDocument();
       expect(screen.queryByText('Prelude')).toBeInTheDocument();
       expect(screen.queryByLabelText('JupyterLab URL')).toBeInTheDocument();
+      expect(screen.queryByText('Open JupyterLab')).toBeInTheDocument();
 
       // unexpected
       expect(screen.queryByLabelText('Token')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Token URL')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Method')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Fetch Token')).not.toBeInTheDocument();
+    });
+
+    describe('with a JupyterLab URL', () => {
+      const urlOpts = { ...autoOpts, jupyterUrl: 'http://jupyter.hamburger.edu:8888/api' };
+
+      it('Should open JupyterLab when you click the button', async () => {
+        await renderWithoutErrors(getComponent(urlOpts));
+        window.open = jest.fn();
+        await fireEvent.click(screen.getByText('Open JupyterLab'));
+        expect(window.open).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/api/../lab');
+      });
     });
 
     describe('with AuthType.RawToken', () => {
@@ -84,33 +88,8 @@ describe('Config Editor', () => {
         expect(screen.queryByText('Packages')).toBeInTheDocument();
         expect(screen.queryByText('Prelude')).toBeInTheDocument();
         expect(screen.queryByLabelText('JupyterLab URL')).toBeInTheDocument();
+        expect(screen.queryByText('Open JupyterLab')).toBeInTheDocument();
         expect(screen.queryByLabelText('Token')).toBeInTheDocument();
-
-        // unexpected
-        expect(screen.queryByLabelText('Token URL')).not.toBeInTheDocument();
-        expect(screen.queryByLabelText('Method')).not.toBeInTheDocument();
-        expect(screen.queryByLabelText('Fetch Token')).not.toBeInTheDocument();
-      });
-    });
-
-    describe('with AuthType.Fetch', () => {
-      const fetchOpts = { ...autoOpts, authType: AuthType.Fetch };
-
-      it('Should render component with the appropriate options', async () => {
-        await renderWithoutErrors(getComponent(fetchOpts));
-
-        // expected
-        expect(screen.queryByLabelText('Connection Type')).toBeInTheDocument();
-        expect(screen.queryByLabelText('Auth Type')).toBeInTheDocument();
-        expect(screen.queryByText('Packages')).toBeInTheDocument();
-        expect(screen.queryByText('Prelude')).toBeInTheDocument();
-        expect(screen.queryByLabelText('JupyterLab URL')).toBeInTheDocument();
-        expect(screen.queryByLabelText('Token URL')).toBeInTheDocument();
-        expect(screen.queryByLabelText('Method')).toBeInTheDocument();
-        expect(screen.queryByLabelText('Fetch Token')).toBeInTheDocument();
-
-        // unexpected
-        expect(screen.queryByLabelText('Token')).not.toBeInTheDocument();
       });
     });
   });
