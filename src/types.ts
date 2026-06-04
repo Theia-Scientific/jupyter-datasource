@@ -51,9 +51,9 @@ from math import sin, cos, pi
 
 base = datetime.datetime.now(timezone(TZ))
 
-timestamps = [(base - datetime.timedelta(seconds=i)).isoformat() for i in range(RANGE_MAX)]
-sine_wave = [sin(i/RANGE_MAX * FREQ0 * pi) for i in range(RANGE_MAX)]
-cosine_wave = [cos(i/RANGE_MAX * FREQ1 * pi) for i in range(RANGE_MAX)]
+timestamps = [(base - datetime.timedelta(seconds=i)).isoformat() for i in range(int(RANGE_MAX))]
+sine_wave = [sin(i/int(RANGE_MAX) * float(FREQ0) * pi) for i in range(int(RANGE_MAX))]
+cosine_wave = [cos(i/int(RANGE_MAX) * float(FREQ1) * pi) for i in range(int(RANGE_MAX))]
 
 create_frame("frame", [
   {"name": "time", "values": timestamps},
