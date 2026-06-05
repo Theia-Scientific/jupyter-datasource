@@ -443,6 +443,8 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 	qb.WriteString(`    }
   def float(self, name, default=0.0):
     return float(self.VARS[name]) if name in self.VARS and self.VARS[name] != "" else default
+  def bool(self, name, default=False):
+    return bool(self.VARS[name]) if name in self.VARS and self.VARS[name] != "" else default
   def int(self, name, default=0):
     return int(self.VARS[name]) if name in self.VARS and self.VARS[name] != "" else default
   def str(self, name, default=""):
