@@ -429,15 +429,28 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 
 	// got a session now
 	var qb strings.Builder
-	qb.WriteString("GF_VARS = {")
+	qb.WriteString(`class GrafanaSupport:
+  def __init__(self):
+    self.VARS = {
+`)
 	for _, v := range qm.Vars {
-		qb.WriteString("  ")
+		qb.WriteString("      ")
 		qb.WriteString(strconv.Quote(v.Name))
 		qb.WriteString(": ")
 		qb.WriteString(strconv.Quote(v.Value))
 		qb.WriteString(",\n")
 	}
-	qb.WriteString("}\n")
+	qb.WriteString(`    }
+  def float(self, name, default=0.0):
+    return float(self.VARS[name]) if name in self.VARS and self.VARS[name] != "" else default
+  def int(self, name, default=0):
+    return int(self.VARS[name]) if name in self.VARS and self.VARS[name] != "" else default
+  def str(self, name, default=""):
+    return self.VARS[name] if name in self.VARS and self.VARS[name] != "" else default
+  def list(self, name, default=[]):
+    return self.VARS[name].replace("{", "").replace("}", "").split(",") if name in self.VARS and self.VARS[name] != "" and self.VARS[name] != "{}" else default
+GF_VARS = GrafanaSupport()
+`)
 	qb.WriteString(code)
 	queryText := qb.String()
 	result, err := sessionState.session.Query(queryText)

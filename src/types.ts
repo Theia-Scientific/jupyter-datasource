@@ -49,10 +49,10 @@ import random
 from pytz import timezone
 from math import sin, cos, pi
 
-range_max = int(GF_VARS["RANGE_MAX"])
-freq0 = float(GF_VARS["FREQ0"])
-freq1 = float(GF_VARS["FREQ1"])
-tz = GF_VARS["TZ"]
+range_max = GF_VARS.int("RANGE_MAX", 1000)
+freq0 = GF_VARS.float("FREQ0", 7)
+freq1 = GF_VARS.float("FREQ1", 13)
+tz = GF_VARS.str("TZ", "America/Los_Angeles")
 
 base = datetime.datetime.now(timezone(tz))
 
