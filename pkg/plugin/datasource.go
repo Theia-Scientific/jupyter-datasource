@@ -429,12 +429,15 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 
 	// got a session now
 	var qb strings.Builder
+	qb.WriteString("GF_VARS = {")
 	for _, v := range qm.Vars {
-		qb.WriteString(v.Name)
-		qb.WriteString(" = ")
+		qb.WriteString("  ")
+		qb.WriteString(strconv.Quote(v.Name))
+		qb.WriteString(": ")
 		qb.WriteString(strconv.Quote(v.Value))
-		qb.WriteString("\n")
+		qb.WriteString(",\n")
 	}
+	qb.WriteString("}\n")
 	qb.WriteString(code)
 	queryText := qb.String()
 	result, err := sessionState.session.Query(queryText)
