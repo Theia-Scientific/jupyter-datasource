@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
@@ -431,7 +432,7 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 	for _, v := range qm.Vars {
 		qb.WriteString(v.Name)
 		qb.WriteString(" = ")
-		qb.WriteString(v.Value)
+		qb.WriteString(strconv.Quote(v.Value))
 		qb.WriteString("\n")
 	}
 	qb.WriteString(code)

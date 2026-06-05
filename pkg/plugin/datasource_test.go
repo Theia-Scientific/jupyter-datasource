@@ -201,10 +201,10 @@ func TestVarChangeDoesNotReinitialize(t *testing.T) {
 	session.EXPECT().Initialize((*[]string)(nil), "1+foo").Return(nil).Once()
 
 	val1 := json.RawMessage("2")
-	session.EXPECT().Query("foo = 1\n1+foo").Return(jupyterclient.Result{Val: &val1}, nil).Once()
+	session.EXPECT().Query("foo = \"1\"\n1+foo").Return(jupyterclient.Result{Val: &val1}, nil).Once()
 
 	val2 := json.RawMessage("3")
-	session.EXPECT().Query("foo = 2\n1+foo").Return(jupyterclient.Result{Val: &val2}, nil).Once()
+	session.EXPECT().Query("foo = \"2\"\n1+foo").Return(jupyterclient.Result{Val: &val2}, nil).Once()
 
 	d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"uuid":"x","kernelId":"kid","code":"1+foo","vars":[{"name":"foo","value":"1"}]}`),
