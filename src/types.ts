@@ -49,11 +49,16 @@ import random
 from pytz import timezone
 from math import sin, cos, pi
 
-base = datetime.datetime.now(timezone(TZ))
+range_max = int(GF_VARS["RANGE_MAX"])
+freq0 = float(GF_VARS["FREQ0"])
+freq1 = float(GF_VARS["FREQ1"])
+tz = GF_VARS["TZ"]
 
-timestamps = [(base - datetime.timedelta(seconds=i)).isoformat() for i in range(int(RANGE_MAX))]
-sine_wave = [sin(i/int(RANGE_MAX) * float(FREQ0) * pi) for i in range(int(RANGE_MAX))]
-cosine_wave = [cos(i/int(RANGE_MAX) * float(FREQ1) * pi) for i in range(int(RANGE_MAX))]
+base = datetime.datetime.now(timezone(tz))
+
+timestamps = [(base - datetime.timedelta(seconds=i)).isoformat() for i in range(range_max)]
+sine_wave = [sin(i/range_max * freq0 * pi) for i in range(range_max)]
+cosine_wave = [cos(i/range_max * freq1 * pi) for i in range(range_max)]
 
 create_frame("frame", [
   {"name": "time", "values": timestamps},
