@@ -448,7 +448,8 @@ GF_VARS = GrafanaSupport({
 		qb.WriteString(",\n")
 	}
 	qb.WriteString(`
-})`)
+})
+`)
 	qb.WriteString(code)
 	queryText := qb.String()
 	result, err := sessionState.session.Query(queryText)
