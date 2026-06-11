@@ -1,6 +1,7 @@
 package plugin
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -132,7 +133,24 @@ func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Contex
 
 func (_ ConnectionStrategyAuto) fetchCode(d *Datasource, settings *InstanceSettings, qm *queryModel) (string, error) {
 	if qm.Notebook != "" {
-		return d.httpClient.GetNotebook(qm.Notebook)
+		notebook, err := d.httpClient.GetNotebook(qm.Notebook)
+		if err != nil {
+			return "", err
+		}
+
+		if notebook.Content == nil {
+			return "", nil
+		}
+
+		var buffer bytes.Buffer
+		for _, cell := range notebook.Content.Cells {
+			if cell.CellType == "code" {
+				buffer.WriteString(cell.Source)
+				buffer.WriteString("\n")
+			}
+		}
+
+		return buffer.String(), nil
 	} else {
 		return qm.Code, nil
 	}

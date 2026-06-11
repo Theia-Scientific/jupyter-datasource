@@ -18,7 +18,7 @@ type IJupyterHttpClient interface {
 	GetKernelSpecs() ([]byte, error)
 	GetListing(path string) ([]PathEntry, error)
 	GetNotebooks() ([]PathEntry, error)
-	GetNotebook(path string) (string, error)
+	GetNotebook(path string) (Notebook, error)
 	CreateKernel(kernelType string) (KernelSpec, error)
 	SelectKernel() (KernelSpec, error)
 	GetConnectionInfo(id string) (ConnectionInfo, error)
@@ -169,29 +169,14 @@ func (jc *JupyterHttpClient) GetNotebooks() ([]PathEntry, error) {
 	return recur("")
 }
 
-func (jc *JupyterHttpClient) GetNotebook(path string) (string, error) {
+func (jc *JupyterHttpClient) GetNotebook(path string) (Notebook, error) {
 	var notebook Notebook
 	req, err := jc.Get(fmt.Sprintf("contents/%s", strings.TrimLeft(path, "/")))
 	if err != nil {
-		return "", err
+		return notebook, err
 	}
 	err = requestJSON(req, &notebook)
-	if err != nil {
-		return "", err
-	}
-	if notebook.Content == nil {
-		return "", nil
-	}
-
-	var buffer bytes.Buffer
-	for _, cell := range notebook.Content.Cells {
-		if cell.CellType == "code" {
-			buffer.WriteString(cell.Source)
-			buffer.WriteString("\n")
-		}
-	}
-
-	return buffer.String(), nil
+	return notebook, err
 }
 
 func (jc *JupyterHttpClient) CreateKernel(kernelType string) (KernelSpec, error) {
