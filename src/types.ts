@@ -138,3 +138,29 @@ export type PathEntry = PathEntryNotebook | PathEntryDirectory;
  */
 export interface MySecureJsonData {
 }
+
+function jupyterLabUrl(jsonData: MyDataSourceOptions, path: string) {
+  const url =
+    (jsonData.jupyterUrl??'').replace(/\/$/,'') +
+      '/../lab' + path;
+  const token =
+    (jsonData.authType === AuthType.RawToken
+      ? `?token=${jsonData.rawToken}`
+      : '');
+  return url + token;
+}
+
+// exported only so it can be mocked for testing
+export function openWindow(url: string) {
+  window.open(url);
+}
+
+export function openJupyterLab(options: MyDataSourceOptions) {
+  openWindow(jupyterLabUrl(options, ''));
+};
+
+export function openJupyterLabNotebook(options: MyDataSourceOptions, {notebook}: MyQuery) {
+  openWindow(jupyterLabUrl(options, `/tree/${notebook}`));
+};
+
+

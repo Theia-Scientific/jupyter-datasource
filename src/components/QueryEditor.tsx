@@ -8,7 +8,7 @@ import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, My
 import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
 import { v4 as uuidv4 } from 'uuid';
 import { FilesList } from './FilesList';
-import { DEFAULT_QUERY, PathEntryNotebook } from '@theia/types';
+import { DEFAULT_QUERY, PathEntryNotebook, openJupyterLabNotebook } from '@theia/types';
 import { t } from '@grafana/i18n';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
@@ -206,15 +206,20 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         />
       </InlineField>
       { isAuto &&
-        <InlineField label={t('queryEditor.source.label', 'Source')} labelWidth={16} tooltip={t('queryEditor.source.tooltip', 'Pick notebook or literal code')}>
-          <Combobox
-            id="query-editor-source"
-            options={sources}
-            onChange={(opt) => setSource(opt.value)}
-            value={source}
-            width={40}
-          />
-        </InlineField>
+        <InlineFieldRow>
+          <InlineField label={t('queryEditor.source.label', 'Source')} labelWidth={16} tooltip={t('queryEditor.source.tooltip', 'Pick notebook or literal code')}>
+            <Combobox
+              id="query-editor-source"
+              options={sources}
+              onChange={(opt) => setSource(opt.value)}
+              value={source}
+              width={40}
+            />
+          </InlineField>
+          { !emptyNotebook(query) &&
+            <Button onClick={() => openJupyterLabNotebook(datasource.options, query)}>{t('configEditor.openNotebook.buttonText', 'Open in JupyterLab')}</Button>
+          }
+        </InlineFieldRow>
       }
       { isAuto && notebookSource &&
         <FilesList
