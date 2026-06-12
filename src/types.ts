@@ -129,9 +129,18 @@ export type PathEntryNotebook = PathEntryBase & {
 export type PathEntryDirectory = PathEntryBase & {
   type: 'directory';
   content?: PathEntry[];
-}
+};
 
 export type PathEntry = PathEntryNotebook | PathEntryDirectory;
+
+interface NotebookCell {
+  cell_type: 'code' | 'markdown';
+  source: string;
+}
+
+export type Notebook = PathEntryNotebook & {
+  content: { cells: NotebookCell[] };
+};
 
 /**
  * Value that is used in the backend, but never sent over HTTP to the frontend

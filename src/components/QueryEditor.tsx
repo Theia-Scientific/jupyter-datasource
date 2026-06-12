@@ -8,7 +8,7 @@ import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, My
 import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
 import { v4 as uuidv4 } from 'uuid';
 import { FilesList } from './FilesList';
-import { DEFAULT_QUERY, PathEntryNotebook, openJupyterLabNotebook } from '@theia/types';
+import { DEFAULT_QUERY, Notebook, PathEntryNotebook, openJupyterLabNotebook } from '@theia/types';
 import { t } from '@grafana/i18n';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
@@ -112,9 +112,21 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
     { label: t('queryEditor.source.notebook', 'Choose notebook below...'), value: CHOOSE_NOTEBOOK },
   ];
   const [source, setSource] = useState(() => emptyNotebook(query) ? ENTER_CODE : query.notebook);
+  const [notebookContent, setNotebookContent] = useState<Notebook|undefined>(undefined);
+  const setSourceAndUpdateNotebookContent = (source: string) => {
+    setSource(source);
+    if (source !== ENTER_CODE && source !== CHOOSE_NOTEBOOK) {
+      datasource.getNotebook(source).then((content) => {
+        console.log("notebook content: ", content);
+        setNotebookContent(content);
+      });
+    } else {
+      setNotebookContent(undefined);
+    }
+  };
 
   const onSelectFile = (f: PathEntryNotebook) => {
-    setSource(f.path);
+    setSourceAndUpdateNotebookContent(f.path);
     onChange({ ...query, notebook: f.path });
   };
 
@@ -211,7 +223,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
             <Combobox
               id="query-editor-source"
               options={sources}
-              onChange={(opt) => setSource(opt.value)}
+              onChange={(opt) => setSourceAndUpdateNotebookContent(opt.value)}
               value={source}
               width={40}
             />
@@ -227,6 +239,12 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
           onSelectFile={onSelectFile}
           rootPath=""
         />
+      }
+      { isAuto && !emptyNotebook(query) && notebookContent && 
+        <p>Notebook content: {JSON.stringify(notebookContent)}</p>
+      }
+      { isAuto && !emptyNotebook(query) && !notebookContent &&
+        <p>loading notebook...</p>
       }
       { (isInfo || codeSource) &&
         <InlineField label={t('queryEditor.code.label', 'Code')} labelWidth={16} tooltip={t('queryEditor.code.tooltip', 'Code to run')}>
