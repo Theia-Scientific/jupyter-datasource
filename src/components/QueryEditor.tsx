@@ -6,6 +6,7 @@ import { QueryEditorProps } from '@grafana/data';
 import { DataSource } from '../datasource';
 import { ConnectionType, KernelSpec, KernelSpecResponse, MyDataSourceOptions, MyQuery, QueryFieldVariable } from '../types';
 import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
+import { NotebookRenderer } from './NotebookRenderer';
 import { v4 as uuidv4 } from 'uuid';
 import { FilesList } from './FilesList';
 import { DEFAULT_QUERY, Notebook, PathEntryNotebook, openJupyterLabNotebook } from '@theia/types';
@@ -241,7 +242,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
         />
       }
       { isAuto && !emptyNotebook(query) && notebookContent && 
-        <p>Notebook content: {JSON.stringify(notebookContent)}</p>
+        <NotebookRenderer notebook={notebookContent} />
       }
       { isAuto && !emptyNotebook(query) && !notebookContent &&
         <p>loading notebook...</p>
