@@ -1,8 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { MyDataSourceOptions, MySecureJsonData, ConnectionType, AuthType } from '@theia/types';
+import { MyDataSourceOptions, MySecureJsonData, ConnectionType, AuthType, openJupyterLab } from '@theia/types';
 import { DataSourceSettings } from '@grafana/data';
 import React from 'react';
-import { openJupyterLab } from '@theia/types';
 
 import { ConfigEditor } from './ConfigEditor';
 
