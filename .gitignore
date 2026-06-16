@@ -45,3 +45,4 @@ ci/
 .idea
 
 .eslintcache
+.ipynb_checkpoints/

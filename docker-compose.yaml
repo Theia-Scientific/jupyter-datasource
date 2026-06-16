@@ -18,6 +18,8 @@ services:
     container_name: 'grafana-jupyter'
     env_file: .env
     network_mode: host
+    volumes:
+      - ./workspace:/home/jovyan/work
 
 secrets:
   envelope_token:

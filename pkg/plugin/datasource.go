@@ -112,27 +112,36 @@ func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResource
 	})
 }
 
+func getPathQueryParameter(req *backend.CallResourceRequest) (string, error) {
+	u, err := url.Parse(req.URL)
+	if err != nil {
+		return "", err
+	}
+
+	m, err := url.ParseQuery(u.RawQuery)
+	if err != nil {
+		return "", err
+	}
+
+	pathArgs := m["path"]
+	if len(pathArgs) == 0 {
+		return "", errMissingPath
+	}
+
+	path := strings.TrimLeft(pathArgs[len(pathArgs)-1], "/")
+	return path, nil
+}
+
 func (p *Datasource) callResource(req *backend.CallResourceRequest) ([]byte, error) {
 	p.logger.Debug(fmt.Sprintf("got a resource request for %+v", req.Path))
 	switch req.Path {
 	case "list":
 		{
-			u, err := url.Parse(req.URL)
+			path, err := getPathQueryParameter(req)
 			if err != nil {
 				return nil, err
 			}
 
-			m, err := url.ParseQuery(u.RawQuery)
-			if err != nil {
-				return nil, err
-			}
-
-			pathArgs := m["path"]
-			if len(pathArgs) == 0 {
-				return nil, errMissingPath
-			}
-
-			path := strings.TrimLeft(pathArgs[len(pathArgs)-1], "/")
 			entries, err := p.httpClient.GetListing(path)
 			if err != nil {
 				return nil, err
@@ -148,6 +157,20 @@ func (p *Datasource) callResource(req *backend.CallResourceRequest) ([]byte, err
 			}
 
 			return json.Marshal(notebooks)
+		}
+	case "notebook":
+		{
+			path, err := getPathQueryParameter(req)
+			if err != nil {
+				return nil, err
+			}
+
+			notebook, err := p.httpClient.GetNotebook(path)
+			if err != nil {
+				return nil, err
+			}
+
+			return json.Marshal(notebook)
 		}
 	case "kernels":
 		{

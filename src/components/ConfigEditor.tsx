@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import React, { useMemo, ChangeEvent } from 'react';
 import { Button, CodeEditor, Combobox, ComboboxOption, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
-import { AuthType, ConnectionType, MyDataSourceOptions, MySecureJsonData } from '../types';
+import { AuthType, ConnectionType, MyDataSourceOptions, MySecureJsonData, openJupyterLab } from '../types';
 import { t } from '@grafana/i18n';
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData> {}
@@ -71,13 +71,6 @@ export function ConfigEditor(props: Props) {
     });
   }
 
-  const jupyterLabUrl =
-    (jsonData.jupyterUrl??'').replace(/\/$/,'') +
-    '/../lab' +
-    (jsonData.authType === AuthType.RawToken
-      ? `?token=${jsonData.rawToken}`
-      : '');
-
   return (
     <>
       <InlineField label={t('configEditor.connectionType.label', 'Connection Type')} labelWidth={20} interactive tooltip={t('configEditor.connectionType.tooltip', 'Type of connection')}>
@@ -122,7 +115,7 @@ export function ConfigEditor(props: Props) {
               width={40}
             />
           </InlineField>
-        <Button onClick={() => window.open(jupyterLabUrl)}>{t('configEditor.openJupyterLab.buttonText', 'Open JupyterLab')}</Button>
+        <Button onClick={() => openJupyterLab(options.jsonData)}>{t('configEditor.openJupyterLab.buttonText', 'Open JupyterLab')}</Button>
         </InlineFieldRow>
         }
       <InlineField label={t('configEditor.packages.label', 'Packages')} labelWidth={20} interactive tooltip={t('configEditor.packages.tooltip', 'Packages to install for every kernel')}>

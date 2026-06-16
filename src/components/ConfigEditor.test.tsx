@@ -1,9 +1,11 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { MyDataSourceOptions, MySecureJsonData, ConnectionType, AuthType } from '@theia/types';
+import { MyDataSourceOptions, MySecureJsonData, ConnectionType, AuthType, openJupyterLab } from '@theia/types';
 import { DataSourceSettings } from '@grafana/data';
 import React from 'react';
 
 import { ConfigEditor } from './ConfigEditor';
+
+jest.mock('@theia/types');
 
 describe('Config Editor', () => {
   const getComponent = (opts: MyDataSourceOptions, onOptionsChange=jest.fn()) => {
@@ -70,9 +72,8 @@ describe('Config Editor', () => {
 
       it('Should open JupyterLab when you click the button', async () => {
         await renderWithoutErrors(getComponent(urlOpts));
-        window.open = jest.fn();
         await fireEvent.click(screen.getByText('Open JupyterLab'));
-        expect(window.open).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/api/../lab');
+        expect(jest.mocked(openJupyterLab)).toHaveBeenCalledWith(urlOpts);
       });
     });
 

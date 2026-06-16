@@ -1,7 +1,7 @@
 import { DataSourceInstanceSettings, CoreApp, ScopedVars } from '@grafana/data';
 import { DataSourceWithBackend, getTemplateSrv } from '@grafana/runtime';
 
-import { KernelSpec, KernelSpecResponse, MyQuery, MyDataSourceOptions, DEFAULT_QUERY, PathEntry } from './types';
+import { DEFAULT_QUERY, KernelSpec, KernelSpecResponse, MyQuery, MyDataSourceOptions, Notebook, PathEntry } from './types';
 
 export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptions> {
   options: MyDataSourceOptions;
@@ -28,6 +28,10 @@ export class DataSource extends DataSourceWithBackend<MyQuery, MyDataSourceOptio
 
   getNotebooks(): Promise<PathEntry[]> {
     return this.getResource('notebooks');
+  }
+
+  getNotebook(path: string): Promise<Notebook> {
+    return this.getResource(`notebook?path=${path}`);
   }
 
   getListing(path: string): Promise<PathEntry[]> {

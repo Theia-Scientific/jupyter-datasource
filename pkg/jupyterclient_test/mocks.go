@@ -329,22 +329,22 @@ func (_c *MockIJupyterHttpClient_GetListing_Call) RunAndReturn(run func(path str
 }
 
 // GetNotebook provides a mock function for the type MockIJupyterHttpClient
-func (_mock *MockIJupyterHttpClient) GetNotebook(path string) (string, error) {
+func (_mock *MockIJupyterHttpClient) GetNotebook(path string) (jupyterclient.Notebook, error) {
 	ret := _mock.Called(path)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNotebook")
 	}
 
-	var r0 string
+	var r0 jupyterclient.Notebook
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(string) (jupyterclient.Notebook, error)); ok {
 		return returnFunc(path)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(string) jupyterclient.Notebook); ok {
 		r0 = returnFunc(path)
 	} else {
-		r0 = ret.Get(0).(string)
+		r0 = ret.Get(0).(jupyterclient.Notebook)
 	}
 	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
 		r1 = returnFunc(path)
@@ -378,12 +378,12 @@ func (_c *MockIJupyterHttpClient_GetNotebook_Call) Run(run func(path string)) *M
 	return _c
 }
 
-func (_c *MockIJupyterHttpClient_GetNotebook_Call) Return(s string, err error) *MockIJupyterHttpClient_GetNotebook_Call {
-	_c.Call.Return(s, err)
+func (_c *MockIJupyterHttpClient_GetNotebook_Call) Return(notebook jupyterclient.Notebook, err error) *MockIJupyterHttpClient_GetNotebook_Call {
+	_c.Call.Return(notebook, err)
 	return _c
 }
 
-func (_c *MockIJupyterHttpClient_GetNotebook_Call) RunAndReturn(run func(path string) (string, error)) *MockIJupyterHttpClient_GetNotebook_Call {
+func (_c *MockIJupyterHttpClient_GetNotebook_Call) RunAndReturn(run func(path string) (jupyterclient.Notebook, error)) *MockIJupyterHttpClient_GetNotebook_Call {
 	_c.Call.Return(run)
 	return _c
 }

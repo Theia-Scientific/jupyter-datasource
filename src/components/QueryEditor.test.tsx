@@ -2,7 +2,7 @@ jest.mock('@grafana/ui');
 
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { type DataSource } from '@theia/datasource';
-import { AuthType, ConnectionType, MyQuery } from '@theia/types';
+import { AuthType, ConnectionType, MyQuery, openJupyterLabNotebook } from '@theia/types';
 import { TEST_IDS } from '@theia/constants';
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { QueryEditor } from './QueryEditor';
 
 jest.mock('uuid');
+jest.mock('@theia/types');
 
 describe('Query Editor', () => {
   const baseQuery: MyQuery = {
@@ -28,6 +29,7 @@ describe('Query Editor', () => {
     options: {
       connectionType: ConnectionType.Auto,
       authType: AuthType.None,
+      jupyterUrl: 'http://jupyter.pimentos.biz/api',
       packages: [],
     },
 
@@ -154,6 +156,17 @@ describe('Query Editor', () => {
         expect(screen.queryByLabelText('Source')).toBeInTheDocument();
         expect(screen.queryByTestId(TEST_IDS.filesList.root)).not.toBeInTheDocument();
         expect(screen.queryByText('Code')).not.toBeInTheDocument();
+      });
+
+      it('should show the Open in JupyterLab button', async () => {
+        await renderWithoutErrors(getComponent({query, datasource, onChange}));
+        expect(screen.queryByText('Open in JupyterLab')).toBeInTheDocument();
+      });
+
+      it('should open the notebook in JupyterLab when you click it', async () => {
+        await renderWithoutErrors(getComponent({query, datasource, onChange}));
+        await fireEvent.click(screen.getByText('Open in JupyterLab'));
+        expect(jest.mocked(openJupyterLabNotebook)).toHaveBeenCalledWith(datasource.options, query);
       });
     });
 

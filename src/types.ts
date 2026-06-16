@@ -129,12 +129,47 @@ export type PathEntryNotebook = PathEntryBase & {
 export type PathEntryDirectory = PathEntryBase & {
   type: 'directory';
   content?: PathEntry[];
-}
+};
 
 export type PathEntry = PathEntryNotebook | PathEntryDirectory;
+
+interface NotebookCell {
+  cell_type: 'code' | 'markdown';
+  source: string;
+}
+
+export type Notebook = PathEntryNotebook & {
+  content: { cells: NotebookCell[] };
+};
 
 /**
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */
 export interface MySecureJsonData {
 }
+
+function jupyterLabUrl(jsonData: MyDataSourceOptions, path: string) {
+  const url =
+    (jsonData.jupyterUrl??'').replace(/\/$/,'') +
+      '/../lab' + path;
+  const token =
+    (jsonData.authType === AuthType.RawToken
+      ? `?token=${jsonData.rawToken}`
+      : '');
+  return url + token;
+}
+
+// exported only so it can be mocked for testing
+export function openWindow(url: string) {
+  window.open(url);
+}
+
+export function openJupyterLab(options: MyDataSourceOptions) {
+  openWindow(jupyterLabUrl(options, ''));
+};
+
+export function openJupyterLabNotebook(options: MyDataSourceOptions, {notebook}: MyQuery) {
+  openWindow(jupyterLabUrl(options, `/tree/${notebook}`));
+};
+
+
