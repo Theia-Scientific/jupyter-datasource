@@ -24,15 +24,15 @@ Install dependent node modules using pnpm:
 pnpm install
 ```
 
-1. Install golang
+3. Install golang
 
 https://go.dev/doc/install
 
-1. Install Mage
+4. Install Mage
 
 https://magefile.org
 
-1. Do a clean build
+5. Do a clean build
 
 n.b. this only builds the linux x64 and linux arm64 binaries for the
 backend, since that's what we ship Theiascope on - in the long run
@@ -46,27 +46,13 @@ mage -v build:linux
 mage -v build:linuxARM64
 ```
 
-1. Sign the plugin
+6. Updating `theia-grafana`
 
-Get the signing token from Ben (or let CI do this part).
+The plugin will be built and signed by CI on commits to main, and the CI action will upload
+a build artifact.  Take that build artifact and unzip it; its contents should go in
+`theia-grafana/src/theiascientific-jupyter-datasource`.
 
-```bash
-export GRAFANA_ACCESS_POLICY_TOKEN=...
-npx @grafana/sign-plugin@latest --rootUrls https://localhost/,http://localhost:3000/
-```
-
-1. Install the updated plugin into our Grafana
-
-Take note!  If your Grafana checkout isn't in a folder named 'grafana' in a sibling
-directory to this one, update the PATH_TO_THEIA_GRAFANA_CHECKOUT variable below.
-
-```bash
-export PATH_TO_THEIA_GRAFANA_CHECKOUT=../grafana
-rm -rf ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-datasource
-cp -rp dist ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-datasource
-```
-
-1. run `npm run build` and `npm run start` in the Grafana repo
+7. run `npm run build` and `npm run start` in the Grafana repo
 
 ### Backend
 
@@ -122,7 +108,7 @@ cp -rp dist ${PATH_TO_THEIA_GRAFANA_CHECKOUT}/src/theiascientific-jupyter-dataso
 5. Spin up a Grafana instance and run the plugin inside it (using Docker)
 
    ```bash
-   pnpm run server
+   pnpm run start
    ```
 
 6. Run the E2E tests (using Playwright)
