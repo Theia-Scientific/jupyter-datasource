@@ -13,7 +13,7 @@
     "lint:fix": "pnpm run lint -- --fix && prettier --write --list-different .",
     "e2e": "playwright test",
     "restart": "mage -v && docker compose restart grafana",
-    "sign": "pnpx --yes @grafana/sign-plugin@latest",
+    "sign": "pnpx --yes @grafana/sign-plugin@latest --rootUrls https://localhost/,http://localhost:3000/",
     "start": "docker compose up --build",
     "stop": "docker compose down"
   },
