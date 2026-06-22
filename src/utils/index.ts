@@ -11,9 +11,9 @@ export const isApiError = (error: unknown): error is FetchError => {
 };
 
 function jupyterLabUrl(jsonData: MyDataSourceOptions, path: string) {
-  const url = URL.parse(jsonData.jupyterUrl) ?? {};
+  const url = new URL(jsonData.jupyterUrl ?? '');
   if (["localhost", "127.0.0.1", "::1"].includes(url.hostname)) {
-    url.hostname = getWindowLocation().hostname;
+    url.hostname = new URL(getWindowLocation()).hostname;
   }
   url.pathname = url.pathname.replace(/\/$/,'') +
       '/../lab' + path;

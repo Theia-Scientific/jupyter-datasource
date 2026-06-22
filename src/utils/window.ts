@@ -4,5 +4,5 @@ export function openWindow(url: string) {
 }
 
 export function getWindowLocation(): string {
-  return window.location.hostname;
+  return window.location.href;
 }

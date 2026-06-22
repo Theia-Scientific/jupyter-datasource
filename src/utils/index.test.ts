@@ -42,7 +42,7 @@ describe('openJupyterLabNotebook', () => {
   });
 
   it('Should use hostname from window.location if jupyterUrl is localhost', async () => {
-    getWindowLocation.mockImplementation(() => URL.parse('http://jupyter.hamburger.edu:3000/'));
+    jest.mocked(getWindowLocation).mockImplementation(() => 'http://jupyter.hamburger.edu:3000/');
     openJupyterLabNotebook(options, {
       ...query,
       notebook: 'MasterControl.ipynb',
