@@ -17,23 +17,25 @@ const query = {
 } as MyQuery;
 
 describe('openJupyterLab', () => {
-  it('Should open to ../lab relative to the jupyter URL', async () => {
+  it('should open to ../lab relative to the jupyter URL', async () => {
     openJupyterLab(options);
     expect(openWindow).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/lab');
   });
 
-  it('should include the token parameter', async () => {
-    openJupyterLab({
-      ...options,
-      authType: AuthType.RawToken,
-      rawToken: 'potato salad',
+  describe('with a token', () => {
+    it('should include the token parameter', async () => {
+      openJupyterLab({
+        ...options,
+        authType: AuthType.RawToken,
+        rawToken: 'potato salad',
+      });
+      expect(openWindow).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/lab?token=potato+salad');
     });
-    expect(openWindow).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/lab?token=potato%20salad');
   });
 });
 
 describe('openJupyterLabNotebook', () => {
-  it('Should open to ../lab/tree/notebook relative to the jupyter URL', async () => {
+  it('should open to ../lab/tree/notebook relative to the jupyter URL', async () => {
     openJupyterLabNotebook(options, {
       ...query,
       notebook: 'MasterControl.ipynb',
@@ -41,13 +43,27 @@ describe('openJupyterLabNotebook', () => {
     expect(openWindow).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/lab/tree/MasterControl.ipynb');
   });
 
-  it('Should use hostname from window.location if jupyterUrl is localhost', async () => {
-    jest.mocked(getWindowLocation).mockImplementation(() => 'http://jupyter.hamburger.edu:3000/');
-    openJupyterLabNotebook(options, {
-      ...query,
-      notebook: 'MasterControl.ipynb',
+  describe('when jupyterUrl is localhost', () => {
+    it('should use hostname from window.location', async () => {
+      jest.mocked(getWindowLocation).mockImplementation(() => 'http://jupyter.hamburger.edu:3000/');
+      openJupyterLabNotebook(options, {
+        ...query,
+        notebook: 'MasterControl.ipynb',
+      });
+      expect(openWindow).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/lab/tree/MasterControl.ipynb');
     });
-    expect(openWindow).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/lab/tree/MasterControl.ipynb');
+  });
+
+  describe('when jupyterUrl is malformed', () => {
+    it('should raise an error', async () => {
+      expect(() => openJupyterLabNotebook({
+        ...options,
+        jupyterUrl: 'not a URL at all',
+      }, {
+        ...query,
+        notebook: 'MasterControl.ipynb',
+      })).toThrow();
+    });
   });
 });
 

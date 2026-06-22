@@ -16,11 +16,11 @@ function jupyterLabUrl(jsonData: MyDataSourceOptions, path: string) {
     url.hostname = new URL(getWindowLocation()).hostname;
   }
   url.pathname = url.pathname.replace(/\/$/,'') +
-      '/../lab' + path;
-  url.search =
-    (jsonData.authType === AuthType.RawToken
-      ? `?token=${jsonData.rawToken}`
-      : '');
+    '/../lab' + path;
+  if (jsonData.authType === AuthType.RawToken && jsonData.rawToken !== '') {
+    url.searchParams.append('token', jsonData.rawToken!);
+  }
+
   return url.href;
 }
 
