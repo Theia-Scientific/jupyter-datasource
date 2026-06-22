@@ -2,9 +2,12 @@ package plugin
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
@@ -508,4 +511,56 @@ func TestCheckHealthSuccessShouldTerminateSessionAndKillKernel(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, backend.HealthStatusOk, res.Status)
 	assert.Equal(t, "Data source is working", res.Message)
+}
+
+func TestSystemPrelude(t *testing.T) {
+	testExpr := func(expr string, expectedOut string, expectedErr string) {
+		var qb strings.Builder
+		qb.WriteString(systemPrelude)
+		qb.WriteString(`GF_VARS=GrafanaSupport({
+    "float": "2.3e17",
+    "int": "12",
+    "str": "corndogs",
+    "f": "no",
+    "t": "anything else",
+    "empty": "",
+    "list": "{man,woman,person,camera,tv}",
+})
+`)
+		qb.WriteString(expr)
+		qb.WriteString("\n")
+
+		cmd := exec.Command("python3", "-c", qb.String())
+		out, err := cmd.CombinedOutput()
+		if expectedErr == "" {
+			assert.Nil(t, err)
+			assert.Equal(t, fmt.Sprintf("%s\n", expectedOut), string(out))
+		} else {
+			assert.NotNil(t, err)
+			assert.Contains(t, string(out), expectedErr)
+		}
+	}
+
+	// test that strings are available unmanipulated (note no +)
+	testExpr("print(GF_VARS['float'])", "2.3e17", "")
+
+	// test that values parse as expected
+	testExpr("print(GF_VARS.float('float'))", "2.3e+17", "")
+	testExpr("print(GF_VARS.int('int'))", "12", "")
+	testExpr("print(GF_VARS.str('str'))", "corndogs", "")
+	testExpr("print(GF_VARS.bool('f'))", "False", "")
+	testExpr("print(GF_VARS.bool('t'))", "True", "")
+	testExpr("print(GF_VARS.list('list'))", "['man', 'woman', 'person', 'camera', 'tv']", "")
+	testExpr("print(GF_VARS.list('str'))", "['corndogs']", "")
+
+	// test that using the wrong type raises error
+	testExpr("GF_VARS.int('float')", "", "ValueError: invalid literal for int() with base 10: '2.3e17'")
+
+	// test that defaults work
+	testExpr("print(GF_VARS.bool('missing', 12))", "12", "")
+	testExpr("print(GF_VARS.bool('empty', 23))", "23", "")
+
+	// test that overriding GF_FALSES works
+	testExpr("print(GF_VARS.bool('str'))", "True", "")
+	testExpr("GF_FALSES.append('corndogs')\nprint(GF_VARS.bool('str'))", "False", "")
 }
