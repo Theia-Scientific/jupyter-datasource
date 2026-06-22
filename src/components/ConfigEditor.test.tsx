@@ -1,11 +1,12 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { MyDataSourceOptions, MySecureJsonData, ConnectionType, AuthType, openJupyterLab } from '@theia/types';
+import { MyDataSourceOptions, MySecureJsonData, ConnectionType, AuthType } from '@theia/types';
+import { openJupyterLab } from '@theia/utils';
 import { DataSourceSettings } from '@grafana/data';
 import React from 'react';
 
 import { ConfigEditor } from './ConfigEditor';
 
-jest.mock('@theia/types');
+jest.mock('@theia/utils');
 
 describe('Config Editor', () => {
   const getComponent = (opts: MyDataSourceOptions, onOptionsChange=jest.fn()) => {

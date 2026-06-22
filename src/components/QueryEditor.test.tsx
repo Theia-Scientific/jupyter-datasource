@@ -2,7 +2,8 @@ jest.mock('@grafana/ui');
 
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { type DataSource } from '@theia/datasource';
-import { AuthType, ConnectionType, MyQuery, openJupyterLabNotebook } from '@theia/types';
+import { AuthType, ConnectionType, MyQuery } from '@theia/types';
+import { openJupyterLabNotebook } from '@theia/utils';
 import { TEST_IDS } from '@theia/constants';
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { QueryEditor } from './QueryEditor';
 
 jest.mock('uuid');
-jest.mock('@theia/types');
+jest.mock('@theia/utils');
 
 describe('Query Editor', () => {
   const baseQuery: MyQuery = {
