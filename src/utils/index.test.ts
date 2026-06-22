@@ -47,7 +47,7 @@ describe('openJupyterLabNotebook', () => {
       ...query,
       notebook: 'MasterControl.ipynb',
     });
-    expect(openWindow).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/jupyter/lab/tree/MasterControl.ipynb');
+    expect(openWindow).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/lab/tree/MasterControl.ipynb');
   });
 });
 
