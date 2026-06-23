@@ -117,10 +117,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   const [notebookContent, setNotebookContent] = useState<Notebook|undefined>(undefined);
   useEffect(() => {
     if (source !== ENTER_CODE && source !== CHOOSE_NOTEBOOK) {
-      datasource.getNotebook(source).then((content) => {
-        console.log("notebook content: ", content);
-        setNotebookContent(content);
-      });
+      datasource.getNotebook(source).then(setNotebookContent);
     } else {
       window.setTimeout(() => setNotebookContent(undefined), 0);
     }

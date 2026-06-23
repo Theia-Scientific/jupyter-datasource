@@ -61,6 +61,20 @@ describe('Query Editor', () => {
         },
       },
     })),
+
+    getNotebook: jest.fn(async (path) => ({
+      type: 'notebook',
+      size: 123,
+      name: path,
+      path: path,
+      last_modified: '2026-05-06T15:09:47Z',
+      content: {
+        cells: [{
+          cell_type: 'markdown',
+          source: 'If I finish this PR I get to take a nap',
+        }],
+      },
+    })),
   });
 
   const getComponent = ({query, datasource, onChange, onRunQuery}: {query: MyQuery, datasource: any, onChange?: () => void, onRunQuery?: () => void}) => {
