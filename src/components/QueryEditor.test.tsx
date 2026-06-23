@@ -3,7 +3,7 @@ jest.mock('@grafana/ui');
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { type DataSource } from '@theia/datasource';
 import { AuthType, ConnectionType, MyQuery } from '@theia/types';
-import { openJupyterLabNotebook } from '@theia/utils';
+import { getJupyterLabNotebookUrl, openWindow } from '@theia/utils';
 import { TEST_IDS } from '@theia/constants';
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -11,7 +11,6 @@ import { v4 as uuidv4 } from 'uuid';
 import { QueryEditor } from './QueryEditor';
 
 jest.mock('uuid');
-jest.mock('@theia/utils');
 
 describe('Query Editor', () => {
   const baseQuery: MyQuery = {
@@ -159,15 +158,26 @@ describe('Query Editor', () => {
         expect(screen.queryByText('Code')).not.toBeInTheDocument();
       });
 
-      it('should show the Open in JupyterLab button', async () => {
+      it('should enable the Open in JupyterLab button', async () => {
         await renderWithoutErrors(getComponent({query, datasource, onChange}));
-        expect(screen.queryByText('Open in JupyterLab')).toBeInTheDocument();
+        const button = screen.getByRole('button', {name: 'Open in JupyterLab'});
+        expect(button).toBeEnabled();
+        await fireEvent.click(button);
+        expect(jest.mocked(openWindow)).toHaveBeenCalledWith('http://jupyter.pimentos.biz/lab/tree/nb.ipynb');
       });
+    });
 
-      it('should open the notebook in JupyterLab when you click it', async () => {
+    describe('with an invalid JupyterLab URL', () => {
+      const datasource = mockDatasource();
+      datasource.options.jupyterUrl = 'something borrowed, something blue';
+      const query = {...baseQuery, notebook: 'nb.ipynb'};
+
+      it('should enable the Open in JupyterLab button', async () => {
         await renderWithoutErrors(getComponent({query, datasource, onChange}));
-        await fireEvent.click(screen.getByText('Open in JupyterLab'));
-        expect(jest.mocked(openJupyterLabNotebook)).toHaveBeenCalledWith(datasource.options, query);
+        const button = screen.getByRole('button', {name: 'Open in JupyterLab'});
+        expect(button).not.toBeEnabled();
+        await fireEvent.click(button);
+        expect(jest.mocked(openWindow)).not.toHaveBeenCalled();
       });
     });
 

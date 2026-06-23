@@ -1,8 +1,5 @@
 import { AuthType, ConnectionType, DEFAULT_QUERY, MyQuery } from '@theia/types';
-import { openJupyterLab, openJupyterLabNotebook } from '@theia/utils';
-import { openWindow, getWindowLocation } from '@theia/utils/window';
-
-
+import { getJupyterLabUrl, getJupyterLabNotebookUrl, getWindowLocation } from '@theia/utils';
 
 const options = {
   connectionType: ConnectionType.Info,
@@ -16,53 +13,53 @@ const query = {
   uuid: 'whatever',
 } as MyQuery;
 
-describe('openJupyterLab', () => {
-  it('should open to ../lab relative to the jupyter URL', async () => {
-    openJupyterLab(options);
-    expect(openWindow).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/lab');
+describe('getJupyterLabUrl', () => {
+  it('should resolve to ../lab relative to the jupyter URL', async () => {
+    expect(getJupyterLabUrl(options)).toEqual('http://jupyter.hamburger.edu:8888/lab');
   });
 
   describe('with a token', () => {
     it('should include the token parameter', async () => {
-      openJupyterLab({
+      expect(getJupyterLabUrl({
         ...options,
         authType: AuthType.RawToken,
         rawToken: 'potato salad',
-      });
-      expect(openWindow).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/lab?token=potato+salad');
+      })).toEqual('http://jupyter.hamburger.edu:8888/lab?token=potato+salad');
     });
   });
 });
 
-describe('openJupyterLabNotebook', () => {
-  it('should open to ../lab/tree/notebook relative to the jupyter URL', async () => {
-    openJupyterLabNotebook(options, {
-      ...query,
-      notebook: 'MasterControl.ipynb',
-    });
-    expect(openWindow).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/lab/tree/MasterControl.ipynb');
+describe('getJupyterLabNotebookUrl', () => {
+  const notebookQuery = {
+    ...query,
+    notebook: 'MasterControl.ipynb',
+  };
+
+  it('should resolve to ../lab/tree/notebook relative to the jupyter URL', async () => {
+    expect(getJupyterLabNotebookUrl(options, notebookQuery))
+      .toEqual('http://jupyter.hamburger.edu:8888/lab/tree/MasterControl.ipynb');
   });
 
   describe('when jupyterUrl is localhost', () => {
+    const localhostOptions = {
+      ...options,
+      jupyterUrl: 'http://localhost:8888/jupyter/api',
+    }
     it('should use hostname from window.location', async () => {
       jest.mocked(getWindowLocation).mockImplementation(() => 'http://jupyter.hamburger.edu:3000/');
-      openJupyterLabNotebook(options, {
-        ...query,
-        notebook: 'MasterControl.ipynb',
-      });
-      expect(openWindow).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/lab/tree/MasterControl.ipynb');
+      expect(getJupyterLabNotebookUrl(localhostOptions, notebookQuery))
+        .toEqual('http://jupyter.hamburger.edu:8888/jupyter/lab/tree/MasterControl.ipynb');
     });
   });
 
   describe('when jupyterUrl is malformed', () => {
-    it('should raise an error', async () => {
-      expect(() => openJupyterLabNotebook({
-        ...options,
-        jupyterUrl: 'not a URL at all',
-      }, {
-        ...query,
-        notebook: 'MasterControl.ipynb',
-      })).toThrow();
+    const malformedOptions = {
+      ...options,
+      jupyterUrl: 'not a URL at all',
+    }
+    it('should return null', async () => {
+      expect(getJupyterLabNotebookUrl(malformedOptions, notebookQuery))
+        .toEqual(null);
     });
   });
 });
