@@ -172,7 +172,7 @@ describe('Query Editor', () => {
       datasource.options.jupyterUrl = 'something borrowed, something blue';
       const query = {...baseQuery, notebook: 'nb.ipynb'};
 
-      it('should enable the Open in JupyterLab button', async () => {
+      it('should not enable the Open in JupyterLab button', async () => {
         await renderWithoutErrors(getComponent({query, datasource, onChange}));
         const button = screen.getByRole('button', {name: 'Open in JupyterLab'});
         expect(button).not.toBeEnabled();
