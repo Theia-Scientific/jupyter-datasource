@@ -115,20 +115,16 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
   ];
   const [source, setSource] = useState(() => emptyNotebook(query) ? ENTER_CODE : query.notebook);
   const [notebookContent, setNotebookContent] = useState<Notebook|undefined>(undefined);
-  const setSourceAndUpdateNotebookContent = (source: string) => {
-    setSource(source);
+  useEffect(() => {
     if (source !== ENTER_CODE && source !== CHOOSE_NOTEBOOK) {
-      datasource.getNotebook(source).then((content) => {
-        console.log("notebook content: ", content);
-        setNotebookContent(content);
-      });
+      datasource.getNotebook(source).then(setNotebookContent);
     } else {
-      setNotebookContent(undefined);
+      window.setTimeout(() => setNotebookContent(undefined), 0);
     }
-  };
+  }, [datasource, source]);
 
   const onSelectFile = (f: PathEntryNotebook) => {
-    setSourceAndUpdateNotebookContent(f.path);
+    setSource(f.path);
     onChange({ ...query, notebook: f.path });
   };
 
@@ -225,7 +221,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
             <Combobox
               id="query-editor-source"
               options={sources}
-              onChange={(opt) => setSourceAndUpdateNotebookContent(opt.value)}
+              onChange={(opt) => setSource(opt.value)}
               value={source}
               width={40}
             />
