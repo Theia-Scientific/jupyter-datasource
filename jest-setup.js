@@ -7,6 +7,7 @@ import { TextDecoder, TextEncoder } from 'util';
  * Logger
  */
 jest.mock('@theia/utils/logger');
+jest.mock('@theia/utils/window');
 jest.mock('react-syntax-highlighter');
 jest.mock('react-markdown');
 

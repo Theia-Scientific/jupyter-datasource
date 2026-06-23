@@ -9,7 +9,8 @@ import { QueryFieldVariablesEditor } from './QueryFieldVariablesEditor';
 import { NotebookRenderer } from './NotebookRenderer';
 import { v4 as uuidv4 } from 'uuid';
 import { FilesList } from './FilesList';
-import { DEFAULT_QUERY, Notebook, PathEntryNotebook, openJupyterLabNotebook } from '@theia/types';
+import { DEFAULT_QUERY, Notebook, PathEntryNotebook } from '@theia/types';
+import { getJupyterLabNotebookUrl, openWindow } from '@theia/utils';
 import { t } from '@grafana/i18n';
 
 type Props = QueryEditorProps<DataSource, MyQuery, MyDataSourceOptions>;
@@ -230,7 +231,11 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
             />
           </InlineField>
           { !emptyNotebook(query) &&
-            <Button onClick={() => openJupyterLabNotebook(datasource.options, query)}>{t('configEditor.openNotebook.buttonText', 'Open in JupyterLab')}</Button>
+            <Button
+              disabled={getJupyterLabNotebookUrl(datasource.options, query) === null}
+              onClick={() => openWindow(getJupyterLabNotebookUrl(datasource.options, query))}>
+              {t('configEditor.openNotebook.buttonText', 'Open in JupyterLab')}
+            </Button>
           }
         </InlineFieldRow>
       }

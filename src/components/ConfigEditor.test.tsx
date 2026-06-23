@@ -1,11 +1,10 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { MyDataSourceOptions, MySecureJsonData, ConnectionType, AuthType, openJupyterLab } from '@theia/types';
+import { MyDataSourceOptions, MySecureJsonData, ConnectionType, AuthType } from '@theia/types';
+import { openWindow } from '@theia/utils';
 import { DataSourceSettings } from '@grafana/data';
 import React from 'react';
 
 import { ConfigEditor } from './ConfigEditor';
-
-jest.mock('@theia/types');
 
 describe('Config Editor', () => {
   const getComponent = (opts: MyDataSourceOptions, onOptionsChange=jest.fn()) => {
@@ -72,8 +71,22 @@ describe('Config Editor', () => {
 
       it('Should open JupyterLab when you click the button', async () => {
         await renderWithoutErrors(getComponent(urlOpts));
-        await fireEvent.click(screen.getByText('Open JupyterLab'));
-        expect(jest.mocked(openJupyterLab)).toHaveBeenCalledWith(urlOpts);
+        const button = screen.getByRole('button', {name: 'Open JupyterLab'});
+        expect(button).toBeEnabled();
+        await fireEvent.click(button);
+        expect(jest.mocked(openWindow)).toHaveBeenCalledWith('http://jupyter.hamburger.edu:8888/lab');
+      });
+    });
+
+    describe('with an invalid JupyterLab URL', () => {
+      const urlOpts = { ...autoOpts, jupyterUrl: 'kinda sleepy here' };
+
+      it('Should not open JupyterLab when you click the button', async () => {
+        await renderWithoutErrors(getComponent(urlOpts));
+        const button = screen.getByRole('button', {name: 'Open JupyterLab'});
+        expect(button).not.toBeEnabled();
+        await fireEvent.click(button);
+        expect(openWindow).not.toHaveBeenCalled();
       });
     });
 
