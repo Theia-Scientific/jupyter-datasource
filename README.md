@@ -173,16 +173,7 @@ Ensure the following system dependencies are installed on the host test machine.
    pnpm install
    ```
 
-3. Configure access to the private Python package index hosted at Envelope.dev.
-   This is only needed to locally build Docker images. Obtain an Envelope.dev
-   token from Theia Scientific personnel and use it in the .env file as follows,
-   where `<token>` is replaced with the token value:
-   
-   ```sh
-   echo "ENVELOPE_TOKEN=<token>" > .env
-   ```
-
-4. Add a `JUPYTER_TOKEN` to the `.env` file. The value of the environment
+3. Add a `JUPYTER_TOKEN` to the `.env` file. The value of the environment
    variable can be anything, but it must exist so that Grafana can communicate
    with the Jupyter instance.
    
@@ -190,7 +181,7 @@ Ensure the following system dependencies are installed on the host test machine.
    echo "JUPYTER_TOKEN=abcdefghijklmnopqrstuvwxyz0123456789" >> .env
    ```
 
-5. Checkout the appropriate branch for a Pull Request (PR) to test:
+4. Checkout the appropriate branch for a Pull Request (PR) to test:
 
    ```sh
    git checkout <feature-branch-name>
@@ -198,7 +189,7 @@ Ensure the following system dependencies are installed on the host test machine.
    
    where `<feature-branch-name>` is replaced with the name of the git branch.
 
-6. Build all components.
+5. Build all components.
 
    ```sh
    pnpm run build:all
@@ -219,7 +210,7 @@ Ensure the following system dependencies are installed on the host test machine.
       mage -v
       ```
       
-7. Build and start the Grafana and Jupyter containers.
+6. Build and start the Grafana and Jupyter containers.
 
    ```sh
    pnpm run start
@@ -231,25 +222,25 @@ Ensure the following system dependencies are installed on the host test machine.
    docker compose up --build
    ```
 
-8. Open a web browser and navigate to <http://localhost:8888>. Enter the
+7. Open a web browser and navigate to <http://localhost:8888>. Enter the
    `JUPYTER_TOKEN` in the `.env` file from earlier in the form field.
    
-9. Open another tab in the web browser and navigate to <http://localhost:3000>
+8. Open another tab in the web browser and navigate to <http://localhost:3000>
    to access Grafana.
    
-10. Test the data source by navigating to the Jupyter data source under the
+9. Test the data source by navigating to the Jupyter data source under the
    "Connections" menu within the Grafana web browser tab, and click on the "Save
    & test" button.
    
-11. Click on the "building a dashboard" link and add a visualization.
+10. Click on the "building a dashboard" link and add a visualization.
 
-12. Select the "Jupyter" data source for the query source in the query editor
+11. Select the "Jupyter" data source for the query source in the query editor
     section of the visualization. The default query should already be filled in.
     
-13. Click "Refresh" to test the execution of the default query. Two sine waves
+12. Click "Refresh" to test the execution of the default query. Two sine waves
     should appear.
 
-14. Once done testing the branch, return to the terminal press `CTRL+C` to stop
+13. Once done testing the branch, return to the terminal press `CTRL+C` to stop
     the containers. Alternatively, another terminal can be opened and the
     following command could be used:
 
