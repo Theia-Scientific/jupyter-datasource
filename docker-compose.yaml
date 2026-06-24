@@ -13,14 +13,8 @@ services:
     build:
       context: ./
       dockerfile: Dockerfile.jupyter
-      secrets:
-        - envelope_token
     container_name: 'grafana-jupyter'
     env_file: .env
     network_mode: host
     volumes:
       - ./workspace:/home/jovyan/work
-
-secrets:
-  envelope_token:
-    environment: ENVELOPE_TOKEN
