@@ -20,7 +20,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: grafana/plugin-actions/build-plugin@build-plugin/v1.2.0
+      - uses: Theia-Scientific/grafana-plugin-actions/build-plugin@a3c0005a69bd1085cd73b5bc83d5e730064d4168
         with:
           node-version: 22
           go-version: '1.26.3'
