@@ -1,14 +1,4 @@
-# Grafana data source plugin template
-
-This template is a starting point for building a Data Source Plugin for Grafana.
-
-## What are Grafana data source plugins?
-
-Grafana supports a wide range of data sources, including Prometheus, MySQL, and even Datadog. There’s a good chance you can already visualize metrics from the systems you have set up. In some cases, though, you already have an in-house metrics solution that you’d like to add to your Grafana dashboards. Grafana Data Source Plugins enables integrating such solutions with Grafana.
-
 ## Getting started
-
-### Theia-Specific info
 
 1. Install pnpm
 
@@ -34,25 +24,9 @@ https://magefile.org
 
 5. Do a clean build
 
-n.b. this only builds the linux x64 and linux arm64 binaries for the
-backend, since that's what we ship Theiascope on - in the long run
-we'll want to just change the two `mage` lines to a single `mage -v`
-invocation, which will build windows and macos binaries as well.
-
 ```bash
-rm -rf dist
-pnpm run build
-mage -v build:linux
-mage -v build:linuxARM64
+pnpm build:clean
 ```
-
-6. Updating `theia-grafana`
-
-The plugin will be built and signed by CI on commits to main, and the CI action will upload
-a build artifact.  Take that build artifact and unzip it; its contents should go in
-`theia-grafana/src/theiascientific-jupyter-datasource`.
-
-7. run `npm run build` and `npm run start` in the Grafana repo
 
 ### Backend
 
