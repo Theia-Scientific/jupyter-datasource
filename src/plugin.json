@@ -7,7 +7,7 @@
   "backend": true,
   "executable": "gpx_jupyter",
   "info": {
-    "description": "",
+    "description": "Jupyter Datasource allows you to connect your Grafana dashboard to a running JupyterLab instance.  A Grafana query can be configured to run a notebook on the instance, or raw Python code entered in the query itself.  With the jupyter-server-connections package installed in JupyterLab, you can dynamically allocate kernels, share kernels between queries, browse notebooks, and more.",
     "author": {
       "name": "Theia Scientific"
     },
