@@ -83,6 +83,10 @@ jobs:
           version: latest
           args: buildAll
 
+      - name: chmod backend
+        run: chmod 0755 dist/gpx*
+        if: steps.check-for-backend.outputs.has-backend == 'true'
+
       - name: Check for E2E
         id: check-for-e2e
         run: |
