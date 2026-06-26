@@ -9,7 +9,6 @@ import { TextDecoder, TextEncoder } from 'util';
 jest.mock('@theia/utils/logger');
 jest.mock('@theia/utils/window');
 jest.mock('react-syntax-highlighter');
-jest.mock('react-markdown');
 
 /**
  * Assign Text Decoder and Encoder which are required in @grafana/ui

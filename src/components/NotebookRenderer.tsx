@@ -1,7 +1,8 @@
 import React from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { materialDark as dark, materialLight as light } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import Markdown from 'react-markdown';
+import { marked } from 'marked';
+import DOMPurify from 'dompurify';
 import { Notebook } from '@theia/types';
 import { useTheme2 } from '@grafana/ui';
 
@@ -23,9 +24,8 @@ export function NotebookRenderer({notebook}: Props) {
         {cell.source}
       </SyntaxHighlighter>
     ) : (
-      <Markdown key={idx}>
-        {cell.source}
-      </Markdown>
+      <div key={idx} dangerouslySetInnerHTML={{__html:DOMPurify.sanitize(marked.parse(cell.source, {async: false}))}}>
+      </div>
     )
   ))
   return <div>{cells}</div>;
