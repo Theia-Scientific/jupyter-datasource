@@ -17,7 +17,10 @@
       "large": "img/squarelogo-greytext-orangebody-greymoons.svg"
     },
     "links": [],
-    "screenshots": [],
+    "screenshots": [
+      { "name": "notebook", "path": "img/screenshot-notebook.png" },
+      { "name": "codeeditor", "path": "img/screenshot-codeeditor.png" }
+    ],
     "version": "%VERSION%",
     "updated": "%TODAY%"
   },
