@@ -14,7 +14,7 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: Theia-Scientific/plugin-actions/create-plugin-update@54e10f2132da55e90c9338fda25da729601fc9b4
+      - uses: grafana/plugin-actions/create-plugin-update@create-plugin-update/v2.0.2
         with:
           # Make sure to save the token in your repository secrets as `GH_PAT_TOKEN`
           token: ${{ secrets.GH_PAT_TOKEN }}
