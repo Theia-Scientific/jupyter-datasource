@@ -1,7 +1,7 @@
 services:
   grafana:
     user: root
-    container_name: 'theiascientific-jupyter-datasource'
+    container_name: 'theia-jupyter-datasource'
 
     build:
       context: .
@@ -19,13 +19,13 @@ services:
     cap_add:
       - SYS_PTRACE
     volumes:
-      - ../dist:/var/lib/grafana/plugins/theiascientific-jupyter-datasource
+      - ../dist:/var/lib/grafana/plugins/theia-jupyter-datasource
       - ../provisioning:/etc/grafana/provisioning
-      - ..:/root/theiascientific-jupyter-datasource
+      - ..:/root/theia-jupyter-datasource
 
     environment:
       NODE_ENV: development
-      GF_LOG_FILTERS: plugin.theiascientific-jupyter-datasource:debug
+      GF_LOG_FILTERS: plugin.theia-jupyter-datasource:debug
       GF_LOG_LEVEL: debug
       GF_DATAPROXY_LOGGING: 1
-      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: theiascientific-jupyter-datasource
+      GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS: theia-jupyter-datasource

@@ -2,7 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "datasource",
   "name": "Jupyter",
-  "id": "theiascientific-jupyter-datasource",
+  "id": "theia-jupyter-datasource",
   "metrics": true,
   "backend": true,
   "executable": "gpx_jupyter",

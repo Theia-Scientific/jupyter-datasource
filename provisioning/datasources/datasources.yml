@@ -2,7 +2,7 @@ apiVersion: 1
 
 datasources:
   - name: 'Jupyter'
-    type: 'theiascientific-jupyter-datasource'
+    type: 'theia-jupyter-datasource'
     access: proxy
     isDefault: false
     orgId: 1
