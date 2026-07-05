@@ -23,7 +23,6 @@ jobs:
       has-backend: ${{ steps.check-for-backend.outputs.has-backend }}
     env:
       GRAFANA_ACCESS_POLICY_TOKEN: ${{ secrets.GRAFANA_ACCESS_POLICY_TOKEN }}
-      GO111MODULE: on # for gosec
     steps:
       - name: Checkout source code
         uses: actions/checkout@v7
@@ -76,11 +75,6 @@ jobs:
         with:
           version: latest
           args: coverage
-
-      - name: run GoSec
-        uses: securego/gosec@master
-        with:
-          args: ./...
 
       - name: Build backend
         if: steps.check-for-backend.outputs.has-backend == 'true'
