@@ -1,6 +1,6 @@
 module github.com/Theia-Scientific/jupyter-datasource
 
-go 1.26.3
+go 1.26.4
 
 require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d
