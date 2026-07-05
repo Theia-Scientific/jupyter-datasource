@@ -12,7 +12,9 @@ permissions: read-all
 jobs:
   release:
     permissions:
+      id-token: write
       contents: write
+      attestations: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source code
