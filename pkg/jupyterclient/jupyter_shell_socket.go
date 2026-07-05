@@ -47,7 +47,7 @@ func makeJupyterDealerSocket(ctx context.Context, connectionInfo *ConnectionInfo
 }
 
 func (jss *JupyterShellSocket) Close() {
-	jss.dealer.Close()
+	_ = jss.dealer.Close()
 }
 
 func (jss *JupyterShellSocket) encodeHeader(msgId string, msgType string) (string, error) {
