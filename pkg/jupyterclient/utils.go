@@ -1,9 +1,9 @@
 package jupyterclient
 
 import (
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"math/rand"
 )
 
 //mockery:generate: true

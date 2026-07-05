@@ -46,7 +46,7 @@ type IJupyterSession interface {
 	Start() error
 	Execute(code string) (Result, error)
 	Query(code string) (Result, error)
-	Restart()
+	Restart() error
 	Initialize(packages *[]string, code string) error
 	Quit()
 }
@@ -93,7 +93,10 @@ func (js *JupyterSession) Execute(code string) (Result, error) {
 	// if the session is already terminated, complain
 	if err := context.Cause(js.groupCtx); err != nil {
 		if err == io.EOF {
-			js.Start()
+			err = js.Start()
+			if err != nil {
+				return Result{}, err
+			}
 		} else {
 			return Result{}, err
 		}
@@ -121,14 +124,18 @@ func (js *JupyterSession) Query(code string) (Result, error) {
 	return js.Execute(code)
 }
 
-func (js *JupyterSession) Restart() {
+func (js *JupyterSession) Restart() error {
 	js.logger.Log("restarting jupytersession")
 	js.shutdown(true)
 	// shut down the group
 	js.group.Go(func() error { return ShutdownError })
-	js.group.Wait()
-	js.Start()
+	_ = js.group.Wait()
+	err := js.Start()
+	if err != nil {
+		return err
+	}
 	js.logger.Log("session restarted")
+	return nil
 }
 
 // install all packages, do all system commands &c, and restart
@@ -152,7 +159,10 @@ func (js *JupyterSession) Initialize(packages *[]string, code string) error {
 		if err != nil {
 			return err
 		}
-		js.Restart()
+		err = js.Restart()
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -167,7 +177,7 @@ func (js *JupyterSession) Quit() {
 	js.logger.Log("stopping jupytersession")
 	// shut down the group
 	js.group.Go(func() error { return ShutdownError })
-	js.group.Wait()
+	_ = js.group.Wait()
 	js.logger.Log("session stopped")
 }
 

@@ -891,9 +891,20 @@ func (_c *MockIJupyterSession_Quit_Call) RunAndReturn(run func()) *MockIJupyterS
 }
 
 // Restart provides a mock function for the type MockIJupyterSession
-func (_mock *MockIJupyterSession) Restart() {
-	_mock.Called()
-	return
+func (_mock *MockIJupyterSession) Restart() error {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Restart")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func() error); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
 }
 
 // MockIJupyterSession_Restart_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Restart'
@@ -913,13 +924,13 @@ func (_c *MockIJupyterSession_Restart_Call) Run(run func()) *MockIJupyterSession
 	return _c
 }
 
-func (_c *MockIJupyterSession_Restart_Call) Return() *MockIJupyterSession_Restart_Call {
-	_c.Call.Return()
+func (_c *MockIJupyterSession_Restart_Call) Return(err error) *MockIJupyterSession_Restart_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *MockIJupyterSession_Restart_Call) RunAndReturn(run func()) *MockIJupyterSession_Restart_Call {
-	_c.Run(run)
+func (_c *MockIJupyterSession_Restart_Call) RunAndReturn(run func() error) *MockIJupyterSession_Restart_Call {
+	_c.Call.Return(run)
 	return _c
 }
 
