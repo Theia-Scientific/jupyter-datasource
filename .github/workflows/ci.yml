@@ -87,6 +87,11 @@ jobs:
         run: chmod 0755 dist/gpx*
         if: steps.check-for-backend.outputs.has-backend == 'true'
 
+      - name: run GoSec
+        uses: securego/gosec@master
+        with:
+          args: ./...
+
       - name: Check for E2E
         id: check-for-e2e
         run: |
