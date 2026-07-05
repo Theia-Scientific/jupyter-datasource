@@ -77,6 +77,11 @@ jobs:
           version: latest
           args: coverage
 
+      - name: run GoSec
+        uses: securego/gosec@master
+        with:
+          args: ./...
+
       - name: Build backend
         if: steps.check-for-backend.outputs.has-backend == 'true'
         uses: magefile/mage-action@a662bd8c29d8106879588cfff83b2faf6e6f59db # v4.0.0
@@ -87,11 +92,6 @@ jobs:
       - name: chmod backend
         run: chmod 0755 dist/gpx*
         if: steps.check-for-backend.outputs.has-backend == 'true'
-
-      - name: run GoSec
-        uses: securego/gosec@master
-        with:
-          args: ./...
 
       - name: Check for E2E
         id: check-for-e2e
