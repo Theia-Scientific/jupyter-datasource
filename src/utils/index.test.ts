@@ -5,7 +5,8 @@ const options = {
   connectionType: ConnectionType.Info,
   authType: AuthType.None,
   jupyterUrl: 'http://jupyter.hamburger.edu:8888/api',
-  packages: []
+  packages: [],
+  insecureSkipVerify: false,
 };
 
 const query = {

@@ -72,16 +72,6 @@ export function ConfigEditor(props: Props) {
     });
   }
 
-  const onInsecureSkipVerifyChange = (val: bool) => {
-    onOptionsChange({
-      ...options,
-      jsonData: {
-        ...jsonData,
-        insecureSkipVerify: val,
-      },
-    });
-  }
-
   return (
     <>
       <InlineField label={t('configEditor.connectionType.label', 'Connection Type')} labelWidth={20} interactive tooltip={t('configEditor.connectionType.tooltip', 'Type of connection')}>
@@ -138,8 +128,14 @@ export function ConfigEditor(props: Props) {
           <InlineField label={t('configEditor.insecureSkipVerify.label', 'Allow Insecure HTTPS')} labelWidth={20} interactive tooltip={t('configEditor.insecureSkipVerify.tooltip', 'Ignore TLS cert errors when connecting to JupyterLab API')}>
             <Checkbox
               id="config-jupyter-insecure-skip-verify"
-              onChange={onInsecureSkipVerifyChange}
-              value={jsonData.insecureSkipVerify}
+              onClick={(event) => onOptionsChange({
+                ...options,
+                jsonData: {
+                  ...jsonData,
+                  insecureSkipVerify: event.currentTarget.checked,
+                },
+              })}
+              checked={jsonData.insecureSkipVerify}
             />
           </InlineField>
         </InlineFieldRow>
