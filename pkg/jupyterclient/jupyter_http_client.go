@@ -27,14 +27,16 @@ type IJupyterHttpClient interface {
 }
 
 func MakeJupyterHttpClient(settings *JupyterServiceSettings) IJupyterHttpClient {
+	// #nosec G402
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: settings.InsecureSkipVerify,
+	}
 	return &JupyterHttpClient{
 		AuthHeader: fmt.Sprintf("Bearer %s", settings.Token),
 		BasePath:   strings.TrimRight(settings.BaseUrl, "/"),
 		Client: &http.Client{
 			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: settings.InsecureSkipVerify,
-				},
+				TLSClientConfig: tlsConfig,
 			},
 		},
 	}
