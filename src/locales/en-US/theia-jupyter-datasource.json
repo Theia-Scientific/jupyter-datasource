@@ -18,10 +18,9 @@
       "label": "Connection Type",
       "tooltip": "Type of connection"
     },
-    "prelude": {
-      "label": "Prelude",
-      "placeholder": "Enter default imports, shared setup code, etc.",
-      "tooltip": "Code to run at start for every kernel"
+    "insecureSkipVerify": {
+      "label": "Skip TLS Verification",
+      "tooltip": "Ignore TLS cert errors when connecting to JupyterLab API"
     },
     "jupyterUrl": {
       "label": "JupyterLab URL",
@@ -39,6 +38,11 @@
       "label": "Packages",
       "placeholder": "numpy==2.4.4",
       "tooltip": "Packages to install for every kernel"
+    },
+    "prelude": {
+      "label": "Prelude",
+      "placeholder": "Enter default imports, shared setup code, etc.",
+      "tooltip": "Code to run at start for every kernel"
     },
     "rawToken": {
       "label": "Token",

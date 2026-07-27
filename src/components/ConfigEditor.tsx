@@ -125,7 +125,7 @@ export function ConfigEditor(props: Props) {
         }
       { jsonData.connectionType === ConnectionType.Auto &&
         <InlineFieldRow>
-          <InlineField label={t('configEditor.insecureSkipVerify.label', 'Allow Insecure HTTPS')} labelWidth={20} interactive tooltip={t('configEditor.insecureSkipVerify.tooltip', 'Ignore TLS cert errors when connecting to JupyterLab API')}>
+          <InlineField label={t('configEditor.insecureSkipVerify.label', 'Skip TLS Verification')} labelWidth={20} interactive tooltip={t('configEditor.insecureSkipVerify.tooltip', 'Ignore TLS cert errors when connecting to JupyterLab API')}>
             <Checkbox
               id="config-jupyter-insecure-skip-verify"
               onClick={(event) => onOptionsChange({
