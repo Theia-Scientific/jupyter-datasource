@@ -28,6 +28,7 @@ describe('Config Editor', () => {
     jupyterUrl: undefined,
     prelude: undefined,
     packages: [],
+    insecureSkipVerify: false,
   };
 
   describe('with ConnectionType.Info', () => {

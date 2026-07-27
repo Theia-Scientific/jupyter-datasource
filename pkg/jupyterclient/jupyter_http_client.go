@@ -33,7 +33,7 @@ func MakeJupyterHttpClient(settings *JupyterServiceSettings) IJupyterHttpClient 
 		Client: &http.Client{
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
-					InsecureSkipVerify: true,
+					InsecureSkipVerify: settings.InsecureSkipVerify,
 				},
 			},
 		},

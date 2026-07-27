@@ -87,6 +87,7 @@ export interface MyDataSourceOptions extends DataSourceJsonData {
   jupyterUrl?: string;
   prelude?: string;
   packages: string[];
+  insecureSkipVerify: bool;
 }
 
 export interface KernelSpec {

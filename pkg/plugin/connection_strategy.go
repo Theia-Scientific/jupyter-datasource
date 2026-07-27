@@ -67,8 +67,9 @@ func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (ju
 	}
 
 	jupyterSettings := &jupyterclient.JupyterServiceSettings{
-		BaseUrl: *settings.JupyterUrl,
-		Token:   jupyterToken,
+		BaseUrl:            *settings.JupyterUrl,
+		Token:              jupyterToken,
+		InsecureSkipVerify: settings.InsecureSkipVerify,
 	}
 	client := jupyterclient.MakeJupyterHttpClient(jupyterSettings)
 	return client, nil

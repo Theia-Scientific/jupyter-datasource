@@ -5,8 +5,9 @@ import (
 )
 
 type JupyterServiceSettings struct {
-	BaseUrl string
-	Token   string
+	BaseUrl            string
+	Token              string
+	InsecureSkipVerify bool
 }
 
 type JupyterHttpClient struct {
