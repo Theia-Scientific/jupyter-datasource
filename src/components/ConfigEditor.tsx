@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useMemo, ChangeEvent } from 'react';
-import { Button, CodeEditor, Combobox, ComboboxOption, InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { Button, Checkbox, CodeEditor, Combobox, ComboboxOption, InlineField, InlineFieldRow, Input } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { AuthType, ConnectionType, MyDataSourceOptions, MySecureJsonData } from '../types';
 import { getJupyterLabUrl, openWindow } from '../utils';
@@ -123,6 +123,23 @@ export function ConfigEditor(props: Props) {
         </Button>
         </InlineFieldRow>
         }
+      { jsonData.connectionType === ConnectionType.Auto &&
+        <InlineFieldRow>
+          <InlineField label={t('configEditor.insecureSkipVerify.label', 'Skip TLS Verification')} labelWidth={20} interactive tooltip={t('configEditor.insecureSkipVerify.tooltip', 'Ignore TLS cert errors when connecting to JupyterLab API')}>
+            <Checkbox
+              id="config-jupyter-insecure-skip-verify"
+              onClick={(event) => onOptionsChange({
+                ...options,
+                jsonData: {
+                  ...jsonData,
+                  insecureSkipVerify: event.currentTarget.checked,
+                },
+              })}
+              checked={jsonData.insecureSkipVerify}
+            />
+          </InlineField>
+        </InlineFieldRow>
+      }
       <InlineField label={t('configEditor.packages.label', 'Packages')} labelWidth={20} interactive tooltip={t('configEditor.packages.tooltip', 'Packages to install for every kernel')}>
       <>
       { (jsonData.packages||[]).map((pkg, index) => (

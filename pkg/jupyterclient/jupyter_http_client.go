@@ -2,6 +2,7 @@ package jupyterclient
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -29,6 +30,13 @@ func MakeJupyterHttpClient(settings *JupyterServiceSettings) IJupyterHttpClient 
 	return &JupyterHttpClient{
 		AuthHeader: fmt.Sprintf("Bearer %s", settings.Token),
 		BasePath:   strings.TrimRight(settings.BaseUrl, "/"),
+		Client: &http.Client{
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: settings.InsecureSkipVerify,
+				},
+			},
+		},
 	}
 }
 
@@ -61,8 +69,8 @@ func (jc *JupyterHttpClient) Delete(path string) (*http.Request, error) {
 	return jc.NewRequest(http.MethodDelete, path, http.NoBody)
 }
 
-func requestBody(req *http.Request) (io.ReadCloser, error) {
-	res, err := http.DefaultClient.Do(req)
+func (jc *JupyterHttpClient) requestBody(req *http.Request) (io.ReadCloser, error) {
+	res, err := jc.Client.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +80,8 @@ func requestBody(req *http.Request) (io.ReadCloser, error) {
 	return res.Body, err
 }
 
-func requestBytes(req *http.Request) ([]byte, error) {
-	body, err := requestBody(req)
+func (jc *JupyterHttpClient) requestBytes(req *http.Request) ([]byte, error) {
+	body, err := jc.requestBody(req)
 	if body != nil {
 		defer body.Close()
 	}
@@ -83,16 +91,20 @@ func requestBytes(req *http.Request) ([]byte, error) {
 	return io.ReadAll(body)
 }
 
-func requestJSON(req *http.Request, val any) error {
-	bytes, err := requestBytes(req)
+func (jc *JupyterHttpClient) requestJSON(req *http.Request, val any) error {
+	bytes, err := jc.requestBytes(req)
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(bytes, val)
+	err = json.Unmarshal(bytes, val)
+	if err != nil {
+		return errors.New(fmt.Sprintf("Can't unmarshal from '%s'", string(bytes)))
+	}
+	return nil
 }
 
-func request(req *http.Request) error {
-	body, err := requestBody(req)
+func (jc *JupyterHttpClient) request(req *http.Request) error {
+	body, err := jc.requestBody(req)
 	if body != nil {
 		defer body.Close()
 	}
@@ -105,7 +117,7 @@ func (jc *JupyterHttpClient) GetSessions() ([]Session, error) {
 	if err != nil {
 		return sessions, err
 	}
-	err = requestJSON(req, &sessions)
+	err = jc.requestJSON(req, &sessions)
 	return sessions, err
 }
 
@@ -114,7 +126,7 @@ func (jc *JupyterHttpClient) KillKernel(id string) error {
 	if err != nil {
 		return err
 	}
-	return request(req)
+	return jc.request(req)
 }
 
 func (jc *JupyterHttpClient) GetKernels() ([]KernelSpec, error) {
@@ -123,7 +135,7 @@ func (jc *JupyterHttpClient) GetKernels() ([]KernelSpec, error) {
 	if err != nil {
 		return kernels, err
 	}
-	err = requestJSON(req, &kernels)
+	err = jc.requestJSON(req, &kernels)
 	return kernels, err
 }
 
@@ -132,7 +144,7 @@ func (jc *JupyterHttpClient) GetKernelSpecs() ([]byte, error) {
 	if err != nil {
 		return []byte{}, err
 	}
-	return requestBytes(req)
+	return jc.requestBytes(req)
 }
 
 func (jc *JupyterHttpClient) GetListing(path string) ([]PathEntry, error) {
@@ -141,7 +153,7 @@ func (jc *JupyterHttpClient) GetListing(path string) ([]PathEntry, error) {
 	if err != nil {
 		return []PathEntry{}, err
 	}
-	err = requestJSON(req, &entry)
+	err = jc.requestJSON(req, &entry)
 	if err != nil {
 		return []PathEntry{}, err
 	}
@@ -175,7 +187,7 @@ func (jc *JupyterHttpClient) GetNotebook(path string) (Notebook, error) {
 	if err != nil {
 		return notebook, err
 	}
-	err = requestJSON(req, &notebook)
+	err = jc.requestJSON(req, &notebook)
 	return notebook, err
 }
 
@@ -194,7 +206,7 @@ func (jc *JupyterHttpClient) CreateKernel(kernelType string) (KernelSpec, error)
 	if err != nil {
 		return kernel, err
 	}
-	err = requestJSON(req, &kernel)
+	err = jc.requestJSON(req, &kernel)
 	return kernel, err
 }
 
@@ -222,7 +234,7 @@ func (jc *JupyterHttpClient) GetConnectionInfo(id string) (ConnectionInfo, error
 	if err != nil {
 		return connectionInfo, err
 	}
-	err = requestJSON(req, &connectionInfo)
+	err = jc.requestJSON(req, &connectionInfo)
 	return connectionInfo, err
 }
 
@@ -231,5 +243,5 @@ func (jc *JupyterHttpClient) Restart(id string) error {
 	if err != nil {
 		return err
 	}
-	return request(req)
+	return jc.request(req)
 }

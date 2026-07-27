@@ -41,6 +41,7 @@ type InstanceSettings struct {
 	JupyterUrl         *string   `json:"jupyterUrl"`
 	Prelude            *string   `json:"prelude"`
 	Packages           *[]string `json:"packages"`
+	InsecureSkipVerify bool      `json:"insecureSkipVerify"`
 	connectionStrategy ConnectionStrategy
 }
 
