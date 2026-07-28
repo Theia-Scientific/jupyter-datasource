@@ -78,12 +78,14 @@ func MakeJupyterSession(ctx context.Context, ci *ConnectionInfo, logger Logger) 
 }
 
 func (js *JupyterSession) Start() error {
+	js.logger.Log(fmt.Sprintf("Start"))
 	js.group, js.groupCtx = errgroup.WithContext(js.ctx)
 	js.group.Go(func() error { return js.requestor() })
 	js.group.Go(func() error { return js.listener() })
 
 	// roundtrip once to detect errors
 	if _, err := js.Execute("None"); err != nil {
+		js.logger.Log(fmt.Sprintf("Start roundtrip failure: %+v", err.Error()))
 		return err
 	}
 	return nil
@@ -91,10 +93,13 @@ func (js *JupyterSession) Start() error {
 
 func (js *JupyterSession) Execute(code string) (Result, error) {
 	// if the session is already terminated, complain
+	js.logger.Log(fmt.Sprintf("Execute: %+v", code))
 	if err := context.Cause(js.groupCtx); err != nil {
 		if err == io.EOF {
+			js.logger.Log(fmt.Sprintf("Execute: restarting from EOF"))
 			err = js.Start()
 			if err != nil {
+				js.logger.Log(fmt.Sprintf("Execute: Start fail"))
 				return Result{}, err
 			}
 		} else {
@@ -103,6 +108,7 @@ func (js *JupyterSession) Execute(code string) (Result, error) {
 	}
 
 	// fake an await with channels
+	js.logger.Log(fmt.Sprintf("Execute for real: %+v", code))
 	resultChannel := make(chan resultMsg)
 	js.requests <- requestMsg{code: code, resultChannel: resultChannel}
 	res := <-resultChannel
@@ -183,6 +189,8 @@ func (js *JupyterSession) Quit() {
 
 func (js *JupyterSession) requestor() error {
 	liveRequests := make(map[string]chan resultMsg)
+	var resetRequests [](chan resultMsg)
+
 	zmqId := NewId()
 	sessionId := NewId()
 	shell, err := makeJupyterShellSocket(js.groupCtx, js.connectionInfo, zmqId, sessionId)
@@ -201,17 +209,18 @@ func (js *JupyterSession) requestor() error {
 		select {
 		case resetRequest := <-js.resets:
 			{
+				js.logger.Log("sending shutdown_request")
 				content, err := json.Marshal(ShutdownRequestContent{
 					Restart: resetRequest.restart,
 				})
 				if err != nil {
 					return err
 				}
-				msgId, err := control.sendMessage("shutdown_request", content)
+				_, err = control.sendMessage("shutdown_request", content)
 				if err != nil {
 					return err
 				}
-				liveRequests[msgId] = resetRequest.completionChannel
+				resetRequests = append(resetRequests, resetRequest.completionChannel)
 			}
 		case request := <-js.requests:
 			{
@@ -238,6 +247,10 @@ func (js *JupyterSession) requestor() error {
 		case <-js.groupCtx.Done():
 			{
 				for _, resultChannel := range liveRequests {
+					resultChannel <- resultMsg{err: context.Cause(js.groupCtx)}
+				}
+				for _, resultChannel := range resetRequests {
+					js.logger.Log("finalizing shutdown_request")
 					resultChannel <- resultMsg{err: context.Cause(js.groupCtx)}
 				}
 				return nil
@@ -306,7 +319,7 @@ func (js *JupyterSession) listener() error {
 			return err
 		}
 
-		// js.logger.Log(fmt.Sprintf("received %s message: %+v", headerParsed.MsgType, string(content)))
+		js.logger.Log(fmt.Sprintf("received %s message: %+v", headerParsed.MsgType, string(content)))
 		if headerParsed.MsgType == "execute_result" {
 			var contentParsed ExecuteResultContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
