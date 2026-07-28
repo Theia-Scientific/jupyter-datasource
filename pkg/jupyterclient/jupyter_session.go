@@ -93,13 +93,10 @@ func (js *JupyterSession) Start() error {
 
 func (js *JupyterSession) Execute(code string) (Result, error) {
 	// if the session is already terminated, complain
-	js.logger.Log(fmt.Sprintf("Execute: %+v", code))
 	if err := context.Cause(js.groupCtx); err != nil {
 		if err == io.EOF {
-			js.logger.Log(fmt.Sprintf("Execute: restarting from EOF"))
 			err = js.Start()
 			if err != nil {
-				js.logger.Log(fmt.Sprintf("Execute: Start fail"))
 				return Result{}, err
 			}
 		} else {
@@ -108,7 +105,6 @@ func (js *JupyterSession) Execute(code string) (Result, error) {
 	}
 
 	// fake an await with channels
-	js.logger.Log(fmt.Sprintf("Execute for real: %+v", code))
 	resultChannel := make(chan resultMsg)
 	js.requests <- requestMsg{code: code, resultChannel: resultChannel}
 	res := <-resultChannel
@@ -319,7 +315,7 @@ func (js *JupyterSession) listener() error {
 			return err
 		}
 
-		js.logger.Log(fmt.Sprintf("received %s message: %+v", headerParsed.MsgType, string(content)))
+		// js.logger.Log(fmt.Sprintf("received %s message: %+v", headerParsed.MsgType, string(content)))
 		if headerParsed.MsgType == "execute_result" {
 			var contentParsed ExecuteResultContent
 			err = json.Unmarshal([]byte(content), &contentParsed)
