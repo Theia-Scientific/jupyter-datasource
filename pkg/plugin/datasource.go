@@ -434,7 +434,9 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 
 	if code != sessionState.code || newSession {
 		d.logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
-		d.logger.Debug(fmt.Sprintf("d.settings: %+v", d.settings))
+		var loggableSettings InstanceSettings = *d.settings
+		loggableSettings.RawToken = nil
+		d.logger.Debug(fmt.Sprintf("d.settings: %+v", loggableSettings))
 		d.logger.Debug(fmt.Sprintf("sessionState: %+v", sessionState))
 		err = sessionState.session.Initialize(d.settings.Packages, code)
 		if err != nil {
