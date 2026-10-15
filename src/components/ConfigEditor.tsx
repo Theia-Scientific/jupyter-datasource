@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import React, { useMemo, ChangeEvent } from 'react';
-import { Button, Checkbox, CodeEditor, Combobox, ComboboxOption, InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { Button, Checkbox, CodeEditor, Combobox, ComboboxOption, InlineField, InlineFieldRow, Input, SecretInput } from '@grafana/ui';
 import { DataSourcePluginOptionsEditorProps } from '@grafana/data';
 import { AuthType, ConnectionType, MyDataSourceOptions, MySecureJsonData } from '../types';
 import { getJupyterLabUrl, openWindow } from '../utils';
@@ -10,7 +10,7 @@ interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions, 
 
 export function ConfigEditor(props: Props) {
   const { onOptionsChange, options } = props;
-  const { jsonData } = options;
+  const { jsonData, secureJsonData, secureJsonFields } = options;
 
   const CONN_OPTIONS = useMemo(() => [
     {label: t('enums.connOptions.automatic.name', 'Automatic'), value: ConnectionType.Auto, description: t('enums.connOptions.automatic.desc', 'Start or connect to a kernel via the JupyterLab API')},
@@ -45,9 +45,23 @@ export function ConfigEditor(props: Props) {
   const onRawTokenChange = (event: ChangeEvent<HTMLInputElement>) => {
     onOptionsChange({
       ...options,
-      jsonData: {
-        ...jsonData,
+      secureJsonData: {
+        ...secureJsonData,
         rawToken: event.target.value,
+      },
+    });
+  };
+
+  const onRawTokenReset = () => {
+    onOptionsChange({
+      ...options,
+      secureJsonFields: {
+        ...secureJsonFields,
+        rawToken: false,
+      },
+      secureJsonData: {
+        ...secureJsonData,
+        rawToken: undefined,
       },
     });
   };
@@ -71,6 +85,9 @@ export function ConfigEditor(props: Props) {
       },
     });
   }
+
+  console.log("secureJsonData: ", secureJsonData);
+  console.log("secureJsonFields: ", secureJsonFields);
 
   return (
     <>
@@ -96,10 +113,12 @@ export function ConfigEditor(props: Props) {
       }
       { jsonData.connectionType === ConnectionType.Auto && jsonData.authType === AuthType.RawToken &&
         <InlineField label={t('configEditor.rawToken.label', 'Token')} labelWidth={20} interactive tooltip={t('configEditor.rawToken.tooltip', 'Token for JupyterLab auth')}>
-          <Input
+          <SecretInput
             id="config-editor-raw-token"
             onChange={onRawTokenChange}
-            value={jsonData.rawToken}
+            isConfigured={secureJsonFields?.rawToken}
+            onReset={onRawTokenReset}
+            value={secureJsonData?.rawToken}
             placeholder={t('configEditor.rawToken.placeholder', 'Enter the token')}
             width={40}
           />

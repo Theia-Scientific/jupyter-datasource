@@ -18,16 +18,6 @@ describe('getJupyterLabUrl', () => {
   it('should resolve to ../lab relative to the jupyter URL', async () => {
     expect(getJupyterLabUrl(options)).toEqual('http://jupyter.hamburger.edu:8888/lab');
   });
-
-  describe('with a token', () => {
-    it('should include the token parameter', async () => {
-      expect(getJupyterLabUrl({
-        ...options,
-        authType: AuthType.RawToken,
-        rawToken: 'potato salad',
-      })).toEqual('http://jupyter.hamburger.edu:8888/lab?token=potato+salad');
-    });
-  });
 });
 
 describe('getJupyterLabNotebookUrl', () => {

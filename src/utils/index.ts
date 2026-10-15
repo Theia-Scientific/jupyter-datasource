@@ -1,5 +1,5 @@
 import { FetchError, isFetchError } from '@grafana/runtime';
-import { AuthType, MyDataSourceOptions, MyQuery } from '@theia/types';
+import { MyDataSourceOptions, MyQuery } from '@theia/types';
 import { getWindowLocation } from './window';
 export * from './logger';
 export * from './window';
@@ -19,9 +19,6 @@ function jupyterLabUrl(jsonData: MyDataSourceOptions, path: string): string | nu
     }
     url.pathname = url.pathname.replace(/\/$/,'') +
       '/../lab' + path;
-    if (jsonData.authType === AuthType.RawToken && jsonData.rawToken !== '') {
-      url.searchParams.append('token', jsonData.rawToken!);
-    }
 
     return url.href;
   } catch {}

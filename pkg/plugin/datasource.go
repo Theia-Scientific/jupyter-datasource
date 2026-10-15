@@ -35,29 +35,59 @@ var (
 var systemPrelude string
 
 type InstanceSettings struct {
+	ConnectionType     string
+	AuthType           string
+	RawToken           *string
+	JupyterUrl         *string
+	Prelude            *string
+	Packages           *[]string
+	InsecureSkipVerify bool
+	connectionStrategy ConnectionStrategy
+}
+
+type InstanceSettingsJSON struct {
 	ConnectionType     string    `json:"connectionType"`
 	AuthType           string    `json:"authType"`
-	RawToken           *string   `json:"rawToken"`
 	JupyterUrl         *string   `json:"jupyterUrl"`
 	Prelude            *string   `json:"prelude"`
 	Packages           *[]string `json:"packages"`
 	InsecureSkipVerify bool      `json:"insecureSkipVerify"`
-	connectionStrategy ConnectionStrategy
 }
 
-func unmarshalInstanceSettings(src []byte) (*InstanceSettings, error) {
-	var settings InstanceSettings
-	err := json.Unmarshal(src, &settings)
+type SecretPluginSettingsJSON struct {
+	RawToken *string `json:"rawToken"`
+}
+
+func unmarshalInstanceSettings(src *backend.DataSourceInstanceSettings) (*InstanceSettings, error) {
+	var settingsJSON InstanceSettingsJSON
+	err := json.Unmarshal(src.JSONData, &settingsJSON)
 	if err != nil {
 		return nil, err
 	}
 
-	settings.connectionStrategy, err = makeConnectionStrategy(&settings)
+	var rawToken *string
+	if rawTokenStr, ok := src.DecryptedSecureJSONData["rawToken"]; ok {
+		rawToken = &rawTokenStr
+	} else {
+		rawToken = nil
+	}
+
+	var settings = &InstanceSettings{
+		ConnectionType:     settingsJSON.ConnectionType,
+		AuthType:           settingsJSON.AuthType,
+		RawToken:           rawToken,
+		JupyterUrl:         settingsJSON.JupyterUrl,
+		Prelude:            settingsJSON.Prelude,
+		Packages:           settingsJSON.Packages,
+		InsecureSkipVerify: settingsJSON.InsecureSkipVerify,
+	}
+
+	settings.connectionStrategy, err = makeConnectionStrategy(settings)
 	if err != nil {
 		return nil, err
 	}
 
-	return &settings, nil
+	return settings, nil
 }
 
 type SessionState struct {
@@ -227,7 +257,7 @@ func getJupyterToken(settings *InstanceSettings) (string, error) {
 
 // NewDatasource creates a new datasource instance.
 func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	settings, err := unmarshalInstanceSettings(instanceSettings.JSONData)
+	settings, err := unmarshalInstanceSettings(&instanceSettings)
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +299,7 @@ func (d *Datasource) Dispose() {
 func (d *Datasource) UpdateDatasourceFromQuery(req *backend.QueryDataRequest) error {
 	d.logger.Debug("updating instance settings")
 
-	settings, err := unmarshalInstanceSettings(req.PluginContext.DataSourceInstanceSettings.JSONData)
+	settings, err := unmarshalInstanceSettings(req.PluginContext.DataSourceInstanceSettings)
 	if err != nil {
 		return err
 	}
