@@ -571,42 +571,39 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *Datasource) CheckHealth(pctx context.Context, _ *backend.CheckHealthRequest) (res *backend.CheckHealthResult, resErr error) {
-	res = &backend.CheckHealthResult{Status: backend.HealthStatusError}
-	resErr = nil
-
+func (d *Datasource) CheckHealth(pctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if d.httpClient != nil {
 		_, err := d.httpClient.GetKernels()
 		if err != nil {
-			res.Message = fmt.Sprintf("Unable to browse kernels: %v", err)
-			return
+			d.logger.Error(fmt.Sprintf("Unable to browse kernels: %v", err))
+			return &backend.CheckHealthResult{Status: backend.HealthStatusError}, err
 		}
 
 		if (d.settings.Packages != nil && len(*d.settings.Packages) > 0) ||
 			(d.settings.Prelude != nil && *d.settings.Prelude != "") {
 			ks, err := d.httpClient.CreateKernel("python3")
 			if err != nil {
-				res.Message = fmt.Sprintf("Unable to create a kernel: %v", err)
-				return
+				d.logger.Error(fmt.Sprintf("Unable to create a kernel: %v", err))
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, err
 			}
 			defer func() {
 				err = d.httpClient.KillKernel(ks.Id)
 				if err != nil {
-					res.Message = fmt.Sprintf("Unable to kill test kernel: %v", err)
+					d.logger.Error(fmt.Sprintf("Unable to kill test kernel: %v", err))
 				}
 			}()
 
 			ci, err := d.httpClient.GetConnectionInfo(ks.Id)
 			if err != nil {
-				res.Message = fmt.Sprintf("Unable to get ConnectionInfo: %v", err)
-				return
+				d.logger.Error(fmt.Sprintf("Unable to get ConnectionInfo: %v", err))
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, err
 			}
 
 			wrapped := WrappedLogger{logger: d.logger}
 			session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
 			if err != nil {
-				res.Message = fmt.Sprintf("Unable to create session: %v", err)
-				return
+				d.logger.Error(fmt.Sprintf("Unable to create session: %v", err))
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, err
 			}
 			defer session.Quit()
 
@@ -616,14 +613,14 @@ func (d *Datasource) CheckHealth(pctx context.Context, _ *backend.CheckHealthReq
 			}
 			err = session.Initialize(d.settings.Packages, code)
 			if err != nil {
-				res.Message = fmt.Sprintf("Unable to initialize session: %v", err)
-				return
+				d.logger.Error(fmt.Sprintf("Unable to initialize session: %v", err))
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, err
 			}
 
 			_, err = session.Execute(code)
 			if err != nil {
-				res.Message = fmt.Sprintf("Unable to execute prelude: %v", err)
-				return
+				d.logger.Error(fmt.Sprintf("Unable to execute prelude: %v", err))
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, err
 			}
 		}
 	}
