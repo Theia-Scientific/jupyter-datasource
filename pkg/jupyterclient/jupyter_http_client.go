@@ -156,10 +156,10 @@ func (jc *JupyterHttpClient) GetListing(path string) ([]PathEntry, error) {
 		return []PathEntry{}, err
 	}
 	err = jc.requestJSON(req, &entry)
-	if err != nil {
+	if err != nil || entry.Content == nil {
 		return []PathEntry{}, err
 	}
-	return *entry.Content, err
+	return *entry.Content, nil
 }
 
 func (jc *JupyterHttpClient) GetNotebooks() ([]PathEntry, error) {
