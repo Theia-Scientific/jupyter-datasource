@@ -10,11 +10,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Theia-Scientific/jupyter-datasource/pkg/grafana-plugin-sdk-go/backend/log_test"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient_test"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/plugin_test"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -48,7 +48,7 @@ func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, 
 			JupyterUrl:         &jupyterUrl,
 			connectionStrategy: ConnectionStrategyAuto{},
 		},
-		logger:         log.New(),
+		logger:         log_test.NewMockLogger(t),
 		sessions:       make(map[string]SessionState),
 		sessionFactory: nil,
 		createdKernels: []string{},
