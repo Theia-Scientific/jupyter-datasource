@@ -35,29 +35,59 @@ var (
 var systemPrelude string
 
 type InstanceSettings struct {
+	ConnectionType     string
+	AuthType           string
+	RawToken           *string
+	JupyterUrl         *string
+	Prelude            *string
+	Packages           *[]string
+	InsecureSkipVerify bool
+	connectionStrategy ConnectionStrategy
+}
+
+type InstanceSettingsJSON struct {
 	ConnectionType     string    `json:"connectionType"`
 	AuthType           string    `json:"authType"`
-	RawToken           *string   `json:"rawToken"`
 	JupyterUrl         *string   `json:"jupyterUrl"`
 	Prelude            *string   `json:"prelude"`
 	Packages           *[]string `json:"packages"`
 	InsecureSkipVerify bool      `json:"insecureSkipVerify"`
-	connectionStrategy ConnectionStrategy
 }
 
-func unmarshalInstanceSettings(src []byte) (*InstanceSettings, error) {
-	var settings InstanceSettings
-	err := json.Unmarshal(src, &settings)
+type SecretPluginSettingsJSON struct {
+	RawToken *string `json:"rawToken"`
+}
+
+func unmarshalInstanceSettings(src *backend.DataSourceInstanceSettings) (*InstanceSettings, error) {
+	var settingsJSON InstanceSettingsJSON
+	err := json.Unmarshal(src.JSONData, &settingsJSON)
 	if err != nil {
 		return nil, err
 	}
 
-	settings.connectionStrategy, err = makeConnectionStrategy(&settings)
+	var rawToken *string
+	if rawTokenStr, ok := src.DecryptedSecureJSONData["rawToken"]; ok {
+		rawToken = &rawTokenStr
+	} else {
+		rawToken = nil
+	}
+
+	var settings = &InstanceSettings{
+		ConnectionType:     settingsJSON.ConnectionType,
+		AuthType:           settingsJSON.AuthType,
+		RawToken:           rawToken,
+		JupyterUrl:         settingsJSON.JupyterUrl,
+		Prelude:            settingsJSON.Prelude,
+		Packages:           settingsJSON.Packages,
+		InsecureSkipVerify: settingsJSON.InsecureSkipVerify,
+	}
+
+	settings.connectionStrategy, err = makeConnectionStrategy(settings)
 	if err != nil {
 		return nil, err
 	}
 
-	return &settings, nil
+	return settings, nil
 }
 
 type SessionState struct {
@@ -227,7 +257,7 @@ func getJupyterToken(settings *InstanceSettings) (string, error) {
 
 // NewDatasource creates a new datasource instance.
 func NewDatasource(ctx context.Context, instanceSettings backend.DataSourceInstanceSettings) (instancemgmt.Instance, error) {
-	settings, err := unmarshalInstanceSettings(instanceSettings.JSONData)
+	settings, err := unmarshalInstanceSettings(&instanceSettings)
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +299,7 @@ func (d *Datasource) Dispose() {
 func (d *Datasource) UpdateDatasourceFromQuery(req *backend.QueryDataRequest) error {
 	d.logger.Debug("updating instance settings")
 
-	settings, err := unmarshalInstanceSettings(req.PluginContext.DataSourceInstanceSettings.JSONData)
+	settings, err := unmarshalInstanceSettings(req.PluginContext.DataSourceInstanceSettings)
 	if err != nil {
 		return err
 	}
@@ -434,7 +464,9 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 
 	if code != sessionState.code || newSession {
 		d.logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
-		d.logger.Debug(fmt.Sprintf("d.settings: %+v", d.settings))
+		var loggableSettings InstanceSettings = *d.settings
+		loggableSettings.RawToken = nil
+		d.logger.Debug(fmt.Sprintf("d.settings: %+v", loggableSettings))
 		d.logger.Debug(fmt.Sprintf("sessionState: %+v", sessionState))
 		err = sessionState.session.Initialize(d.settings.Packages, code)
 		if err != nil {
@@ -539,59 +571,64 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 // The main use case for these health checks is the test button on the
 // datasource configuration page which allows users to verify that
 // a datasource is working as expected.
-func (d *Datasource) CheckHealth(pctx context.Context, _ *backend.CheckHealthRequest) (res *backend.CheckHealthResult, resErr error) {
-	res = &backend.CheckHealthResult{Status: backend.HealthStatusError}
-	resErr = nil
-
+func (d *Datasource) CheckHealth(pctx context.Context, _ *backend.CheckHealthRequest) (*backend.CheckHealthResult, error) {
 	if d.httpClient != nil {
 		_, err := d.httpClient.GetKernels()
 		if err != nil {
-			res.Message = fmt.Sprintf("Unable to browse kernels: %v", err)
-			return
+			d.logger.Error(fmt.Sprintf("Unable to browse kernels: %v", err))
+			return &backend.CheckHealthResult{Status: backend.HealthStatusError}, nil
 		}
 
 		if (d.settings.Packages != nil && len(*d.settings.Packages) > 0) ||
 			(d.settings.Prelude != nil && *d.settings.Prelude != "") {
 			ks, err := d.httpClient.CreateKernel("python3")
 			if err != nil {
-				res.Message = fmt.Sprintf("Unable to create a kernel: %v", err)
-				return
+				d.logger.Error(fmt.Sprintf("Unable to create a kernel: %v", err))
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, nil
 			}
-			defer func() {
-				err = d.httpClient.KillKernel(ks.Id)
+
+			success := func() bool {
+				ci, err := d.httpClient.GetConnectionInfo(ks.Id)
 				if err != nil {
-					res.Message = fmt.Sprintf("Unable to kill test kernel: %v", err)
+					d.logger.Error(fmt.Sprintf("Unable to get ConnectionInfo: %v", err))
+					return false
 				}
+
+				wrapped := WrappedLogger{logger: d.logger}
+				session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
+				if err != nil {
+					d.logger.Error(fmt.Sprintf("Unable to create session: %v", err))
+					return false
+				}
+				defer session.Quit()
+
+				code := ""
+				if d.settings.Prelude != nil {
+					code = *d.settings.Prelude
+				}
+				err = session.Initialize(d.settings.Packages, code)
+				if err != nil {
+					d.logger.Error(fmt.Sprintf("Unable to initialize session: %v", err))
+					return false
+				}
+
+				_, err = session.Execute(code)
+				if err != nil {
+					d.logger.Error(fmt.Sprintf("Unable to execute prelude: %v", err))
+					return false
+				}
+
+				return true
 			}()
 
-			ci, err := d.httpClient.GetConnectionInfo(ks.Id)
+			err = d.httpClient.KillKernel(ks.Id)
 			if err != nil {
-				res.Message = fmt.Sprintf("Unable to get ConnectionInfo: %v", err)
-				return
+				d.logger.Error(fmt.Sprintf("Unable to kill test kernel: %v", err))
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, nil
 			}
 
-			wrapped := WrappedLogger{logger: d.logger}
-			session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
-			if err != nil {
-				res.Message = fmt.Sprintf("Unable to create session: %v", err)
-				return
-			}
-			defer session.Quit()
-
-			code := ""
-			if d.settings.Prelude != nil {
-				code = *d.settings.Prelude
-			}
-			err = session.Initialize(d.settings.Packages, code)
-			if err != nil {
-				res.Message = fmt.Sprintf("Unable to initialize session: %v", err)
-				return
-			}
-
-			_, err = session.Execute(code)
-			if err != nil {
-				res.Message = fmt.Sprintf("Unable to execute prelude: %v", err)
-				return
+			if !success {
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, nil
 			}
 		}
 	}

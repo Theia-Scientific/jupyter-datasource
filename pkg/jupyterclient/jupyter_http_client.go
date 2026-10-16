@@ -2,13 +2,14 @@ package jupyterclient
 
 import (
 	"bytes"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"strings"
+
+	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 )
 
 //mockery:generate: true
@@ -26,20 +27,30 @@ type IJupyterHttpClient interface {
 	Restart(id string) error
 }
 
-func MakeJupyterHttpClient(settings *JupyterServiceSettings) IJupyterHttpClient {
-	// #nosec G402
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: settings.InsecureSkipVerify,
-	}
-	return &JupyterHttpClient{
-		AuthHeader: fmt.Sprintf("Bearer %s", settings.Token),
-		BasePath:   strings.TrimRight(settings.BaseUrl, "/"),
-		Client: &http.Client{
-			Transport: &http.Transport{
-				TLSClientConfig: tlsConfig,
-			},
+type JupyterHttpClient struct {
+	BasePath string
+	Client   *http.Client
+}
+
+func MakeJupyterHttpClient(settings *JupyterServiceSettings) (IJupyterHttpClient, error) {
+	header := make(http.Header)
+	header.Add("Authorization", fmt.Sprintf("Bearer %s", settings.Token))
+
+	client, err := httpclient.New(httpclient.Options{
+		TLS: &httpclient.TLSOptions{
+			InsecureSkipVerify: settings.InsecureSkipVerify,
 		},
+		Header: header,
+	})
+
+	if err != nil {
+		return nil, err
 	}
+
+	return &JupyterHttpClient{
+		BasePath: strings.TrimRight(settings.BaseUrl, "/"),
+		Client:   client,
+	}, nil
 }
 
 func (jc *JupyterHttpClient) NewRequest(method, path string, body io.Reader) (*http.Request, error) {
@@ -47,7 +58,6 @@ func (jc *JupyterHttpClient) NewRequest(method, path string, body io.Reader) (*h
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Add("Authorization", jc.AuthHeader)
 	return req, nil
 }
 
@@ -156,10 +166,10 @@ func (jc *JupyterHttpClient) GetListing(path string) ([]PathEntry, error) {
 		return []PathEntry{}, err
 	}
 	err = jc.requestJSON(req, &entry)
-	if err != nil {
+	if err != nil || entry.Content == nil {
 		return []PathEntry{}, err
 	}
-	return *entry.Content, err
+	return *entry.Content, nil
 }
 
 func (jc *JupyterHttpClient) GetNotebooks() ([]PathEntry, error) {

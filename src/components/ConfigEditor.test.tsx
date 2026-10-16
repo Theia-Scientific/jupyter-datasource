@@ -24,7 +24,6 @@ describe('Config Editor', () => {
   const baseOpts: MyDataSourceOptions = {
     connectionType: ConnectionType.Info,
     authType: AuthType.None,
-    rawToken: undefined,
     jupyterUrl: undefined,
     prelude: undefined,
     packages: [],

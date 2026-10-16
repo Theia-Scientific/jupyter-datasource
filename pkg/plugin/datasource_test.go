@@ -10,11 +10,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Theia-Scientific/jupyter-datasource/pkg/grafana-plugin-sdk-go/backend/log_test"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient_test"
 	"github.com/Theia-Scientific/jupyter-datasource/pkg/plugin_test"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -37,9 +37,15 @@ func TestConnectionStrategy(t *testing.T) {
 ////////////////////////////////////////////////////////////
 // Datasource
 
-func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, *Datasource) {
+func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, *Datasource, *log_test.MockLogger) {
 	httpClient := jupyterclient_test.NewMockIJupyterHttpClient(t)
 	jupyterUrl := "http://jupyter.corndog.edu/"
+
+	logger := log_test.NewMockLogger(t)
+	logger.On("Debug", mock.Anything).Return()
+	// this is very stupid but i have to call it at least once to make sure it doesn't
+	// count this as an expectation failure
+	logger.Debug("ungh")
 
 	d := &Datasource{
 		settings: &InstanceSettings{
@@ -48,7 +54,7 @@ func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, 
 			JupyterUrl:         &jupyterUrl,
 			connectionStrategy: ConnectionStrategyAuto{},
 		},
-		logger:         log.New(),
+		logger:         logger,
 		sessions:       make(map[string]SessionState),
 		sessionFactory: nil,
 		createdKernels: []string{},
@@ -58,7 +64,7 @@ func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, 
 		cancel:         func() {},
 	}
 
-	return httpClient, d
+	return httpClient, d, logger
 }
 
 ////////////////////////////////////////////////////////////
@@ -66,7 +72,7 @@ func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, 
 
 // calling GetListing will return a list of paths
 func TestCallResource(t *testing.T) {
-	httpClient, d := setupDatasource(t)
+	httpClient, d, _ := setupDatasource(t)
 
 	httpClient.EXPECT().GetListing("some/path").Return([]jupyterclient.PathEntry{}, nil)
 
@@ -84,7 +90,7 @@ func TestCallResource(t *testing.T) {
 
 // a query with no UUID specified should fail
 func TestNoUUIDReturnsError(t *testing.T) {
-	_, d := setupDatasource(t)
+	_, d, _ := setupDatasource(t)
 
 	resp := d.query(context.Background(), backend.DataQuery{
 		JSON: json.RawMessage(`{"code":"1+1"}`),
@@ -94,8 +100,8 @@ func TestNoUUIDReturnsError(t *testing.T) {
 	assert.Equal(t, resp.Error.Error(), "query missing uuid")
 }
 
-func setupDatasourceWithSession(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, *jupyterclient_test.MockIJupyterSession, *Datasource) {
-	httpClient, d := setupDatasource(t)
+func setupDatasourceWithSession(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, *jupyterclient_test.MockIJupyterSession, *Datasource, *log_test.MockLogger) {
+	httpClient, d, logger := setupDatasource(t)
 	session := jupyterclient_test.NewMockIJupyterSession(t)
 	sessionFactory := plugin_test.NewMockIJupyterSessionFactory(t)
 	sessionFactory.EXPECT().
@@ -103,12 +109,12 @@ func setupDatasourceWithSession(t *testing.T) (*jupyterclient_test.MockIJupyterH
 		Return(session, nil)
 	d.sessionFactory = sessionFactory
 
-	return httpClient, session, d
+	return httpClient, session, d, logger
 }
 
 // a query with no kernelId specified should create a new kernel
 func TestUnspecifiedKernelIdCreatesKernel(t *testing.T) {
-	httpClient, session, d := setupDatasourceWithSession(t)
+	httpClient, session, d, _ := setupDatasourceWithSession(t)
 
 	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil)
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
@@ -124,7 +130,7 @@ func TestUnspecifiedKernelIdCreatesKernel(t *testing.T) {
 
 // a query with a kernelId specified should reuse an existing kernel
 func TestSpecifiedKernelIdDoesNotCreateKernel(t *testing.T) {
-	httpClient, session, d := setupDatasourceWithSession(t)
+	httpClient, session, d, _ := setupDatasourceWithSession(t)
 
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil)
@@ -138,7 +144,7 @@ func TestSpecifiedKernelIdDoesNotCreateKernel(t *testing.T) {
 
 // a datasource with import statements should Execute them once
 func TestImportStatementsAreIncludedInInitialize(t *testing.T) {
-	httpClient, session, d := setupDatasourceWithSession(t)
+	httpClient, session, d, _ := setupDatasourceWithSession(t)
 	prelude := "from treats import candy"
 	d.settings.Prelude = &prelude
 
@@ -159,7 +165,7 @@ func TestImportStatementsAreIncludedInInitialize(t *testing.T) {
 
 // a query without a code change should NOT call Initialize again
 func TestNoCodeChangeDoesNotReinitialize(t *testing.T) {
-	httpClient, session, d := setupDatasourceWithSession(t)
+	httpClient, session, d, _ := setupDatasourceWithSession(t)
 
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
@@ -177,7 +183,7 @@ func TestNoCodeChangeDoesNotReinitialize(t *testing.T) {
 
 // a query with a code change should call Initialize again
 func TestCodeChangeReinitializes(t *testing.T) {
-	httpClient, session, d := setupDatasourceWithSession(t)
+	httpClient, session, d, _ := setupDatasourceWithSession(t)
 
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session.EXPECT().Initialize((*[]string)(nil), "1+1").Return(nil).Once()
@@ -198,7 +204,7 @@ func TestCodeChangeReinitializes(t *testing.T) {
 
 // a query with a vars change should not reinitialize
 func TestVarChangeDoesNotReinitialize(t *testing.T) {
-	httpClient, session, d := setupDatasourceWithSession(t)
+	httpClient, session, d, _ := setupDatasourceWithSession(t)
 
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil)
 	session.EXPECT().Initialize((*[]string)(nil), "1+foo").Return(nil).Once()
@@ -220,7 +226,7 @@ func TestVarChangeDoesNotReinitialize(t *testing.T) {
 
 // switching from an unspecified kernelId to a specified kernelId should kill the old kernelId
 func TestMovingToSpecifiedKernelIdDeletesOldKernel(t *testing.T) {
-	httpClient, d := setupDatasource(t)
+	httpClient, d, _ := setupDatasource(t)
 	session1 := jupyterclient_test.NewMockIJupyterSession(t)
 	sessionFactory := plugin_test.NewMockIJupyterSessionFactory(t)
 	d.sessionFactory = sessionFactory
@@ -257,7 +263,7 @@ func TestMovingToSpecifiedKernelIdDeletesOldKernel(t *testing.T) {
 
 // a kernelId should not be killed if it's still in use
 func TestKernelsStillInUseShouldNotBeKilled(t *testing.T) {
-	httpClient, d := setupDatasource(t)
+	httpClient, d, _ := setupDatasource(t)
 	session1 := jupyterclient_test.NewMockIJupyterSession(t)
 	sessionFactory := plugin_test.NewMockIJupyterSessionFactory(t)
 	d.sessionFactory = sessionFactory
@@ -304,7 +310,7 @@ func TestKernelsStillInUseShouldNotBeKilled(t *testing.T) {
 
 // two queries using the same kernel tag should use the same kernel
 func TestTwoQueriesWithSameTagShouldUseSameKernel(t *testing.T) {
-	httpClient, d := setupDatasource(t)
+	httpClient, d, _ := setupDatasource(t)
 	session1 := jupyterclient_test.NewMockIJupyterSession(t)
 	sessionFactory := plugin_test.NewMockIJupyterSessionFactory(t)
 	d.sessionFactory = sessionFactory
@@ -336,7 +342,7 @@ func TestTwoQueriesWithSameTagShouldUseSameKernel(t *testing.T) {
 
 // a query whose kernel tag changes should create a new kernel
 func TestKernelTagChangeShouldCreateNewKernel(t *testing.T) {
-	httpClient, d := setupDatasource(t)
+	httpClient, d, _ := setupDatasource(t)
 	session1 := jupyterclient_test.NewMockIJupyterSession(t)
 	sessionFactory := plugin_test.NewMockIJupyterSessionFactory(t)
 	d.sessionFactory = sessionFactory
@@ -375,17 +381,17 @@ func TestKernelTagChangeShouldCreateNewKernel(t *testing.T) {
 
 // failure to browse kernels will yield an error
 func TestCheckHealthBrowseKernelsFailureShouldError(t *testing.T) {
-	httpClient, d := setupDatasource(t)
+	httpClient, d, logger := setupDatasource(t)
 	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, errors.New("oof")).Once()
+	logger.EXPECT().Error("Unable to browse kernels: oof").Return()
 	res, err := d.CheckHealth(context.Background(), nil)
 	assert.Nil(t, err)
 	assert.Equal(t, backend.HealthStatusError, res.Status)
-	assert.Equal(t, "Unable to browse kernels: oof", res.Message)
 }
 
 // no prelude or packages means we won't attempt to test the kernel
 func TestCheckHealthNoPrelude(t *testing.T) {
-	httpClient, d := setupDatasource(t)
+	httpClient, d, _ := setupDatasource(t)
 	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
 	res, err := d.CheckHealth(context.Background(), nil)
 	assert.Nil(t, err)
@@ -394,35 +400,35 @@ func TestCheckHealthNoPrelude(t *testing.T) {
 
 // failure to create a test kernel will yield an error
 func TestCheckHealthCreateKernelFailureShouldError(t *testing.T) {
-	httpClient, d := setupDatasource(t)
+	httpClient, d, logger := setupDatasource(t)
 	prelude := "import whatever"
 	d.settings.Prelude = &prelude
 	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
 	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{}, errors.New("ouch")).Once()
+	logger.EXPECT().Error("Unable to create a kernel: ouch").Return()
 	res, err := d.CheckHealth(context.Background(), nil)
 	assert.Nil(t, err)
 	assert.Equal(t, backend.HealthStatusError, res.Status)
-	assert.Equal(t, "Unable to create a kernel: ouch", res.Message)
 }
 
 // failure to get connectioninfo will yield an error, but still kill the kernel
 func TestCheckHealthGetConnectionInfoFailureShouldError(t *testing.T) {
-	httpClient, d := setupDatasource(t)
+	httpClient, d, logger := setupDatasource(t)
 	prelude := "import whatever"
 	d.settings.Prelude = &prelude
 	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
 	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil).Once()
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, errors.New("yikes")).Once()
 	httpClient.EXPECT().KillKernel("kid").Return(nil).Once()
+	logger.EXPECT().Error("Unable to get ConnectionInfo: yikes").Return()
 	res, err := d.CheckHealth(context.Background(), nil)
 	assert.Nil(t, err)
 	assert.Equal(t, backend.HealthStatusError, res.Status)
-	assert.Equal(t, "Unable to get ConnectionInfo: yikes", res.Message)
 }
 
 // failure to create a session will yield an error, but still kill the kernel
 func TestCheckHealthCreateSessionFailureShouldError(t *testing.T) {
-	httpClient, d := setupDatasource(t)
+	httpClient, d, logger := setupDatasource(t)
 	sessionFactory := plugin_test.NewMockIJupyterSessionFactory(t)
 	sessionFactory.EXPECT().
 		MakeJupyterSession(mock.Anything, mock.Anything, mock.Anything).
@@ -436,15 +442,15 @@ func TestCheckHealthCreateSessionFailureShouldError(t *testing.T) {
 	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil).Once()
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil).Once()
 	httpClient.EXPECT().KillKernel("kid").Return(nil).Once()
+	logger.EXPECT().Error("Unable to create session: wince").Return()
 	res, err := d.CheckHealth(context.Background(), nil)
 	assert.Nil(t, err)
 	assert.Equal(t, backend.HealthStatusError, res.Status)
-	assert.Equal(t, "Unable to create session: wince", res.Message)
 }
 
 // failure to initialize will yield an error, but still terminate session / kill kernel
 func TestCheckHealthInitializeFailureShouldError(t *testing.T) {
-	httpClient, session, d := setupDatasourceWithSession(t)
+	httpClient, session, d, logger := setupDatasourceWithSession(t)
 	prelude := "import whatever"
 	d.settings.Prelude = &prelude
 	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
@@ -453,15 +459,15 @@ func TestCheckHealthInitializeFailureShouldError(t *testing.T) {
 	session.EXPECT().Initialize((*[]string)(nil), "import whatever").Return(errors.New("bleaugh")).Once()
 	httpClient.EXPECT().KillKernel("kid").Return(nil).Once()
 	session.EXPECT().Quit().Once()
+	logger.EXPECT().Error("Unable to initialize session: bleaugh").Return()
 	res, err := d.CheckHealth(context.Background(), nil)
 	assert.Nil(t, err)
 	assert.Equal(t, backend.HealthStatusError, res.Status)
-	assert.Equal(t, "Unable to initialize session: bleaugh", res.Message)
 }
 
 // failure to execute will yield an error, but still terminate session / kill kernel
 func TestCheckHealthExecuteFailureShouldError(t *testing.T) {
-	httpClient, session, d := setupDatasourceWithSession(t)
+	httpClient, session, d, logger := setupDatasourceWithSession(t)
 	prelude := "import whatever"
 	d.settings.Prelude = &prelude
 	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
@@ -471,33 +477,33 @@ func TestCheckHealthExecuteFailureShouldError(t *testing.T) {
 	session.EXPECT().Execute("import whatever").Return(jupyterclient.Result{}, errors.New("whappo")).Once()
 	httpClient.EXPECT().KillKernel("kid").Return(nil).Once()
 	session.EXPECT().Quit().Once()
+	logger.EXPECT().Error("Unable to execute prelude: whappo").Return()
 	res, err := d.CheckHealth(context.Background(), nil)
 	assert.Nil(t, err)
 	assert.Equal(t, backend.HealthStatusError, res.Status)
-	assert.Equal(t, "Unable to execute prelude: whappo", res.Message)
 }
 
 // failure to kill the kernel will yield that specific error
 func TestCheckHealthKillKernelFailureShouldError(t *testing.T) {
-	httpClient, session, d := setupDatasourceWithSession(t)
+	httpClient, session, d, logger := setupDatasourceWithSession(t)
 	prelude := "import whatever"
 	d.settings.Prelude = &prelude
 	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()
 	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil).Once()
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil).Once()
 	session.EXPECT().Initialize((*[]string)(nil), "import whatever").Return(nil).Once()
-	session.EXPECT().Execute("import whatever").Return(jupyterclient.Result{}, errors.New("whappo")).Once()
+	session.EXPECT().Execute("import whatever").Return(jupyterclient.Result{}, nil).Once()
 	httpClient.EXPECT().KillKernel("kid").Return(errors.New("zoinks")).Once()
 	session.EXPECT().Quit().Once()
+	logger.EXPECT().Error("Unable to kill test kernel: zoinks").Return()
 	res, err := d.CheckHealth(context.Background(), nil)
 	assert.Nil(t, err)
 	assert.Equal(t, backend.HealthStatusError, res.Status)
-	assert.Equal(t, "Unable to kill test kernel: zoinks", res.Message)
 }
 
 // success will still terminate the session and kill the kernel
 func TestCheckHealthSuccessShouldTerminateSessionAndKillKernel(t *testing.T) {
-	httpClient, session, d := setupDatasourceWithSession(t)
+	httpClient, session, d, _ := setupDatasourceWithSession(t)
 	prelude := "import whatever"
 	d.settings.Prelude = &prelude
 	httpClient.EXPECT().GetKernels().Return([]jupyterclient.KernelSpec{}, nil).Once()

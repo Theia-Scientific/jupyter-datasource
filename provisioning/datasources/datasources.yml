@@ -8,10 +8,11 @@ datasources:
     orgId: 1
     version: 1
     editable: true
+    secureJsonData:
+      rawToken: '${JUPYTER_TOKEN}'
     jsonData:
       connectionType: AUTO
       authType: RAW
-      rawToken: '${JUPYTER_TOKEN}'
       jupyterUrl: http://localhost:8888/api
       prelude: |
         from IPython.display import JSON
