@@ -43,6 +43,9 @@ func setupDatasource(t *testing.T) (*jupyterclient_test.MockIJupyterHttpClient, 
 
 	logger := log_test.NewMockLogger(t)
 	logger.On("Debug", mock.Anything).Return()
+	// this is very stupid but i have to call it at least once to make sure it doesn't
+	// count this as an expectation failure
+	logger.Debug("ungh")
 
 	d := &Datasource{
 		settings: &InstanceSettings{
@@ -489,7 +492,7 @@ func TestCheckHealthKillKernelFailureShouldError(t *testing.T) {
 	httpClient.EXPECT().CreateKernel("python3").Return(jupyterclient.KernelSpec{Id: "kid"}, nil).Once()
 	httpClient.EXPECT().GetConnectionInfo("kid").Return(jupyterclient.ConnectionInfo{}, nil).Once()
 	session.EXPECT().Initialize((*[]string)(nil), "import whatever").Return(nil).Once()
-	session.EXPECT().Execute("import whatever").Return(jupyterclient.Result{}, errors.New("whappo")).Once()
+	session.EXPECT().Execute("import whatever").Return(jupyterclient.Result{}, nil).Once()
 	httpClient.EXPECT().KillKernel("kid").Return(errors.New("zoinks")).Once()
 	session.EXPECT().Quit().Once()
 	logger.EXPECT().Error("Unable to kill test kernel: zoinks").Return()

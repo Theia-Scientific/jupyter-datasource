@@ -576,7 +576,7 @@ func (d *Datasource) CheckHealth(pctx context.Context, _ *backend.CheckHealthReq
 		_, err := d.httpClient.GetKernels()
 		if err != nil {
 			d.logger.Error(fmt.Sprintf("Unable to browse kernels: %v", err))
-			return &backend.CheckHealthResult{Status: backend.HealthStatusError}, err
+			return &backend.CheckHealthResult{Status: backend.HealthStatusError}, nil
 		}
 
 		if (d.settings.Packages != nil && len(*d.settings.Packages) > 0) ||
@@ -584,7 +584,7 @@ func (d *Datasource) CheckHealth(pctx context.Context, _ *backend.CheckHealthReq
 			ks, err := d.httpClient.CreateKernel("python3")
 			if err != nil {
 				d.logger.Error(fmt.Sprintf("Unable to create a kernel: %v", err))
-				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, err
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, nil
 			}
 			defer func() {
 				err = d.httpClient.KillKernel(ks.Id)
@@ -596,14 +596,14 @@ func (d *Datasource) CheckHealth(pctx context.Context, _ *backend.CheckHealthReq
 			ci, err := d.httpClient.GetConnectionInfo(ks.Id)
 			if err != nil {
 				d.logger.Error(fmt.Sprintf("Unable to get ConnectionInfo: %v", err))
-				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, err
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, nil
 			}
 
 			wrapped := WrappedLogger{logger: d.logger}
 			session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
 			if err != nil {
 				d.logger.Error(fmt.Sprintf("Unable to create session: %v", err))
-				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, err
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, nil
 			}
 			defer session.Quit()
 
@@ -614,13 +614,13 @@ func (d *Datasource) CheckHealth(pctx context.Context, _ *backend.CheckHealthReq
 			err = session.Initialize(d.settings.Packages, code)
 			if err != nil {
 				d.logger.Error(fmt.Sprintf("Unable to initialize session: %v", err))
-				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, err
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, nil
 			}
 
 			_, err = session.Execute(code)
 			if err != nil {
 				d.logger.Error(fmt.Sprintf("Unable to execute prelude: %v", err))
-				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, err
+				return &backend.CheckHealthResult{Status: backend.HealthStatusError}, nil
 			}
 		}
 	}
