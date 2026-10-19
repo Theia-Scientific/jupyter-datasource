@@ -126,27 +126,6 @@ type Datasource struct {
 var err404 = errors.New("Not found")
 var errMissingPath = errors.New("missing 'path' argument on request")
 
-func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
-	response, err := p.callResource(req)
-	if err == err404 {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: http.StatusNotFound,
-		})
-	}
-
-	if err != nil {
-		return sender.Send(&backend.CallResourceResponse{
-			Status: http.StatusInternalServerError,
-			Body:   []byte(err.Error()),
-		})
-	}
-
-	return sender.Send(&backend.CallResourceResponse{
-		Status: http.StatusOK,
-		Body:   response,
-	})
-}
-
 func getPathQueryParameter(req *backend.CallResourceRequest) (string, error) {
 	u, err := url.Parse(req.URL)
 	if err != nil {
@@ -167,56 +146,89 @@ func getPathQueryParameter(req *backend.CallResourceRequest) (string, error) {
 	return path, nil
 }
 
-func (p *Datasource) callResource(req *backend.CallResourceRequest) ([]byte, error) {
+func (p *Datasource) CallResource(ctx context.Context, req *backend.CallResourceRequest, sender backend.CallResourceResponseSender) error {
+	return sender.Send(p.callResource(req))
+}
+
+func (p *Datasource) callResource(req *backend.CallResourceRequest) *backend.CallResourceResponse {
+	respondJSON := func(body []byte) *backend.CallResourceResponse {
+		return &backend.CallResourceResponse{
+			Status: http.StatusOK,
+			Body:   body,
+		}
+	}
+
+	respondErr := func(err error) *backend.CallResourceResponse {
+		return &backend.CallResourceResponse{
+			Status: http.StatusInternalServerError,
+			Body:   []byte(err.Error()),
+		}
+	}
+
 	p.logger.Debug(fmt.Sprintf("got a resource request for %+v", req.Path))
 	switch req.Path {
 	case "list":
 		{
 			path, err := getPathQueryParameter(req)
 			if err != nil {
-				return nil, err
+				return respondErr(err)
 			}
 
 			entries, err := p.httpClient.GetListing(path)
 			if err != nil {
-				return nil, err
+				return respondErr(err)
 			}
 
-			return json.Marshal(entries)
+			body, err := json.Marshal(entries)
+			if err != nil {
+				return respondErr(err)
+			}
+
+			return respondJSON(body)
 		}
 	case "notebooks":
 		{
 			notebooks, err := p.httpClient.GetNotebooks()
 			if err != nil {
-				return nil, err
+				return respondErr(err)
 			}
 
-			return json.Marshal(notebooks)
+			body, err := json.Marshal(notebooks)
+			if err != nil {
+				return respondErr(err)
+			}
+
+			return respondJSON(body)
 		}
 	case "notebook":
 		{
 			path, err := getPathQueryParameter(req)
 			if err != nil {
-				return nil, err
+				return respondErr(err)
 			}
 
 			notebook, err := p.httpClient.GetNotebook(path)
 			if err != nil {
-				return nil, err
+				return respondErr(err)
 			}
 
-			return json.Marshal(notebook)
+			body, err := json.Marshal(notebook)
+			if err != nil {
+				return respondErr(err)
+			}
+
+			return respondJSON(body)
 		}
 	case "kernels":
 		{
 			kernels, err := p.httpClient.GetKernels()
 			if err != nil {
-				return nil, err
+				return respondErr(err)
 			}
 
 			sessions, err := p.httpClient.GetSessions()
 			if err != nil {
-				return nil, err
+				return respondErr(err)
 			}
 
 			for i, k := range kernels {
@@ -228,18 +240,30 @@ func (p *Datasource) callResource(req *backend.CallResourceRequest) ([]byte, err
 				}
 			}
 
-			return json.Marshal(kernels)
+			body, err := json.Marshal(kernels)
+			if err != nil {
+				return respondErr(err)
+			}
+
+			return respondJSON(body)
 		}
 	case "kernelspecs":
 		{
-			return p.httpClient.GetKernelSpecs()
+			body, err := p.httpClient.GetKernelSpecs()
+			if err != nil {
+				return respondErr(err)
+			}
+
+			return respondJSON(body)
 		}
 	default:
 		{
 		}
 	}
 
-	return nil, err404
+	return &backend.CallResourceResponse{
+		Status: http.StatusNotFound,
+	}
 }
 
 func getJupyterToken(settings *InstanceSettings) (string, error) {

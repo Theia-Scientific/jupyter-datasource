@@ -76,13 +76,13 @@ func TestCallResource(t *testing.T) {
 
 	httpClient.EXPECT().GetListing("some/path").Return([]jupyterclient.PathEntry{}, nil)
 
-	rv, err := d.callResource(&backend.CallResourceRequest{
+	rv := d.callResource(&backend.CallResourceRequest{
 		Path: "list",
 		URL:  "http://whatever/list?path=some/path",
 	})
 
-	assert.Equal(t, string(rv), "[]")
-	assert.Nil(t, err)
+	assert.Equal(t, rv.Status, 200)
+	assert.Equal(t, string(rv.Body), "[]")
 }
 
 ////////////////////////////////////////////////////////////
