@@ -213,8 +213,8 @@ importers:
         specifier: ^12.3.0
         version: 12.4.2(@openfeature/web-sdk@1.7.3(@openfeature/core@1.9.2))(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(eslint@9.39.5(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(typescript@5.5.4)
       '@grafana/schema':
-        specifier: ^12.3.0
-        version: 12.4.2
+        specifier: ^13.2.4
+        version: 13.2.4
       '@grafana/ui':
         specifier: ^12.3.0
         version: 12.4.2(@react-spectrum/provider@3.11.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@types/react@18.3.28)(eslint@9.39.5(supports-color@8.1.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(supports-color@8.1.1)(typescript@5.5.4)
@@ -873,6 +873,9 @@ packages:
 
   '@grafana/schema@12.4.2':
     resolution: {integrity: sha512-dkIEvcqTMitGO1qQcg4Hd2RoLK/YcQCNZQusX4sINvWH64u3uryBn3TS6TTPItvkiccWULYuZSWcQMV478i9Yg==}
+
+  '@grafana/schema@13.2.4':
+    resolution: {integrity: sha512-VtdneAIEUzdpN9l7Pa4M7FawXloUMxjMDhrbcIjpWA1vJkI3AezpF6jaORycBulMelhh4IlysiLNDEIyNA3/Dg==}
 
   '@grafana/tsconfig@2.0.1':
     resolution: {integrity: sha512-yGNQWQDlxFfklzMfk0i8qnDqKOvIGc0Aqe62zLS4LTqptkhnyLEVsdaVmX99m3QFOcBiiFn8scREDzGeF2iNvQ==}
@@ -6091,6 +6094,8 @@ snapshots:
   '@grafana/schema@12.4.2':
     dependencies:
       tslib: 2.8.1
+
+  '@grafana/schema@13.2.4': {}
 
   '@grafana/tsconfig@2.0.1': {}
 
