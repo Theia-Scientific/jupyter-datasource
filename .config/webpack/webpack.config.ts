@@ -128,6 +128,11 @@ const config = async (env: Env): Promise<Configuration> => {
       minimize: Boolean(env.production),
       minimizer: [
         new TerserPlugin({
+          extractComments: {
+            banner: false,
+            filename: 'LICENSE.txt',
+          },
+
           terserOptions: {
             format: {
               comments: (_, { type, value }) => type === 'comment2' && value.trim().startsWith('[create-plugin]'),
@@ -218,12 +223,14 @@ const config = async (env: Env): Promise<Configuration> => {
               typescript: { configFile: path.join(process.cwd(), 'tsconfig.json') },
             }),
             new DiagnosticsPlugin({
-              checks: [{
-                use: 'eslint',
-                extensions: ['.ts', '.tsx'],
-                lintDirtyModulesOnly: Boolean(env.development), // don't lint on start, only lint changed files
-                failOnError: Boolean(env.production),
-              }]
+              checks: [
+                {
+                  use: 'eslint',
+                  extensions: ['.ts', '.tsx'],
+                  lintDirtyModulesOnly: Boolean(env.development), // don't lint on start, only lint changed files
+                  failOnError: Boolean(env.production),
+                },
+              ],
             }),
           ]
         : []),
