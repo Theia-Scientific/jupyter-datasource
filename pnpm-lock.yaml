@@ -195,6 +195,7 @@ overrides:
   uuid@>=13.0.0 <13.0.1: ^13.0.1
   websocket-driver@<0.7.5: ^0.7.5
   chokidar@<6: ^6
+  basic-ftp@<6.2.1: ^6.2.1
 
 importers:
 
@@ -2595,8 +2596,8 @@ packages:
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  basic-ftp@5.3.1:
-    resolution: {integrity: sha512-bopVNp6ugyA150DDuZfPFdt1KZ5a94ZDiwX4hMgZDzF+GttD80lEy8kj98kbyhLXnPvhtIo93mdnLIjpCAeeOw==}
+  basic-ftp@6.2.3:
+    resolution: {integrity: sha512-T7GYtQ2eKJUN5YORG7A8u2WfB9JMN0a4/wl3MI64qq2qTRfa3FXzoNq0DDojZDkDyStcL+TkfKsz4JHEZx5kGQ==}
     engines: {node: '>=10.0.0'}
 
   body@5.1.0:
@@ -7852,7 +7853,7 @@ snapshots:
     dependencies:
       '@adobe/react-spectrum': 3.47.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@adobe/react-spectrum-ui': 1.2.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.10
       '@swc/helpers': 0.5.21
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
@@ -8656,7 +8657,7 @@ snapshots:
 
   babel-plugin-macros@3.1.0:
     dependencies:
-      '@babel/runtime': 7.29.2
+      '@babel/runtime': 7.29.10
       cosmiconfig: 7.1.0
       resolve: 1.22.12
 
@@ -8691,7 +8692,7 @@ snapshots:
 
   baseline-browser-mapping@2.11.30: {}
 
-  basic-ftp@5.3.1: {}
+  basic-ftp@6.2.3: {}
 
   body@5.1.0:
     dependencies:
@@ -9700,7 +9701,7 @@ snapshots:
 
   get-uri@8.0.0(supports-color@8.1.1):
     dependencies:
-      basic-ftp: 5.3.1
+      basic-ftp: 6.2.3
       data-uri-to-buffer: 8.0.0
       debug: 4.4.3(supports-color@8.1.1)
     transitivePeerDependencies:

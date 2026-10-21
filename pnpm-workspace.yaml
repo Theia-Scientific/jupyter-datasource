@@ -37,3 +37,4 @@ overrides:
   uuid@>=13.0.0 <13.0.1: ^13.0.1
   websocket-driver@<0.7.5: ^0.7.5
   chokidar@<6: ^6
+  basic-ftp@<6.2.1: ^6.2.1
