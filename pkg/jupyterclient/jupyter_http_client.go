@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
@@ -28,8 +29,8 @@ type IJupyterHttpClient interface {
 }
 
 type JupyterHttpClient struct {
-	BasePath string
-	Client   *http.Client
+	BaseUrl *url.URL
+	Client  *http.Client
 }
 
 func MakeJupyterHttpClient(settings *JupyterServiceSettings) (IJupyterHttpClient, error) {
@@ -47,14 +48,19 @@ func MakeJupyterHttpClient(settings *JupyterServiceSettings) (IJupyterHttpClient
 		return nil, err
 	}
 
+	baseUrl, err := url.Parse(settings.BaseUrl)
+	if err != nil {
+		return nil, err
+	}
+
 	return &JupyterHttpClient{
-		BasePath: strings.TrimRight(settings.BaseUrl, "/"),
-		Client:   client,
+		BaseUrl: baseUrl,
+		Client:  client,
 	}, nil
 }
 
 func (jc *JupyterHttpClient) NewRequest(method, path string, body io.Reader) (*http.Request, error) {
-	req, err := http.NewRequest(method, fmt.Sprintf("%s/%s", jc.BasePath, path), body)
+	req, err := http.NewRequest(method, jc.BaseUrl.JoinPath(path).String(), body)
 	if err != nil {
 		return nil, err
 	}
