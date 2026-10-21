@@ -24,3 +24,7 @@ template-schema: '{{.Template}}.schema.json'
 packages:
   github.com/Theia-Scientific/jupyter-datasource/pkg/plugin:
   github.com/Theia-Scientific/jupyter-datasource/pkg/jupyterclient:
+  github.com/grafana/grafana-plugin-sdk-go/backend/log:
+    config:
+      all: true
+      dir: './pkg/grafana-plugin-sdk-go/backend/log_test'

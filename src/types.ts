@@ -83,7 +83,6 @@ export enum ConnectionType {
 export interface MyDataSourceOptions extends DataSourceJsonData {
   connectionType: ConnectionType;
   authType: AuthType;
-  rawToken?: string;
   jupyterUrl?: string;
   prelude?: string;
   packages: string[];
@@ -147,5 +146,6 @@ export type Notebook = PathEntryNotebook & {
  * Value that is used in the backend, but never sent over HTTP to the frontend
  */
 export interface MySecureJsonData {
+  rawToken?: string;
 }
 

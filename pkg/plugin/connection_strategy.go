@@ -71,8 +71,8 @@ func (_ ConnectionStrategyAuto) createHttpClient(settings *InstanceSettings) (ju
 		Token:              jupyterToken,
 		InsecureSkipVerify: settings.InsecureSkipVerify,
 	}
-	client := jupyterclient.MakeJupyterHttpClient(jupyterSettings)
-	return client, nil
+
+	return jupyterclient.MakeJupyterHttpClient(jupyterSettings)
 }
 
 func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Context, settings *InstanceSettings, qm *queryModel) (SessionState, error) {
