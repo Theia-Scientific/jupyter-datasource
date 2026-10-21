@@ -74,7 +74,7 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": ">=11.9.0 <12.0.0",
+      "version": "^12.14.0",
       "onFail": "warn"
     }
   },
@@ -97,7 +97,7 @@
     "react-data-grid": "https://codeload.github.com/grafana/react-data-grid/tar.gz/a10c748f40edc538425b458af4e471a8262ec4ed",
     "react-dom": "^18.3.0",
     "react-syntax-highlighter": "^16.1.1",
-    "react-use": "^17.6.0",
+    "react-use": "^17.6.1",
     "rxjs": "7.8.2",
     "uuid": "^13.0.0"
   }
