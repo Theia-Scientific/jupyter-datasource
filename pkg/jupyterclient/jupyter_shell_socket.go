@@ -34,6 +34,7 @@ func makeJupyterDealerSocket(ctx context.Context, connectionInfo *ConnectionInfo
 	var shellAddr = fmt.Sprintf("tcp://%s:%d", connectionInfo.IP, port)
 	err := dealer.Dial(shellAddr)
 	if err != nil {
+		_ = dealer.Close()
 		return nil, err
 	}
 

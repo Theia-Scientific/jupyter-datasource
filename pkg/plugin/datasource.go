@@ -457,8 +457,6 @@ func (d *Datasource) findOrCreateSession(settings *InstanceSettings, qm *queryMo
 }
 
 func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backend.DataResponse {
-	d.logger.Debug(fmt.Sprintf("grafana query: %+v\n", string(query.JSON)))
-
 	var response backend.DataResponse
 
 	// Unmarshal the JSON into our queryModel.
@@ -487,7 +485,7 @@ func (d *Datasource) query(pctx context.Context, query backend.DataQuery) backen
 	}
 
 	if code != sessionState.code || newSession {
-		d.logger.Debug(fmt.Sprintf("session code differs (%s vs %s), initializing", sessionState.code, code))
+		d.logger.Debug("session code differs, initializing")
 		var loggableSettings InstanceSettings = *d.settings
 		loggableSettings.RawToken = nil
 		d.logger.Debug(fmt.Sprintf("d.settings: %+v", loggableSettings))

@@ -121,7 +121,6 @@ func (js *JupyterSession) Query(code string) (Result, error) {
 		return strings.HasPrefix(expr, "%") || strings.HasPrefix(expr, "!")
 	})
 	code = strings.Join(nonSysLines, "\n")
-	js.logger.Log(fmt.Sprintf("query code: '%+v'", code))
 
 	return js.Execute(code)
 }
@@ -156,7 +155,6 @@ func (js *JupyterSession) Initialize(packages *[]string, code string) error {
 
 	if len(packageLines) > 0 || len(sysLines) > 0 {
 		sys := strings.Join(append(packageLines, sysLines...), "\n")
-		js.logger.Log(fmt.Sprintf("Initialization code: %+v", sys))
 		_, err := js.Execute(sys)
 		if err != nil {
 			return err
@@ -259,10 +257,10 @@ func (js *JupyterSession) listener() error {
 	sub := zmq.NewSub(js.groupCtx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
 	var ioPubAddr = fmt.Sprintf("tcp://%s:%d", js.connectionInfo.IP, js.connectionInfo.IOPubPort)
 	err := sub.Dial(ioPubAddr)
+	defer sub.Close()
 	if err != nil {
 		return err
 	}
-	defer sub.Close()
 	err = sub.SetOption(zmq.OptionSubscribe, "")
 	if err != nil {
 		return err

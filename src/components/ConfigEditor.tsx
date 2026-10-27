@@ -8,6 +8,9 @@ import { t } from '@grafana/i18n';
 
 interface Props extends DataSourcePluginOptionsEditorProps<MyDataSourceOptions, MySecureJsonData> {}
 
+const LEFT_COLUMN_WIDTH = 40;
+const LABEL_WIDTH = 30;
+
 export function ConfigEditor(props: Props) {
   const { onOptionsChange, options } = props;
   const { jsonData, secureJsonData, secureJsonFields } = options;
@@ -86,33 +89,30 @@ export function ConfigEditor(props: Props) {
     });
   }
 
-  console.log("secureJsonData: ", secureJsonData);
-  console.log("secureJsonFields: ", secureJsonFields);
-
   return (
     <>
-      <InlineField label={t('configEditor.connectionType.label', 'Connection Type')} labelWidth={20} interactive tooltip={t('configEditor.connectionType.tooltip', 'Type of connection')}>
+      <InlineField label={t('configEditor.connectionType.label', 'Connection Type')} labelWidth={LABEL_WIDTH} interactive tooltip={t('configEditor.connectionType.tooltip', 'Type of connection')}>
         <Combobox
           id="config-editor-conn-type"
           options={CONN_OPTIONS}
           onChange={onConnectionTypeChange}
           value={jsonData.connectionType}
-          width={40}
+          width={LEFT_COLUMN_WIDTH}
         />
       </InlineField>
       { jsonData.connectionType === ConnectionType.Auto &&
-        <InlineField label={t('configEditor.authType.label', 'Auth Type')} labelWidth={20} interactive tooltip={t('configEditor.authType.tooltip', 'Type of authentication')}>
+        <InlineField label={t('configEditor.authType.label', 'Auth Type')} labelWidth={LABEL_WIDTH} interactive tooltip={t('configEditor.authType.tooltip', 'Type of authentication')}>
           <Combobox
             id="config-editor-auth-type"
             options={AUTH_OPTIONS}
             onChange={onAuthTypeChange}
             value={jsonData.authType}
-            width={40}
+            width={LEFT_COLUMN_WIDTH}
           />
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto && jsonData.authType === AuthType.RawToken &&
-        <InlineField label={t('configEditor.rawToken.label', 'Token')} labelWidth={20} interactive tooltip={t('configEditor.rawToken.tooltip', 'Token for JupyterLab auth')}>
+        <InlineField label={t('configEditor.rawToken.label', 'Token')} labelWidth={LABEL_WIDTH} interactive tooltip={t('configEditor.rawToken.tooltip', 'Token for JupyterLab auth')}>
           <SecretInput
             id="config-editor-raw-token"
             onChange={onRawTokenChange}
@@ -120,19 +120,19 @@ export function ConfigEditor(props: Props) {
             onReset={onRawTokenReset}
             value={secureJsonData?.rawToken}
             placeholder={t('configEditor.rawToken.placeholder', 'Enter the token')}
-            width={40}
+            width={LEFT_COLUMN_WIDTH}
           />
         </InlineField>
       }
       { jsonData.connectionType === ConnectionType.Auto &&
         <InlineFieldRow>
-          <InlineField label={t('configEditor.jupyterUrl.label', 'JupyterLab URL')} labelWidth={20} interactive tooltip={t('configEditor.jupyterUrl.tooltip', 'JupyterLab endpoint URL')}>
+          <InlineField label={t('configEditor.jupyterUrl.label', 'JupyterLab URL')} labelWidth={LABEL_WIDTH} interactive tooltip={t('configEditor.jupyterUrl.tooltip', 'JupyterLab endpoint URL')}>
             <Input
               id="config-jupyter-url"
               onChange={onJupyterUrlChange}
               value={jsonData.jupyterUrl}
               placeholder={t('configEditor.jupyterUrl.placeholder', 'Enter the JupyterLab URL, e.g. http://localhost:8888/')}
-              width={40}
+              width={LEFT_COLUMN_WIDTH}
             />
           </InlineField>
         <Button
@@ -144,7 +144,7 @@ export function ConfigEditor(props: Props) {
         }
       { jsonData.connectionType === ConnectionType.Auto &&
         <InlineFieldRow>
-          <InlineField label={t('configEditor.insecureSkipVerify.label', 'Skip TLS Verification')} labelWidth={20} interactive tooltip={t('configEditor.insecureSkipVerify.tooltip', 'Ignore TLS cert errors when connecting to JupyterLab API')}>
+          <InlineField label={t('configEditor.insecureSkipVerify.label', 'Skip TLS Verification')} labelWidth={LABEL_WIDTH} interactive tooltip={t('configEditor.insecureSkipVerify.tooltip', 'Ignore TLS cert errors when connecting to JupyterLab API')}>
             <Checkbox
               id="config-jupyter-insecure-skip-verify"
               onClick={(event) => onOptionsChange({
@@ -159,7 +159,7 @@ export function ConfigEditor(props: Props) {
           </InlineField>
         </InlineFieldRow>
       }
-      <InlineField label={t('configEditor.packages.label', 'Packages')} labelWidth={20} interactive tooltip={t('configEditor.packages.tooltip', 'Packages to install for every kernel')}>
+      <InlineField label={t('configEditor.packages.label', 'Packages')} labelWidth={LABEL_WIDTH} interactive tooltip={t('configEditor.packages.tooltip', 'Packages to install for every kernel')}>
       <>
       { (jsonData.packages||[]).map((pkg, index) => (
         <InlineFieldRow key={index}>
@@ -178,7 +178,7 @@ export function ConfigEditor(props: Props) {
             }
             value={pkg}
             placeholder={t('configEditor.packages.placeholder', 'numpy==2.4.4')}
-            width={40}
+            width={LEFT_COLUMN_WIDTH}
           />
           <Button
             icon="minus"
@@ -211,7 +211,7 @@ export function ConfigEditor(props: Props) {
       </Button>
     </>
       </InlineField>
-      <InlineField label={t('configEditor.prelude.label', 'Prelude')} labelWidth={20} interactive tooltip={t('configEditor.prelude.tooltip', 'Code to run at start for every kernel')}>
+      <InlineField label={t('configEditor.prelude.label', 'Prelude')} labelWidth={LABEL_WIDTH} interactive tooltip={t('configEditor.prelude.tooltip', 'Code to run at start for every kernel')}>
         <CodeEditor
           value={jsonData.prelude ?? ""}
           language="python"
