@@ -117,9 +117,8 @@ func (_ ConnectionStrategyAuto) createSession(d *Datasource, pctx context.Contex
 		return SessionState{}, err
 	}
 
-	d.logger.Debug(fmt.Sprintf("got ConnectionInfo: %v", ci))
+	d.logger.Debug("ConnectionInfo received")
 	session, err := d.sessionFactory.MakeJupyterSession(pctx, &ci, wrapped)
-	d.logger.Debug(fmt.Sprintf("got session=%+v, err=%+v", session, err))
 	if err != nil {
 		return SessionState{}, err
 	}
