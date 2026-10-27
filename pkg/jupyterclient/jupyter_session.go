@@ -259,10 +259,10 @@ func (js *JupyterSession) listener() error {
 	sub := zmq.NewSub(js.groupCtx, zmq.WithAutomaticReconnect(true), zmq.WithDialerMaxRetries(-1))
 	var ioPubAddr = fmt.Sprintf("tcp://%s:%d", js.connectionInfo.IP, js.connectionInfo.IOPubPort)
 	err := sub.Dial(ioPubAddr)
+	defer sub.Close()
 	if err != nil {
 		return err
 	}
-	defer sub.Close()
 	err = sub.SetOption(zmq.OptionSubscribe, "")
 	if err != nil {
 		return err
