@@ -86,9 +86,6 @@ export function ConfigEditor(props: Props) {
     });
   }
 
-  console.log("secureJsonData: ", secureJsonData);
-  console.log("secureJsonFields: ", secureJsonFields);
-
   return (
     <>
       <InlineField label={t('configEditor.connectionType.label', 'Connection Type')} labelWidth={20} interactive tooltip={t('configEditor.connectionType.tooltip', 'Type of connection')}>
